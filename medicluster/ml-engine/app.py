@@ -323,6 +323,36 @@ def cluster():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Image analysis route
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.route("/analyze-image", methods=["POST"])
+def analyze_image():
+    """
+    Analyze a chest X-ray / CT scan image for pathology findings.
+
+    Body: { image_b64: "<base64-encoded image bytes>" }
+
+    Returns: { findings: [{label, confidence}], model }
+    """
+    import base64
+    from imaging.analyzer import analyze_image as _analyze
+
+    body = request.get_json(force=True)
+    image_b64 = body.get("image_b64")
+    if not image_b64:
+        return jsonify({"error": "image_b64 is required"}), 400
+
+    try:
+        image_bytes = base64.b64decode(image_b64)
+        result = _analyze(image_bytes)
+        return jsonify(result)
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Image analysis failed: {e}"}), 500
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Entry point
 # ─────────────────────────────────────────────────────────────────────────────
 

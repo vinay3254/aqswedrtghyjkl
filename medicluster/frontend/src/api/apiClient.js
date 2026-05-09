@@ -92,4 +92,13 @@ export function getMediaFileUrl(fileId) {
   return `/api/media/file/${fileId}`;
 }
 
+/**
+ * Run deep learning analysis on an uploaded image (CT scan / chest X-ray).
+ * Returns { findings: [{label, confidence}], model, analyzedAt }
+ */
+export async function analyzePatientMedia(fileId) {
+  const res = await api.post(`/media/analyze/${fileId}`, {}, { timeout: 120_000 });
+  return res.data;
+}
+
 export default api;

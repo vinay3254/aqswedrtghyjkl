@@ -3,7 +3,10 @@ const multer = require("multer");
 const mongoose = require("mongoose");
 const { GridFSBucket } = require("mongodb");
 const { Readable } = require("stream");
+const axios = require("axios");
 const PatientMedia = require("../models/PatientMedia");
+
+const ML_ENGINE_URL = process.env.ML_ENGINE_URL || "http://localhost:8000";
 
 const router = express.Router();
 
@@ -113,6 +116,53 @@ router.delete("/file/:fileId", async (req, res, next) => {
     await media.deleteOne();
 
     res.json({ deleted: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/media/analyze/:fileId  — run DL analysis on an image (must be before /:patientId)
+router.post("/analyze/:fileId", async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.fileId))
+      return res.status(400).json({ error: "Invalid file ID" });
+
+    const media = await PatientMedia.findOne({
+      gridfs_id: new mongoose.Types.ObjectId(req.params.fileId),
+    });
+    if (!media) return res.status(404).json({ error: "File not found" });
+    if (media.file_type !== "image")
+      return res.status(400).json({ error: "Only images can be analyzed" });
+
+    // Stream file from GridFS into a buffer
+    const bucket = getBucket();
+    const chunks = [];
+    const downloadStream = bucket.openDownloadStream(media.gridfs_id);
+    await new Promise((resolve, reject) => {
+      downloadStream.on("data", (chunk) => chunks.push(chunk));
+      downloadStream.on("end", resolve);
+      downloadStream.on("error", reject);
+    });
+
+    const imageB64 = Buffer.concat(chunks).toString("base64");
+
+    // Send to ML engine
+    const mlRes = await axios.post(
+      `${ML_ENGINE_URL}/analyze-image`,
+      { image_b64: imageB64 },
+      { timeout: 120_000 }
+    );
+
+    const analysis = {
+      findings: mlRes.data.findings,
+      model: mlRes.data.model,
+      analyzedAt: new Date(),
+    };
+
+    media.analysis = analysis;
+    await media.save();
+
+    res.json(analysis);
   } catch (err) {
     next(err);
   }

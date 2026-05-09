@@ -1,5 +1,10 @@
 const mongoose = require("mongoose");
 
+const FindingSchema = new mongoose.Schema(
+  { label: String, confidence: Number },
+  { _id: false }
+);
+
 const PatientMediaSchema = new mongoose.Schema(
   {
     patient_id: { type: String, required: true, index: true },
@@ -8,6 +13,11 @@ const PatientMediaSchema = new mongoose.Schema(
     size: { type: Number },
     file_type: { type: String, enum: ["image", "document"], required: true },
     gridfs_id: { type: mongoose.Schema.Types.ObjectId, required: true },
+    analysis: {
+      findings: [FindingSchema],
+      model: String,
+      analyzedAt: Date,
+    },
   },
   { timestamps: true }
 );

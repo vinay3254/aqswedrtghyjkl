@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  analyzePatientMedia,
   deletePatientMedia,
   getMediaFileUrl,
   listPatientMedia,
@@ -24,6 +25,37 @@ function FileIcon() {
   );
 }
 
+function FindingsPanel({ findings, model }) {
+  const TOP = 8;
+  const top = findings.slice(0, TOP);
+  return (
+    <div className="mt-2 bg-slate-50 border border-slate-100 rounded-lg p-3 space-y-2">
+      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+        AI Findings · <span className="font-mono normal-case">{model}</span>
+      </p>
+      {top.map((f) => (
+        <div key={f.label} className="space-y-0.5">
+          <div className="flex justify-between text-xs">
+            <span className={`font-medium ${f.confidence > 0.5 ? "text-red-600" : "text-slate-600"}`}>
+              {f.label}
+            </span>
+            <span className="text-slate-400 font-mono">{(f.confidence * 100).toFixed(1)}%</span>
+          </div>
+          <div className="w-full bg-slate-200 rounded-full h-1.5">
+            <div
+              className={`h-1.5 rounded-full ${f.confidence > 0.5 ? "bg-red-500" : "bg-blue-400"}`}
+              style={{ width: `${(f.confidence * 100).toFixed(1)}%` }}
+            />
+          </div>
+        </div>
+      ))}
+      <p className="text-xs text-slate-400 pt-1">
+        Confidence &gt;50% highlighted in red. For clinical reference only — not a diagnosis.
+      </p>
+    </div>
+  );
+}
+
 export default function PatientMediaModal({ patientId, onClose }) {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,6 +63,8 @@ export default function PatientMediaModal({ patientId, onClose }) {
   const [dragOver, setDragOver] = useState(false);
   const [lightbox, setLightbox] = useState(null);
   const [error, setError] = useState(null);
+  const [analyzing, setAnalyzing] = useState(new Set());
+  const [selectedFile, setSelectedFile] = useState(null);
   const inputRef = useRef();
 
   useEffect(() => {
@@ -63,10 +97,30 @@ export default function PatientMediaModal({ patientId, onClose }) {
       await deletePatientMedia(fileId);
       setFiles((prev) => prev.filter((f) => f.gridfs_id !== fileId));
       if (lightbox === fileId) setLightbox(null);
+      if (selectedFile?.gridfs_id === fileId) setSelectedFile(null);
     } catch {
       setError("Delete failed");
     }
-  }, [lightbox]);
+  }, [lightbox, selectedFile]);
+
+  const handleAnalyze = useCallback(async (file) => {
+    setAnalyzing((prev) => new Set(prev).add(file.gridfs_id));
+    setError(null);
+    try {
+      const analysis = await analyzePatientMedia(file.gridfs_id);
+      const updated = { ...file, analysis };
+      setFiles((prev) => prev.map((f) => f.gridfs_id === file.gridfs_id ? updated : f));
+      setSelectedFile(updated);
+    } catch (e) {
+      setError(e?.response?.data?.error || "Analysis failed. Make sure the ML engine is running.");
+    } finally {
+      setAnalyzing((prev) => {
+        const next = new Set(prev);
+        next.delete(file.gridfs_id);
+        return next;
+      });
+    }
+  }, []);
 
   const onDrop = useCallback((e) => {
     e.preventDefault();
@@ -138,7 +192,7 @@ export default function PatientMediaModal({ patientId, onClose }) {
             <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded px-3 py-2">{error}</p>
           )}
 
-          {/* File list */}
+          {/* File grid */}
           {loading ? (
             <div className="flex items-center justify-center gap-2 text-slate-400 py-8 text-sm">
               <div className="spinner w-4 h-4" /> Loading…
@@ -147,54 +201,86 @@ export default function PatientMediaModal({ patientId, onClose }) {
             <p className="text-center text-sm text-slate-400 py-8">No files uploaded yet</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {files.map((f) => (
-                <div
-                  key={f._id}
-                  className="group relative border border-slate-100 rounded-lg overflow-hidden bg-slate-50 hover:border-blue-300 transition-colors"
-                >
-                  {f.file_type === "image" ? (
-                    <button
-                      onClick={() => setLightbox(f.gridfs_id)}
-                      className="w-full aspect-square block"
-                    >
-                      <img
-                        src={getMediaFileUrl(f.gridfs_id)}
-                        alt={f.original_name}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ) : (
-                    <a
-                      href={getMediaFileUrl(f.gridfs_id)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="w-full aspect-square flex flex-col items-center justify-center gap-2"
-                    >
-                      <FileIcon />
-                      <span className="text-xs text-blue-600 font-medium px-2 text-center leading-tight">
-                        {f.original_name}
-                      </span>
-                    </a>
-                  )}
+              {files.map((f) => {
+                const isAnalyzing = analyzing.has(f.gridfs_id);
+                const isSelected = selectedFile?.gridfs_id === f.gridfs_id;
+                return (
+                  <div
+                    key={f._id}
+                    className={`group relative border rounded-lg overflow-hidden bg-slate-50 transition-colors
+                      ${isSelected ? "border-blue-500 ring-1 ring-blue-300" : "border-slate-100 hover:border-blue-300"}`}
+                  >
+                    {f.file_type === "image" ? (
+                      <button
+                        onClick={() => { setLightbox(f.gridfs_id); setSelectedFile(f); }}
+                        className="w-full aspect-square block"
+                      >
+                        <img
+                          src={getMediaFileUrl(f.gridfs_id)}
+                          alt={f.original_name}
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ) : (
+                      <a
+                        href={getMediaFileUrl(f.gridfs_id)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full aspect-square flex flex-col items-center justify-center gap-2"
+                      >
+                        <FileIcon />
+                        <span className="text-xs text-blue-600 font-medium px-2 text-center leading-tight">
+                          {f.original_name}
+                        </span>
+                      </a>
+                    )}
 
-                  {/* Overlay info */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-between gap-1">
-                    <span className="text-white text-xs truncate flex-1">{f.original_name}</span>
-                    <span className="text-slate-300 text-xs shrink-0">{formatBytes(f.size)}</span>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDelete(f.gridfs_id); }}
-                      className="text-red-400 hover:text-red-300 transition-colors shrink-0 ml-1"
-                      aria-label="Delete"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
+                    {/* Overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/70 px-2 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-between gap-1 mb-1">
+                        <span className="text-white text-xs truncate flex-1">{f.original_name}</span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDelete(f.gridfs_id); }}
+                          className="text-red-400 hover:text-red-300 transition-colors shrink-0"
+                          aria-label="Delete"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                      {f.file_type === "image" && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleAnalyze(f); }}
+                          disabled={isAnalyzing}
+                          className="w-full text-xs bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white rounded px-2 py-0.5 transition-colors flex items-center justify-center gap-1"
+                        >
+                          {isAnalyzing ? (
+                            <><div className="spinner w-3 h-3" /> Analyzing…</>
+                          ) : f.analysis ? "Re-analyze" : "🔬 Analyze"}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Analysis badge */}
+                    {f.analysis && (
+                      <div className="absolute top-1 right-1 bg-green-500 text-white text-xs rounded px-1 py-0.5 font-medium">
+                        AI ✓
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
+          )}
+
+          {/* Findings panel for selected file */}
+          {selectedFile?.analysis && (
+            <FindingsPanel
+              findings={selectedFile.analysis.findings}
+              model={selectedFile.analysis.model}
+            />
           )}
         </div>
       </div>
