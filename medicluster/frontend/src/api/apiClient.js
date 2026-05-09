@@ -56,4 +56,40 @@ export async function listDatasets({ page = 1, limit = 20 } = {}) {
   return res.data;
 }
 
+/**
+ * Upload a media file (image or document) for a patient.
+ */
+export async function uploadPatientMedia(patientId, file) {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("patient_id", patientId);
+  const res = await api.post("/media/upload", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+}
+
+/**
+ * List all media files for a patient.
+ */
+export async function listPatientMedia(patientId) {
+  const res = await api.get(`/media/${patientId}`);
+  return res.data;
+}
+
+/**
+ * Delete a media file by its GridFS file ID.
+ */
+export async function deletePatientMedia(fileId) {
+  const res = await api.delete(`/media/file/${fileId}`);
+  return res.data;
+}
+
+/**
+ * Returns the URL to stream/view a media file inline.
+ */
+export function getMediaFileUrl(fileId) {
+  return `/api/media/file/${fileId}`;
+}
+
 export default api;

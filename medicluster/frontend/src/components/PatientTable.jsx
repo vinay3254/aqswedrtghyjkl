@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import PatientMediaModal from "./PatientMediaModal";
 
 const TIER_COLORS = {
   Low:      "badge-low",
@@ -16,6 +17,7 @@ export default function PatientTable({ patients = [] }) {
   const [sortKey, setSortKey]   = useState("patient_id");
   const [sortDir, setSortDir]   = useState("asc");
   const [page, setPage]         = useState(1);
+  const [mediaPatient, setMediaPatient] = useState(null);
 
   const tiers = ["All", "Low", "Moderate", "High", "Critical", "Noise"];
 
@@ -68,6 +70,7 @@ export default function PatientTable({ patients = [] }) {
     { key: "glucose",     label: "Glucose" },
     { key: "risk_tier",   label: "Risk Tier" },
     { key: "cluster_id",  label: "Cluster" },
+    { key: "_files",      label: "Files", noSort: true },
   ];
 
   return (
@@ -102,11 +105,11 @@ export default function PatientTable({ patients = [] }) {
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  onClick={() => sort(col.key)}
-                  className="px-3 py-2.5 cursor-pointer hover:text-blue-700 select-none whitespace-nowrap"
+                  onClick={() => !col.noSort && sort(col.key)}
+                  className={`px-3 py-2.5 select-none whitespace-nowrap ${col.noSort ? "" : "cursor-pointer hover:text-blue-700"}`}
                 >
                   {col.label}
-                  {sortKey === col.key && (
+                  {!col.noSort && sortKey === col.key && (
                     <span className="ml-1">{sortDir === "asc" ? "↑" : "↓"}</span>
                   )}
                 </th>
@@ -116,7 +119,7 @@ export default function PatientTable({ patients = [] }) {
           <tbody>
             {pageRows.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-3 py-6 text-center text-slate-600">
+                <td colSpan={columns.length} className="px-3 py-6 text-center text-slate-600" >
                   No results match filters
                 </td>
               </tr>
@@ -137,6 +140,15 @@ export default function PatientTable({ patients = [] }) {
                     </span>
                   </td>
                   <td className="px-3 py-2 font-mono text-slate-500">{p.cluster_id}</td>
+                  <td className="px-3 py-2">
+                    <button
+                      onClick={() => setMediaPatient(p.patient_id)}
+                      className="btn-secondary text-xs py-0.5 px-2"
+                      title="Upload / view CT scans & documents"
+                    >
+                      📎 Files
+                    </button>
+                  </td>
                 </tr>
               ))
             )}
@@ -164,6 +176,13 @@ export default function PatientTable({ patients = [] }) {
           </button>
         </div>
       </div>
+
+      {mediaPatient && (
+        <PatientMediaModal
+          patientId={mediaPatient}
+          onClose={() => setMediaPatient(null)}
+        />
+      )}
     </div>
   );
 }
