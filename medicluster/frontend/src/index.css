@@ -3,9 +3,7 @@
 @tailwind utilities;
 
 @layer base {
-  * {
-    box-sizing: border-box;
-  }
+  * { box-sizing: border-box; }
 
   html, body, #root {
     height: 100%;
@@ -20,64 +18,62 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track { background: #f8fbff; }
-  ::-webkit-scrollbar-thumb { background: #bfdbfe; border-radius: 3px; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #f1f5f9; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: #2563eb; }
 }
 
 @layer components {
   .panel {
-    @apply bg-white border border-blue-100 rounded-lg p-4 shadow-sm;
+    @apply bg-white border border-slate-200 rounded-xl p-4 shadow-sm;
   }
 
   .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-md
-           transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed
-           flex items-center gap-2 justify-center;
+    @apply bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold
+           px-4 py-2 rounded-lg transition-all duration-150
+           disabled:opacity-40 disabled:cursor-not-allowed
+           flex items-center gap-2 justify-center shadow-sm;
   }
 
   .btn-secondary {
-    @apply bg-white hover:bg-blue-50 border border-blue-200 hover:border-blue-400
-           text-blue-700 font-medium px-4 py-2 rounded-md transition-all duration-200
+    @apply bg-white hover:bg-slate-50 active:bg-slate-100
+           border border-slate-200 hover:border-slate-300
+           text-slate-700 font-medium px-4 py-2 rounded-lg
+           transition-all duration-150
            flex items-center gap-2 justify-center;
   }
 
-  .badge-low      { @apply bg-blue-50 text-blue-700 border border-blue-100 text-xs px-2 py-0.5 rounded-full font-mono; }
-  .badge-moderate { @apply bg-blue-100 text-blue-800 border border-blue-200 text-xs px-2 py-0.5 rounded-full font-mono; }
-  .badge-high     { @apply bg-blue-600 text-white border border-blue-600 text-xs px-2 py-0.5 rounded-full font-mono; }
-  .badge-critical { @apply bg-blue-900 text-white border border-blue-900 text-xs px-2 py-0.5 rounded-full font-mono; }
-  .badge-noise    { @apply bg-slate-100 text-slate-600 border border-slate-200 text-xs px-2 py-0.5 rounded-full font-mono; }
+  /* ── Risk tier badges — semantic colours ─────────────────────────── */
+  .badge-low      { @apply bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs px-2.5 py-0.5 rounded-full font-semibold; }
+  .badge-moderate { @apply bg-amber-50   text-amber-700   border border-amber-200   text-xs px-2.5 py-0.5 rounded-full font-semibold; }
+  .badge-high     { @apply bg-orange-50  text-orange-700  border border-orange-200  text-xs px-2.5 py-0.5 rounded-full font-semibold; }
+  .badge-critical { @apply bg-red-50     text-red-700     border border-red-200     text-xs px-2.5 py-0.5 rounded-full font-semibold; }
+  .badge-noise    { @apply bg-slate-100  text-slate-500   border border-slate-200   text-xs px-2.5 py-0.5 rounded-full font-semibold; }
 
   .input-field {
-    @apply bg-white border border-blue-200 focus:border-blue-500 focus:outline-none
-           text-slate-900 rounded-md px-3 py-2 text-sm w-full transition-colors;
+    @apply bg-white border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-100
+           focus:outline-none text-slate-900 placeholder-slate-400
+           rounded-lg px-3 py-2 text-sm w-full transition-all;
   }
 
   .section-label {
-    @apply text-xs font-semibold uppercase tracking-widest text-blue-500 mb-2;
-  }
-
-  .metric-card {
-    @apply panel flex flex-col gap-1;
+    @apply text-xs font-bold uppercase tracking-widest text-slate-400 mb-3;
   }
 }
 
-/* Spinner animation */
+/* ── Spinner ──────────────────────────────────────────────────────── */
 @keyframes spin { to { transform: rotate(360deg); } }
 .spinner {
-  border: 2px solid #bfdbfe;
+  border: 2px solid #e2e8f0;
   border-top-color: #2563eb;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: spin 0.75s linear infinite;
 }
 
-/* Fade-in for panels */
+/* ── Fade-in ──────────────────────────────────────────────────────── */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.fade-in { animation: fadeIn 0.35s ease forwards; }
+.fade-in { animation: fadeIn 0.3s ease forwards; }

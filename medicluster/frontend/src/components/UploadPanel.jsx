@@ -1,24 +1,37 @@
-import React, { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import sampleData from "../data/sample_patients.json";
 import { uploadDataset } from "../api/apiClient";
 
+function UploadIcon() {
+  return (
+    <svg className="w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+    </svg>
+  );
+}
+
 export default function UploadPanel({ onDatasetLoaded }) {
-  const [dragging, setDragging] = useState(false);
-  const [progress, setProgress]   = useState(0);
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState(null);
-  const [dataset, setDataset]     = useState(null);
+  const [dragging,  setDragging]  = useState(false);
+  const [loading,   setLoading]   = useState(false);
+  const [error,     setError]     = useState(null);
+  const [dataset,   setDataset]   = useState(null);
   const inputRef = useRef();
 
   const handleFile = useCallback(async (file) => {
     if (!file) return;
     setError(null);
     setLoading(true);
-    setProgress(20);
-
     try {
       const result = await uploadDataset(file);
-      setProgress(100);
       setDataset(result);
       onDatasetLoaded?.(result);
     } catch (err) {
@@ -31,27 +44,22 @@ export default function UploadPanel({ onDatasetLoaded }) {
   const handleDrop = useCallback((e) => {
     e.preventDefault();
     setDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleFile(file);
+    handleFile(e.dataTransfer.files[0]);
   }, [handleFile]);
 
   const handleSampleLoad = async () => {
     setError(null);
     setLoading(true);
-    setProgress(50);
     try {
-      // Simulate upload via creating a Blob from sample JSON
       const csv = jsonToCSV(sampleData);
       const file = new File([csv], "sample_patients.csv", { type: "text/csv" });
       const result = await uploadDataset(file);
-      setProgress(100);
       setDataset(result);
       onDatasetLoaded?.(result);
-    } catch (err) {
-      // Fallback: use sample data directly (offline mode)
+    } catch {
       const fakeResult = {
         datasetId: "__sample__",
-        name: "Sample Pima Diabetes Dataset",
+        name: "Sample Dataset (100 patients)",
         rowCount: sampleData.length,
         featureNames: Object.keys(sampleData[0]).filter((k) => k !== "patient_id"),
         rawData: sampleData,
@@ -59,7 +67,6 @@ export default function UploadPanel({ onDatasetLoaded }) {
       setDataset(fakeResult);
       onDatasetLoaded?.(fakeResult);
     } finally {
-      setProgress(0);
       setLoading(false);
     }
   };
@@ -68,81 +75,104 @@ export default function UploadPanel({ onDatasetLoaded }) {
     <div className="panel space-y-3">
       <p className="section-label">Dataset</p>
 
-      {/* Drop zone */}
-      {!dataset && (
-        <div
-          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={handleDrop}
-          onClick={() => inputRef.current?.click()}
-          className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200 ${
-            dragging
-              ? "border-blue-500 bg-blue-50"
-              : "border-blue-100 hover:border-blue-300 hover:bg-blue-50"
-          }`}
-        >
-          <input
-            ref={inputRef}
-            type="file"
-            accept=".csv"
-            className="hidden"
-            onChange={(e) => handleFile(e.target.files[0])}
-          />
-          <div className="text-2xl mb-2">📁</div>
-          <p className="text-sm text-slate-400">
-            Drag & drop a <span className="text-blue-600 font-mono">.csv</span> file
-          </p>
-          <p className="text-xs text-slate-600 mt-1">or click to browse</p>
-        </div>
-      )}
-
-      {/* Progress bar */}
-      {loading && (
-        <div className="w-full bg-navy-700 rounded-full h-1.5">
+      {!dataset ? (
+        <>
+          {/* Drop zone */}
           <div
-            className="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      )}
-
-      {/* Error */}
-      {error && (
-        <div className="text-xs text-blue-800 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
-          {error}
-        </div>
-      )}
-
-      {/* Sample button */}
-      {!dataset && (
-        <button
-          onClick={handleSampleLoad}
-          disabled={loading}
-          className="btn-secondary w-full text-sm"
-        >
-          <span>Use Sample Dataset</span>
-        </button>
-      )}
-
-      {/* Dataset info */}
-      {dataset && (
-        <div className="space-y-2 fade-in">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-slate-900 truncate">{dataset.name}</span>
-            <span className="font-mono text-xs text-blue-600">{dataset.rowCount} rows</span>
+            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={handleDrop}
+            onClick={() => inputRef.current?.click()}
+            className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all duration-200 ${
+              dragging
+                ? "border-blue-500 bg-blue-50"
+                : "border-slate-200 hover:border-blue-300 hover:bg-slate-50"
+            }`}
+          >
+            <input
+              ref={inputRef}
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={(e) => handleFile(e.target.files[0])}
+            />
+            {loading ? (
+              <div className="flex flex-col items-center gap-2 py-2">
+                <div className="spinner w-6 h-6" />
+                <p className="text-xs text-slate-400">Processing…</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2 py-1">
+                <UploadIcon />
+                <div>
+                  <p className="text-sm text-slate-600 font-medium">
+                    Drop a <span className="text-blue-600 font-mono">.csv</span> file
+                  </p>
+                  <p className="text-xs text-slate-400 mt-0.5">or click to browse</p>
+                </div>
+              </div>
+            )}
           </div>
+
+          {error && (
+            <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+              {error}
+            </p>
+          )}
+
+          <div className="flex items-center gap-2 text-xs text-slate-300">
+            <div className="flex-1 h-px bg-slate-100" />
+            or
+            <div className="flex-1 h-px bg-slate-100" />
+          </div>
+
+          <button
+            onClick={handleSampleLoad}
+            disabled={loading}
+            className="btn-secondary w-full text-xs py-2"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Use Sample Dataset
+          </button>
+        </>
+      ) : (
+        /* Dataset loaded state */
+        <div className="space-y-3 fade-in">
+          <div className="flex items-start gap-2">
+            <CheckIcon />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-slate-800 truncate">{dataset.name}</p>
+              <p className="text-xs text-slate-400 mt-0.5">
+                <span className="font-mono text-blue-600">{dataset.rowCount}</span> patients ·{" "}
+                <span className="font-mono text-blue-600">{dataset.featureNames?.length ?? 0}</span> features
+              </p>
+            </div>
+          </div>
+
           <div className="flex flex-wrap gap-1">
-            {dataset.featureNames?.map((f) => (
-              <span key={f} className="text-xs font-mono bg-blue-50 border border-blue-100 px-2 py-0.5 rounded text-slate-600">
+            {dataset.featureNames?.slice(0, 8).map((f) => (
+              <span key={f} className="text-xs font-mono bg-slate-100 text-slate-500 px-2 py-0.5 rounded">
                 {f}
               </span>
             ))}
+            {(dataset.featureNames?.length ?? 0) > 8 && (
+              <span className="text-xs text-slate-400 px-1">
+                +{dataset.featureNames.length - 8} more
+              </span>
+            )}
           </div>
+
           <button
-            onClick={() => { setDataset(null); setProgress(0); }}
-            className="text-xs text-slate-500 hover:text-blue-700 transition-colors"
+            onClick={() => setDataset(null)}
+            className="text-xs text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1"
           >
-            ✕ Remove dataset
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Remove dataset
           </button>
         </div>
       )}
@@ -154,8 +184,7 @@ function jsonToCSV(rows) {
   if (!rows.length) return "";
   const headers = Object.keys(rows[0]);
   const lines = [headers.join(",")];
-  for (const row of rows) {
+  for (const row of rows)
     lines.push(headers.map((h) => row[h] ?? "").join(","));
-  }
   return lines.join("\n");
 }
