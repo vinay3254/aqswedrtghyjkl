@@ -77,8 +77,8 @@ export default function UploadPanel({ onDatasetLoaded }) {
           onClick={() => inputRef.current?.click()}
           className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200 ${
             dragging
-              ? "border-teal-500 bg-teal-500/5"
-              : "border-navy-600 hover:border-teal-600 hover:bg-navy-700/30"
+              ? "border-blue-500 bg-blue-50"
+              : "border-blue-100 hover:border-blue-300 hover:bg-blue-50"
           }`}
         >
           <input
@@ -90,7 +90,7 @@ export default function UploadPanel({ onDatasetLoaded }) {
           />
           <div className="text-2xl mb-2">📁</div>
           <p className="text-sm text-slate-400">
-            Drag & drop a <span className="text-teal-400 font-mono">.csv</span> file
+            Drag & drop a <span className="text-blue-600 font-mono">.csv</span> file
           </p>
           <p className="text-xs text-slate-600 mt-1">or click to browse</p>
         </div>
@@ -100,7 +100,7 @@ export default function UploadPanel({ onDatasetLoaded }) {
       {loading && (
         <div className="w-full bg-navy-700 rounded-full h-1.5">
           <div
-            className="bg-teal-500 h-1.5 rounded-full transition-all duration-500"
+            className="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -108,7 +108,7 @@ export default function UploadPanel({ onDatasetLoaded }) {
 
       {/* Error */}
       {error && (
-        <div className="text-xs text-red-400 bg-red-900/20 border border-red-800 rounded-lg px-3 py-2">
+        <div className="text-xs text-blue-800 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
           {error}
         </div>
       )}
@@ -128,19 +128,19 @@ export default function UploadPanel({ onDatasetLoaded }) {
       {dataset && (
         <div className="space-y-2 fade-in">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-slate-200 truncate">{dataset.name}</span>
-            <span className="font-mono text-xs text-teal-400">{dataset.rowCount} rows</span>
+            <span className="text-sm font-medium text-slate-900 truncate">{dataset.name}</span>
+            <span className="font-mono text-xs text-blue-600">{dataset.rowCount} rows</span>
           </div>
           <div className="flex flex-wrap gap-1">
             {dataset.featureNames?.map((f) => (
-              <span key={f} className="text-xs font-mono bg-navy-700 border border-navy-600 px-2 py-0.5 rounded text-slate-400">
+              <span key={f} className="text-xs font-mono bg-blue-50 border border-blue-100 px-2 py-0.5 rounded text-slate-600">
                 {f}
               </span>
             ))}
           </div>
           <button
             onClick={() => { setDataset(null); setProgress(0); }}
-            className="text-xs text-slate-500 hover:text-red-400 transition-colors"
+            className="text-xs text-slate-500 hover:text-blue-700 transition-colors"
           >
             ✕ Remove dataset
           </button>

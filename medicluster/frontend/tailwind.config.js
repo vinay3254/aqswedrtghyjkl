@@ -5,23 +5,23 @@ export default {
     extend: {
       colors: {
         navy: {
-          950: "#050912",
-          900: "#0A0F1E",
-          800: "#0D1530",
-          700: "#111b3a",
-          600: "#162247",
+          950: "#eaf2ff",
+          900: "#f8fbff",
+          800: "#ffffff",
+          700: "#dbeafe",
+          600: "#bfdbfe",
         },
         teal: {
-          400: "#2EEDC8",
-          500: "#00D4AA",
-          600: "#00B891",
+          400: "#3b82f6",
+          500: "#2563eb",
+          600: "#1d4ed8",
         },
         risk: {
-          low: "#22c55e",
-          moderate: "#eab308",
-          high: "#f97316",
-          critical: "#ef4444",
-          noise: "#6b7280",
+          low: "#93c5fd",
+          moderate: "#60a5fa",
+          high: "#2563eb",
+          critical: "#1e3a8a",
+          noise: "#94a3b8",
         },
       },
       fontFamily: {

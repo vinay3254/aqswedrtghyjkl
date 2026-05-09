@@ -30,7 +30,7 @@ export default function ResultsPage() {
 
   if (error)
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-3 text-red-400">
+      <div className="flex flex-col items-center justify-center h-64 gap-3 text-blue-800">
         <p>{error}</p>
         <Link to="/dashboard" className="btn-secondary text-sm">← Back to Dashboard</Link>
       </div>
@@ -40,8 +40,8 @@ export default function ResultsPage() {
     <div className="max-w-screen-xl mx-auto px-4 py-6 space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold text-white">
-            Cluster Result — <span className="text-teal-400 font-mono">{result.algorithm}</span>
+          <h1 className="text-xl font-bold text-blue-950">
+            Cluster Result — <span className="text-blue-600 font-mono">{result.algorithm}</span>
           </h1>
           <p className="text-xs text-slate-500 font-mono mt-0.5">ID: {id}</p>
         </div>
@@ -49,7 +49,7 @@ export default function ResultsPage() {
       </div>
 
       {result.warnings?.length > 0 && (
-        <div className="bg-amber-900/25 border border-amber-800 text-amber-300 text-xs px-4 py-3 rounded-lg space-y-1">
+        <div className="bg-blue-50 border border-blue-100 text-blue-800 text-xs px-4 py-3 rounded-lg space-y-1">
           {result.warnings.map((warning) => (
             <p key={warning}>{warning}</p>
           ))}

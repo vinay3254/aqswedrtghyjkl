@@ -46,23 +46,23 @@ export default function HomePage() {
           className="pointer-events-none absolute inset-0 opacity-[0.04]"
           style={{
             backgroundImage:
-              "linear-gradient(#00D4AA 1px, transparent 1px), linear-gradient(90deg, #00D4AA 1px, transparent 1px)",
+              "linear-gradient(#2563eb 1px, transparent 1px), linear-gradient(90deg, #2563eb 1px, transparent 1px)",
             backgroundSize: "40px 40px",
           }}
         />
 
         <div className="relative max-w-4xl mx-auto text-center space-y-6">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 rounded-full px-4 py-1.5 text-xs text-teal-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
+          <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-full px-4 py-1.5 text-xs text-blue-700">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
             AI-powered · Unsupervised Clustering · Real-time Analysis
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white">
-            Medi<span className="text-teal-500">Cluster</span>
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-blue-950">
+            Medi<span className="text-blue-600">Cluster</span>
           </h1>
 
-          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
             AI-powered patient risk stratification using unsupervised clustering. <br />
             Identify at-risk patient populations without labels — instantly.
           </p>
@@ -87,7 +87,7 @@ export default function HomePage() {
               { val: "100%", label: "Offline Ready" },
             ].map(({ val, label }) => (
               <div key={label}>
-                <p className="text-2xl font-bold text-teal-500 font-mono">{val}</p>
+                <p className="text-2xl font-bold text-blue-600 font-mono">{val}</p>
                 <p className="text-xs text-slate-500 mt-0.5">{label}</p>
               </div>
             ))}
@@ -97,7 +97,7 @@ export default function HomePage() {
 
       {/* ── Algorithm Cards ───────────────────────────────────────────────── */}
       <section className="py-16 px-6 max-w-6xl mx-auto">
-        <h2 className="text-2xl font-bold text-center text-white mb-2">4 Clustering Algorithms</h2>
+        <h2 className="text-2xl font-bold text-center text-blue-950 mb-2">4 Clustering Algorithms</h2>
         <p className="text-slate-500 text-center text-sm mb-10">
           Compare them all or tune a single algorithm for precision results.
         </p>
@@ -110,36 +110,36 @@ export default function HomePage() {
               onMouseLeave={() => setHovered(null)}
               className={`panel cursor-default transition-all duration-300 ${
                 hovered === i
-                  ? "border-teal-500/50 shadow-lg shadow-teal-500/10 -translate-y-1"
-                  : "hover:border-navy-500"
+                  ? "border-blue-300 -translate-y-1"
+                  : "hover:border-blue-200"
               }`}
             >
               <div className="text-3xl mb-3">{f.icon}</div>
-              <div className="inline-block text-xs font-mono text-teal-600 bg-teal-500/10 border border-teal-500/20 rounded px-2 py-0.5 mb-2">
+              <div className="inline-block text-xs font-mono text-blue-700 bg-blue-50 border border-blue-100 rounded px-2 py-0.5 mb-2">
                 {f.tag}
               </div>
-              <h3 className="font-bold text-white mb-1">{f.title}</h3>
-              <p className="text-sm text-slate-500 leading-relaxed">{f.desc}</p>
+              <h3 className="font-bold text-blue-950 mb-1">{f.title}</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* ── How it works ─────────────────────────────────────────────────── */}
-      <section id="how-it-works" className="py-16 px-6 bg-navy-800/50">
+      <section id="how-it-works" className="py-16 px-6 bg-blue-50/60">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold text-center text-white mb-10">How It Works</h2>
+          <h2 className="text-2xl font-bold text-center text-blue-950 mb-10">How It Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {HOW_IT_WORKS.map((step, i) => (
               <div key={step.step} className="text-center space-y-3">
-                <div className="w-12 h-12 rounded-full border border-teal-500/40 bg-teal-500/10 flex items-center justify-center mx-auto">
-                  <span className="font-mono text-teal-400 text-sm font-bold">{step.step}</span>
+                <div className="w-12 h-12 rounded-full border border-blue-200 bg-white flex items-center justify-center mx-auto">
+                  <span className="font-mono text-blue-700 text-sm font-bold">{step.step}</span>
                 </div>
                 {i < HOW_IT_WORKS.length - 1 && (
                   <div className="hidden md:block absolute" />
                 )}
-                <h3 className="font-semibold text-white">{step.title}</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">{step.desc}</p>
+                <h3 className="font-semibold text-blue-950">{step.title}</h3>
+                <p className="text-sm text-slate-600 leading-relaxed">{step.desc}</p>
               </div>
             ))}
           </div>

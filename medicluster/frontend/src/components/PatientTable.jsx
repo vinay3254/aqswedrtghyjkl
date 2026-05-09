@@ -103,7 +103,7 @@ export default function PatientTable({ patients = [] }) {
                 <th
                   key={col.key}
                   onClick={() => sort(col.key)}
-                  className="px-3 py-2.5 cursor-pointer hover:text-teal-400 select-none whitespace-nowrap"
+                  className="px-3 py-2.5 cursor-pointer hover:text-blue-700 select-none whitespace-nowrap"
                 >
                   {col.label}
                   {sortKey === col.key && (
@@ -126,7 +126,7 @@ export default function PatientTable({ patients = [] }) {
                   key={i}
                   className="border-t border-navy-700 hover:bg-navy-700/40 transition-colors"
                 >
-                  <td className="px-3 py-2 font-mono text-teal-400">{p.patient_id}</td>
+                  <td className="px-3 py-2 font-mono text-blue-700">{p.patient_id}</td>
                   <td className="px-3 py-2 font-mono">{p.age ?? "—"}</td>
                   <td className="px-3 py-2 font-mono">{fmt(p.bmi)}</td>
                   <td className="px-3 py-2 font-mono">{p.systolic_bp ?? "—"}</td>

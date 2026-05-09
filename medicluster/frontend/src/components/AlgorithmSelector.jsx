@@ -45,8 +45,8 @@ export default function AlgorithmSelector({ onRun, disabled }) {
             onClick={() => setSelected(algo.id)}
             className={`text-xs px-2.5 py-1 rounded-md font-medium transition-all ${
               selected === algo.id
-                ? "bg-teal-500 text-navy-900"
-                : "bg-navy-700 text-slate-400 hover:text-slate-200"
+                ? "bg-blue-600 text-white"
+                : "bg-blue-50 text-slate-600 hover:text-blue-700"
             }`}
           >
             {algo.label}
@@ -166,7 +166,7 @@ function SliderField({ label, min, max, step, value, onChange }) {
         min={min} max={max} step={step}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full accent-teal-500 cursor-pointer"
+        className="w-full accent-blue-600 cursor-pointer"
       />
       <div className="flex justify-between text-xs text-slate-600">
         <span>{min}</span><span>{max}</span>

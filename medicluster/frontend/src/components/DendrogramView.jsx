@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 
 const RISK_COLORS = {
-  Low: "#22c55e", Moderate: "#eab308", High: "#f97316", Critical: "#ef4444",
-  Noise: "#6b7280", Unknown: "#6b7280",
+  Low: "#93c5fd", Moderate: "#60a5fa", High: "#2563eb", Critical: "#1e3a8a",
+  Noise: "#94a3b8", Unknown: "#94a3b8",
 };
 
 export default function DendrogramView({ linkageMatrix = [], patients = [] }) {
@@ -23,19 +23,19 @@ export default function DendrogramView({ linkageMatrix = [], patients = [] }) {
 
       {isEmpty ? (
         <div className="flex items-center justify-center h-48 text-slate-600 text-sm">
-          Run <span className="mx-1 text-teal-500 font-mono">Hierarchical</span> clustering to see dendrogram
+          Run <span className="mx-1 text-blue-600 font-mono">Hierarchical</span> clustering to see dendrogram
         </div>
       ) : (
         <>
           <div>
             <label className="text-xs text-slate-400 mb-1 block">
-              Cut height: {cutHeight}% — clusters: <span className="text-teal-400 font-mono">{estimateClusters(linkageMatrix, cutHeight)}</span>
+              Cut height: {cutHeight}% — clusters: <span className="text-blue-600 font-mono">{estimateClusters(linkageMatrix, cutHeight)}</span>
             </label>
             <input
               type="range" min={0} max={100} step={1}
               value={cutHeight}
               onChange={(e) => setCutHeight(+e.target.value)}
-              className="w-full accent-teal-500"
+              className="w-full accent-blue-600"
             />
           </div>
           <div className="overflow-x-auto">
@@ -107,7 +107,7 @@ function drawDendrogram(svgEl, linkageMatrix, patients, cutPct) {
   svg.append("line")
     .attr("x1", 0).attr("x2", innerW)
     .attr("y1", cutY).attr("y2", cutY)
-    .attr("stroke", "#00D4AA")
+    .attr("stroke", "#2563eb")
     .attr("stroke-width", 1.5)
     .attr("stroke-dasharray", "4,3")
     .attr("opacity", 0.7);
@@ -122,7 +122,7 @@ function drawDendrogram(svgEl, linkageMatrix, patients, cutPct) {
       const child = nodes[childId];
       const cx = xScale(child.x);
       const cy = yScale(child.height);
-      const color = node.height > cutHeight ? "#334155" : RISK_COLORS.Low;
+      const color = node.height > cutHeight ? "#94a3b8" : RISK_COLORS.High;
       svg.append("path")
         .attr("d", `M${x},${y} L${x},${cy} L${cx},${cy}`)
         .attr("fill", "none")
@@ -138,6 +138,6 @@ function drawDendrogram(svgEl, linkageMatrix, patients, cutPct) {
     .call(d3.axisLeft(yScale).ticks(5).tickFormat(d3.format(".2f")))
     .selectAll("text").style("fill", "#64748b").style("font-size", "10px");
 
-  svg.select(".domain").attr("stroke", "#1e3a5f");
-  svg.selectAll(".tick line").attr("stroke", "#1e3a5f");
+  svg.select(".domain").attr("stroke", "#bfdbfe");
+  svg.selectAll(".tick line").attr("stroke", "#bfdbfe");
 }

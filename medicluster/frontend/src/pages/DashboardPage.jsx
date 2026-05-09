@@ -65,20 +65,20 @@ export default function DashboardPage() {
     <div className="h-[calc(100vh-56px)] flex flex-col overflow-hidden">
       {/* Error banner */}
       {error && (
-        <div className="bg-red-900/30 border-b border-red-800 text-red-400 text-xs px-6 py-2 flex items-center justify-between">
+        <div className="bg-blue-50 border-b border-blue-200 text-blue-800 text-xs px-6 py-2 flex items-center justify-between">
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="hover:text-red-200">✕</button>
+          <button onClick={() => setError(null)} className="hover:text-blue-950">✕</button>
         </div>
       )}
 
       {warnings.length > 0 && (
-        <div className="bg-amber-900/25 border-b border-amber-800 text-amber-300 text-xs px-6 py-2 flex items-start justify-between gap-4">
+        <div className="bg-blue-50 border-b border-blue-200 text-blue-800 text-xs px-6 py-2 flex items-start justify-between gap-4">
           <div className="space-y-1">
             {warnings.map((warning) => (
               <p key={warning}>{warning}</p>
             ))}
           </div>
-          <button onClick={() => setWarnings([])} className="hover:text-amber-100">Dismiss</button>
+          <button onClick={() => setWarnings([])} className="hover:text-blue-950">Dismiss</button>
         </div>
       )}
 
@@ -102,8 +102,8 @@ export default function DashboardPage() {
                 onClick={() => setActiveTab(i)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-t-lg transition-colors ${
                   activeTab === i
-                    ? "text-teal-400 border-b-2 border-teal-500 -mb-px"
-                    : "text-slate-500 hover:text-slate-300"
+                    ? "text-blue-700 border-b-2 border-blue-600 -mb-px"
+                    : "text-slate-500 hover:text-blue-700"
                 }`}
               >
                 {tab}

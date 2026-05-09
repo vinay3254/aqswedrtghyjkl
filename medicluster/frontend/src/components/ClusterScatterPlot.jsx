@@ -5,12 +5,12 @@ import {
 } from "recharts";
 
 const RISK_COLORS = {
-  Low:      "#22c55e",
-  Moderate: "#eab308",
-  High:     "#f97316",
-  Critical: "#ef4444",
-  Noise:    "#6b7280",
-  Unknown:  "#6b7280",
+  Low:      "#93c5fd",
+  Moderate: "#60a5fa",
+  High:     "#2563eb",
+  Critical: "#1e3a8a",
+  Noise:    "#94a3b8",
+  Unknown:  "#94a3b8",
 };
 
 function CustomTooltip({ active, payload }) {
@@ -22,8 +22,8 @@ function CustomTooltip({ active, payload }) {
   const top3 = features.slice(0, 3);
 
   return (
-    <div className="bg-navy-800 border border-navy-600 rounded-lg p-3 text-xs shadow-xl">
-      <p className="font-mono text-teal-400 mb-1">{d.patient_id}</p>
+    <div className="bg-white border border-blue-100 rounded-lg p-3 text-xs shadow-xl">
+      <p className="font-mono text-blue-700 mb-1">{d.patient_id}</p>
       <p className="mb-1">
         Risk:{" "}
         <span style={{ color: RISK_COLORS[d.risk_tier] ?? "#fff" }} className="font-semibold">
@@ -82,7 +82,7 @@ export default function ClusterScatterPlot({ patients = [], featureNames = [] })
       ) : (
         <ResponsiveContainer width="100%" height="100%" minHeight={380}>
           <ScatterChart margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid stroke="#162247" strokeDasharray="3 3" />
+            <CartesianGrid stroke="#dbeafe" strokeDasharray="3 3" />
             <XAxis
               dataKey="x"
               type="number"
@@ -97,7 +97,7 @@ export default function ClusterScatterPlot({ patients = [], featureNames = [] })
               tick={{ fill: "#64748b", fontSize: 11, fontFamily: "JetBrains Mono" }}
             />
             <ZAxis range={[30, 30]} />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: "#00D4AA22" }} />
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke: "#2563eb22" }} />
             <Legend
               wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
               formatter={(val) => <span style={{ color: RISK_COLORS[val] }}>{val}</span>}
@@ -126,7 +126,7 @@ function AxisSelect({ label, value, options, onChange }) {
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="text-xs bg-navy-700 border border-navy-600 rounded px-2 py-1 text-slate-300 font-mono focus:outline-none focus:border-teal-500"
+        className="text-xs bg-white border border-blue-200 rounded px-2 py-1 text-slate-700 font-mono focus:outline-none focus:border-blue-500"
       >
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>

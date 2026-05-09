@@ -14,8 +14,8 @@
   }
 
   body {
-    background-color: #0A0F1E;
-    color: #e2e8f0;
+    background-color: #f8fbff;
+    color: #0f172a;
     font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
@@ -24,41 +24,41 @@
     width: 6px;
     height: 6px;
   }
-  ::-webkit-scrollbar-track { background: #0d1530; }
-  ::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #00D4AA; }
+  ::-webkit-scrollbar-track { background: #f8fbff; }
+  ::-webkit-scrollbar-thumb { background: #bfdbfe; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #2563eb; }
 }
 
 @layer components {
   .panel {
-    @apply bg-navy-800 border border-navy-600 rounded-xl p-4;
+    @apply bg-white border border-blue-100 rounded-lg p-4 shadow-sm;
   }
 
   .btn-primary {
-    @apply bg-teal-500 hover:bg-teal-400 text-navy-900 font-semibold px-4 py-2 rounded-lg
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-md
            transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed
            flex items-center gap-2 justify-center;
   }
 
   .btn-secondary {
-    @apply bg-navy-700 hover:bg-navy-600 border border-navy-600 hover:border-teal-500
-           text-slate-200 font-medium px-4 py-2 rounded-lg transition-all duration-200
+    @apply bg-white hover:bg-blue-50 border border-blue-200 hover:border-blue-400
+           text-blue-700 font-medium px-4 py-2 rounded-md transition-all duration-200
            flex items-center gap-2 justify-center;
   }
 
-  .badge-low      { @apply bg-green-900/40 text-green-400 border border-green-700 text-xs px-2 py-0.5 rounded-full font-mono; }
-  .badge-moderate { @apply bg-yellow-900/40 text-yellow-400 border border-yellow-700 text-xs px-2 py-0.5 rounded-full font-mono; }
-  .badge-high     { @apply bg-orange-900/40 text-orange-400 border border-orange-700 text-xs px-2 py-0.5 rounded-full font-mono; }
-  .badge-critical { @apply bg-red-900/40 text-red-400 border border-red-700 text-xs px-2 py-0.5 rounded-full font-mono; }
-  .badge-noise    { @apply bg-gray-900/40 text-gray-400 border border-gray-700 text-xs px-2 py-0.5 rounded-full font-mono; }
+  .badge-low      { @apply bg-blue-50 text-blue-700 border border-blue-100 text-xs px-2 py-0.5 rounded-full font-mono; }
+  .badge-moderate { @apply bg-blue-100 text-blue-800 border border-blue-200 text-xs px-2 py-0.5 rounded-full font-mono; }
+  .badge-high     { @apply bg-blue-600 text-white border border-blue-600 text-xs px-2 py-0.5 rounded-full font-mono; }
+  .badge-critical { @apply bg-blue-900 text-white border border-blue-900 text-xs px-2 py-0.5 rounded-full font-mono; }
+  .badge-noise    { @apply bg-slate-100 text-slate-600 border border-slate-200 text-xs px-2 py-0.5 rounded-full font-mono; }
 
   .input-field {
-    @apply bg-navy-900 border border-navy-600 focus:border-teal-500 focus:outline-none
-           text-slate-200 rounded-lg px-3 py-2 text-sm w-full transition-colors;
+    @apply bg-white border border-blue-200 focus:border-blue-500 focus:outline-none
+           text-slate-900 rounded-md px-3 py-2 text-sm w-full transition-colors;
   }
 
   .section-label {
-    @apply text-xs font-semibold uppercase tracking-widest text-slate-500 mb-2;
+    @apply text-xs font-semibold uppercase tracking-widest text-blue-500 mb-2;
   }
 
   .metric-card {
@@ -69,8 +69,8 @@
 /* Spinner animation */
 @keyframes spin { to { transform: rotate(360deg); } }
 .spinner {
-  border: 2px solid #1e3a5f;
-  border-top-color: #00D4AA;
+  border: 2px solid #bfdbfe;
+  border-top-color: #2563eb;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

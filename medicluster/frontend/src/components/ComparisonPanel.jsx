@@ -8,7 +8,7 @@ const ALGOS = ["kmeans", "dbscan", "hierarchical", "gmm"];
 const ALGO_LABELS = { kmeans: "K-Means", dbscan: "DBSCAN", hierarchical: "Hierarchical", gmm: "GMM" };
 
 const RISK_COLORS = {
-  Low: "#22c55e", Moderate: "#eab308", High: "#f97316", Critical: "#ef4444", Noise: "#6b7280",
+  Low: "#93c5fd", Moderate: "#60a5fa", High: "#2563eb", Critical: "#1e3a8a", Noise: "#94a3b8",
 };
 
 const METRIC_KEYS = ["silhouette", "davies_bouldin", "calinski_harabasz"];
@@ -44,7 +44,7 @@ export default function ComparisonPanel({ allResults }) {
   if (isEmpty) {
     return (
       <div className="panel flex items-center justify-center h-64 text-slate-600 text-sm">
-        Run <span className="mx-1 text-teal-500 font-mono">All</span> algorithms to see comparison
+        Run <span className="mx-1 text-blue-600 font-mono">All</span> algorithms to see comparison
       </div>
     );
   }
@@ -70,17 +70,17 @@ export default function ComparisonPanel({ allResults }) {
                 const hasErr = !res || res.error;
                 return (
                   <tr key={algo} className="border-t border-navy-700/60 hover:bg-navy-700/30">
-                    <td className="py-2 pr-4 font-semibold text-slate-300">{ALGO_LABELS[algo]}</td>
+                    <td className="py-2 pr-4 font-semibold text-slate-800">{ALGO_LABELS[algo]}</td>
                     {METRIC_KEYS.map((mk) => {
                       const v = res?.metrics?.[mk];
                       const isBest = bestAlgos[mk] === algo;
                       return (
-                        <td key={mk} className={`py-2 px-3 font-mono ${isBest ? "text-teal-400 font-bold" : "text-slate-400"}`}>
-                          {hasErr ? <span className="text-red-500 text-xs">{res?.error ?? "Error"}</span>
+                        <td key={mk} className={`py-2 px-3 font-mono ${isBest ? "text-blue-700 font-bold" : "text-slate-500"}`}>
+                          {hasErr ? <span className="text-blue-800 text-xs">{res?.error ?? "Error"}</span>
                             : v !== null && v !== undefined ? (
                               <>
                                 {v.toFixed(3)}
-                                {isBest && <span className="ml-1 text-teal-600">★</span>}
+                                {isBest && <span className="ml-1 text-blue-600">★</span>}
                               </>
                             ) : "—"}
                         </td>
@@ -108,20 +108,20 @@ export default function ComparisonPanel({ allResults }) {
 
           return (
             <div key={algo} className="panel">
-              <p className="text-xs font-semibold text-slate-300 mb-2">{ALGO_LABELS[algo]}</p>
+              <p className="text-xs font-semibold text-slate-800 mb-2">{ALGO_LABELS[algo]}</p>
               {res?.error ? (
-                <div className="text-red-400 text-xs p-4">{res.error}</div>
+                <div className="text-blue-800 text-xs p-4">{res.error}</div>
               ) : (
                 <ResponsiveContainer width="100%" height={180}>
                   <ScatterChart margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                    <CartesianGrid stroke="#162247" strokeDasharray="2 2" />
+                    <CartesianGrid stroke="#dbeafe" strokeDasharray="2 2" />
                     <XAxis dataKey="x" type="number" tick={{ fontSize: 9, fill: "#475569" }} />
                     <YAxis dataKey="y" type="number" tick={{ fontSize: 9, fill: "#475569" }} />
                     <ZAxis range={[15, 15]} />
                     <Tooltip
                       content={({ active, payload }) =>
                         active && payload?.length ? (
-                          <div className="bg-navy-800 border border-navy-700 rounded px-2 py-1 text-xs text-slate-300">
+                          <div className="bg-white border border-blue-100 rounded px-2 py-1 text-xs text-slate-700">
                             {payload[0].payload.x?.toFixed(2)}, {payload[0].payload.y?.toFixed(2)}
                           </div>
                         ) : null

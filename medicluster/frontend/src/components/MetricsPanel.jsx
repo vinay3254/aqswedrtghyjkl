@@ -15,9 +15,9 @@ const METRIC_CONFIG = {
       : "Overlapping clusters",
     color: (v) =>
       v === null ? "#64748b"
-      : v > 0.5  ? "#22c55e"
-      : v > 0.25 ? "#eab308"
-      : "#ef4444",
+      : v > 0.5  ? "#1d4ed8"
+      : v > 0.25 ? "#60a5fa"
+      : "#94a3b8",
   },
   davies_bouldin: {
     label: "Davies-Bouldin Index",
@@ -33,9 +33,9 @@ const METRIC_CONFIG = {
       : "Poor separation",
     color: (v) =>
       v === null ? "#64748b"
-      : v < 0.5  ? "#22c55e"
-      : v < 1.0  ? "#eab308"
-      : "#ef4444",
+      : v < 0.5  ? "#1d4ed8"
+      : v < 1.0  ? "#60a5fa"
+      : "#94a3b8",
   },
   calinski_harabasz: {
     label: "Calinski-Harabasz",
@@ -51,9 +51,9 @@ const METRIC_CONFIG = {
       : "Diffuse clusters",
     color: (v) =>
       v === null ? "#64748b"
-      : v > 200   ? "#22c55e"
-      : v > 50    ? "#eab308"
-      : "#ef4444",
+      : v > 200   ? "#1d4ed8"
+      : v > 50    ? "#60a5fa"
+      : "#94a3b8",
   },
 };
 
