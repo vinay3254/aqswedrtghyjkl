@@ -41,5 +41,6 @@ def run_gmm(
         "labels": labels,
         "probabilities": probs,
         "centroids": centroids,
-        "inertia": float(-model.score(X) * X.shape[0]),  # negative log-likelihood
+        "inertia": float(model.bic(X)),   # BIC (lower = better fit)
+        "aic": float(model.aic(X)),
     }

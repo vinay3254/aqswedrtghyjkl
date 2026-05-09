@@ -48,12 +48,16 @@ export default function PatientTable({ patients = [] }) {
   const exportCSV = () => {
     const cols = ["patient_id", "cluster_id", "risk_tier", "age", "bmi", "systolic_bp", "glucose", "pca_x", "pca_y"];
     const header = cols.join(",");
-    const lines  = filtered.map((p) => cols.map((c) => p[c] ?? "").join(","));
+    const lines  = filtered.map((p) => cols.map((c) => csvCell(p[c])).join(","));
     const blob   = new Blob([[header, ...lines].join("\n")], { type: "text/csv" });
     const url    = URL.createObjectURL(blob);
     const a      = document.createElement("a");
-    a.href = url; a.download = "medicluster_results.csv"; a.click();
-    URL.revokeObjectURL(url);
+    a.href = url;
+    a.download = "medicluster_results.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
   };
 
   const columns = [
@@ -165,3 +169,9 @@ export default function PatientTable({ patients = [] }) {
 }
 
 const fmt = (v) => (v !== undefined && v !== null ? Number(v).toFixed(1) : "—");
+
+const csvCell = (value) => {
+  if (value === undefined || value === null) return "";
+  const text = String(value);
+  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};

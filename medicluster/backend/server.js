@@ -28,6 +28,28 @@ app.get("/api/health", (_req, res) =>
   res.json({ status: "ok", service: "medicluster-backend" })
 );
 
+app.use("/api", (_req, res) => {
+  res.status(404).json({ error: "API route not found" });
+});
+
+app.use((err, _req, res, _next) => {
+  let status = err.status || err.statusCode || 500;
+  let message = status >= 500 ? "Internal server error" : err.message;
+
+  if (err.name === "MulterError") {
+    status = 400;
+    message = err.code === "LIMIT_FILE_SIZE"
+      ? "CSV file is too large"
+      : err.message;
+  }
+
+  if (status >= 500) {
+    console.error("Unhandled API error:", err);
+  }
+
+  res.status(status).json({ error: message });
+});
+
 // ── MongoDB connection ────────────────────────────────────────────────────────
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/medicluster";
 

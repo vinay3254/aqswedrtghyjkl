@@ -7,8 +7,8 @@ import MetricsPanel      from "../components/MetricsPanel";
 import PatientTable      from "../components/PatientTable";
 import ComparisonPanel   from "../components/ComparisonPanel";
 import DendrogramView    from "../components/DendrogramView";
+import ChartErrorBoundary from "../components/ChartErrorBoundary";
 import { runClustering } from "../api/apiClient";
-import sampleData        from "../data/sample_patients.json";
 
 const TABS = ["Scatter Plot", "Comparison", "Dendrogram"];
 
@@ -17,28 +17,28 @@ export default function DashboardPage() {
   const [result,     setResult]     = useState(null);
   const [allResults, setAllResults] = useState(null);
   const [error,      setError]      = useState(null);
+  const [warnings,   setWarnings]   = useState([]);
   const [activeTab,  setActiveTab]  = useState(0);
+  const [runKey,     setRunKey]     = useState(0);
 
   const handleDatasetLoaded = (ds) => {
     setDataset(ds);
     setResult(null);
     setAllResults(null);
+    setWarnings([]);
+    setRunKey((key) => key + 1);
   };
 
   const handleRun = async (algorithm, params) => {
     if (!dataset) { setError("Please upload a dataset first."); return; }
     setError(null);
+    setWarnings([]);
 
     try {
-      let res;
-      if (dataset.datasetId === "__sample__") {
-        // Offline mode: call ML engine directly via backend (pass raw data inline)
-        // We forward as datasetId "__sample__" — backend handles this
-        // Alternatively, call with raw data directly; for demo use sample data
-        res = await runClustering(dataset.datasetId, algorithm, params);
-      } else {
-        res = await runClustering(dataset.datasetId, algorithm, params);
-      }
+      const inlineRows = dataset.datasetId === "__sample__" ? dataset.rawData : undefined;
+      const res = await runClustering(dataset.datasetId, algorithm, params, inlineRows);
+      setWarnings(collectWarnings(res));
+      setRunKey((key) => key + 1);
 
       if (algorithm === "all") {
         setAllResults(res.all ?? {});
@@ -68,6 +68,17 @@ export default function DashboardPage() {
         <div className="bg-red-900/30 border-b border-red-800 text-red-400 text-xs px-6 py-2 flex items-center justify-between">
           <span>{error}</span>
           <button onClick={() => setError(null)} className="hover:text-red-200">✕</button>
+        </div>
+      )}
+
+      {warnings.length > 0 && (
+        <div className="bg-amber-900/25 border-b border-amber-800 text-amber-300 text-xs px-6 py-2 flex items-start justify-between gap-4">
+          <div className="space-y-1">
+            {warnings.map((warning) => (
+              <p key={warning}>{warning}</p>
+            ))}
+          </div>
+          <button onClick={() => setWarnings([])} className="hover:text-amber-100">Dismiss</button>
         </div>
       )}
 
@@ -103,14 +114,29 @@ export default function DashboardPage() {
           <div className="flex-1 p-3 overflow-y-auto space-y-3">
             {activeTab === 0 && (
               <div className="h-[420px]">
-                <ClusterScatterPlot patients={activePatients} featureNames={featureNames} />
+                <ChartErrorBoundary
+                  title="Scatter plot"
+                  resetKey={`${runKey}-${result?.algorithm ?? "empty"}-${activePatients.length}`}
+                >
+                  <ClusterScatterPlot patients={activePatients} featureNames={featureNames} />
+                </ChartErrorBoundary>
               </div>
             )}
             {activeTab === 1 && (
-              <ComparisonPanel allResults={allResults ?? {}} />
+              <ChartErrorBoundary
+                title="Algorithm comparison"
+                resetKey={`${runKey}-${Object.keys(allResults ?? {}).join("|")}`}
+              >
+                <ComparisonPanel allResults={allResults ?? {}} />
+              </ChartErrorBoundary>
             )}
             {activeTab === 2 && (
-              <DendrogramView linkageMatrix={linkageMatrix} patients={activePatients} />
+              <ChartErrorBoundary
+                title="Dendrogram"
+                resetKey={`${runKey}-${linkageMatrix.length}-${activePatients.length}`}
+              >
+                <DendrogramView linkageMatrix={linkageMatrix} patients={activePatients} />
+              </ChartErrorBoundary>
             )}
 
             {/* Patient table always visible at bottom */}
@@ -122,7 +148,12 @@ export default function DashboardPage() {
 
         {/* ── Right panel ──────────────────────────────────────────────── */}
         <aside className="w-60 min-w-[14rem] flex flex-col gap-3 p-3 border-l border-navy-700 overflow-y-auto bg-navy-900">
-          <RiskDonutChart riskDistribution={activeRiskDist} />
+          <ChartErrorBoundary
+            title="Risk distribution"
+            resetKey={`${runKey}-${JSON.stringify(activeRiskDist)}`}
+          >
+            <RiskDonutChart riskDistribution={activeRiskDist} />
+          </ChartErrorBoundary>
           <MetricsPanel   metrics={activeMetrics} />
 
           {/* Cluster profiles */}
@@ -146,4 +177,16 @@ export default function DashboardPage() {
       </div>
     </div>
   );
+}
+
+function collectWarnings(response) {
+  const allWarnings = new Set(response?.warnings ?? []);
+
+  for (const result of Object.values(response?.all ?? {})) {
+    for (const warning of result?.warnings ?? []) {
+      allWarnings.add(warning);
+    }
+  }
+
+  return [...allWarnings];
 }

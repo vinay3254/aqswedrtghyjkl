@@ -5,6 +5,7 @@ import ClusterScatterPlot  from "../components/ClusterScatterPlot";
 import RiskDonutChart       from "../components/RiskDonutChart";
 import MetricsPanel         from "../components/MetricsPanel";
 import PatientTable         from "../components/PatientTable";
+import ChartErrorBoundary   from "../components/ChartErrorBoundary";
 
 export default function ResultsPage() {
   const { id } = useParams();
@@ -47,15 +48,33 @@ export default function ResultsPage() {
         <Link to="/dashboard" className="btn-secondary text-sm">← Dashboard</Link>
       </div>
 
+      {result.warnings?.length > 0 && (
+        <div className="bg-amber-900/25 border border-amber-800 text-amber-300 text-xs px-4 py-3 rounded-lg space-y-1">
+          {result.warnings.map((warning) => (
+            <p key={warning}>{warning}</p>
+          ))}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 h-[400px]">
-          <ClusterScatterPlot
-            patients={result.patients ?? []}
-            featureNames={result.featureNames ?? []}
-          />
+          <ChartErrorBoundary
+            title="Scatter plot"
+            resetKey={`${result._id ?? id}-${result.patients?.length ?? 0}`}
+          >
+            <ClusterScatterPlot
+              patients={result.patients ?? []}
+              featureNames={result.featureNames ?? []}
+            />
+          </ChartErrorBoundary>
         </div>
         <div className="space-y-4">
-          <RiskDonutChart riskDistribution={result.riskDistribution ?? {}} />
+          <ChartErrorBoundary
+            title="Risk distribution"
+            resetKey={JSON.stringify(result.riskDistribution ?? {})}
+          >
+            <RiskDonutChart riskDistribution={result.riskDistribution ?? {}} />
+          </ChartErrorBoundary>
           <MetricsPanel   metrics={result.metrics ?? {}} />
         </div>
       </div>

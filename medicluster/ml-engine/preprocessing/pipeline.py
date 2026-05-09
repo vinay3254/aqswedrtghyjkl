@@ -9,7 +9,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
 
-def preprocess(df: pd.DataFrame):
+def preprocess(df: pd.DataFrame, return_report: bool = False):
     """
     Preprocess a raw patient DataFrame.
 
@@ -29,6 +29,9 @@ def preprocess(df: pd.DataFrame):
     scaler       : StandardScaler instance (kept for risk labelling)
     """
 
+    rows_before = len(df)
+    original_columns = list(df.columns)
+
     # ── 1. Separate patient_id ────────────────────────────────────────────
     id_col = None
     if "patient_id" in df.columns:
@@ -36,6 +39,12 @@ def preprocess(df: pd.DataFrame):
         df = df.drop(columns=["patient_id"])
 
     # ── 2. Keep only numeric columns ─────────────────────────────────────
+    numeric_columns = list(df.select_dtypes(include=[np.number]).columns)
+    dropped_non_numeric_columns = [
+        col for col in original_columns
+        if col != "patient_id" and col not in numeric_columns
+    ]
+
     df = df.select_dtypes(include=[np.number])
     feature_names = list(df.columns)
 
@@ -55,6 +64,9 @@ def preprocess(df: pd.DataFrame):
     if id_col is not None:
         id_col = id_col[mask.values].reset_index(drop=True)
 
+    if df.empty:
+        raise ValueError("All rows were removed as outliers during preprocessing.")
+
     # ── 5. Standard scaling ───────────────────────────────────────────────
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(df.values)
@@ -72,5 +84,16 @@ def preprocess(df: pd.DataFrame):
     cleaned_df = df.copy()
     if id_col is not None:
         cleaned_df.insert(0, "patient_id", id_col)
+
+    report = {
+        "rows_before": int(rows_before),
+        "rows_after": int(len(cleaned_df)),
+        "dropped_rows": int(rows_before - len(cleaned_df)),
+        "dropped_non_numeric_columns": dropped_non_numeric_columns,
+        "feature_names": feature_names,
+    }
+
+    if return_report:
+        return cleaned_df, X_scaled, pca_coords, feature_names, scaler, report
 
     return cleaned_df, X_scaled, pca_coords, feature_names, scaler

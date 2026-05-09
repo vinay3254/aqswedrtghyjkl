@@ -23,9 +23,12 @@ export async function uploadDataset(file) {
  * @param {string} datasetId
  * @param {string} algorithm  kmeans | dbscan | hierarchical | gmm | all
  * @param {object} params     algorithm-specific params
+ * @param {Array<object>} data optional inline rows for sample/offline datasets
  */
-export async function runClustering(datasetId, algorithm, params = {}) {
-  const res = await api.post("/cluster", { datasetId, algorithm, params });
+export async function runClustering(datasetId, algorithm, params = {}, data) {
+  const body = { datasetId, algorithm, params };
+  if (Array.isArray(data)) body.data = data;
+  const res = await api.post("/cluster", body);
   return res.data;
 }
 
@@ -48,8 +51,8 @@ export async function getHistory(datasetId) {
 /**
  * List all stored datasets.
  */
-export async function listDatasets() {
-  const res = await api.get("/data");
+export async function listDatasets({ page = 1, limit = 20 } = {}) {
+  const res = await api.get("/data", { params: { page, limit } });
   return res.data;
 }
 

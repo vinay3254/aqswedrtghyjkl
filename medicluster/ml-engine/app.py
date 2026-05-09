@@ -39,6 +39,26 @@ def _safe_list(arr):
     return arr
 
 
+def _preprocessing_warnings(report: dict) -> list[str]:
+    """Turn preprocessing stats into user-facing warnings."""
+    warnings = []
+    dropped_rows = report.get("dropped_rows", 0)
+    dropped_columns = report.get("dropped_non_numeric_columns", [])
+
+    if dropped_rows:
+        warnings.append(
+            f"Preprocessing removed {dropped_rows} row(s) as outliers."
+        )
+
+    if dropped_columns:
+        names = ", ".join(dropped_columns)
+        warnings.append(
+            f"Preprocessing ignored non-numeric column(s): {names}."
+        )
+
+    return warnings
+
+
 def _run_algorithm(X, algorithm: str, params: dict) -> dict:
     """Dispatch to the requested clustering algorithm and return raw result."""
     algo = algorithm.lower()
@@ -66,7 +86,16 @@ def _run_algorithm(X, algorithm: str, params: dict) -> dict:
         raise ValueError(f"Unknown algorithm: {algorithm}")
 
 
-def _build_response(result, cleaned_df, X_scaled, pca_coords, feature_names, scaler, params):
+def _build_response(
+    result,
+    cleaned_df,
+    X_scaled,
+    pca_coords,
+    feature_names,
+    scaler,
+    params,
+    preprocessing_report,
+):
     """Build the standard JSON response for a single algorithm result."""
     labels = np.array(result["labels"])
     centroids = result.get("centroids")
@@ -88,7 +117,13 @@ def _build_response(result, cleaned_df, X_scaled, pca_coords, feature_names, sca
         centroids_for_risk = np.array(centroids)
 
     # Label risk tiers per cluster
-    risk_map = label_risk_tiers(labels, centroids_for_risk, feature_names, scaler)
+    risk_map = label_risk_tiers(
+        labels,
+        centroids_for_risk,
+        feature_names,
+        scaler,
+        risk_feature_weights=params.get("risk_feature_weights"),
+    )
 
     # Build per-patient output
     patients_out = []
@@ -149,6 +184,8 @@ def _build_response(result, cleaned_df, X_scaled, pca_coords, feature_names, sca
         "cluster_profiles": cluster_profiles,
         "algorithm": algorithm,
         "feature_names": feature_names,
+        "preprocessing": preprocessing_report,
+        "warnings": _preprocessing_warnings(preprocessing_report),
     }
 
     if linkage_matrix is not None:
@@ -181,7 +218,10 @@ def preprocess_preview():
 
     df = pd.DataFrame(data)
     try:
-        cleaned_df, X_scaled, pca_coords, feature_names, scaler = preprocess(df)
+        cleaned_df, X_scaled, pca_coords, feature_names, scaler, report = preprocess(
+            df,
+            return_report=True,
+        )
     except Exception as e:
         return jsonify({"error": str(e)}), 422
 
@@ -199,6 +239,8 @@ def preprocess_preview():
         "row_count": len(cleaned_df),
         "feature_names": feature_names,
         "feature_stats": stats,
+        "preprocessing": report,
+        "warnings": _preprocessing_warnings(report),
     })
 
 
@@ -224,7 +266,10 @@ def cluster():
     df = pd.DataFrame(data)
 
     try:
-        cleaned_df, X_scaled, pca_coords, feature_names, scaler = preprocess(df)
+        cleaned_df, X_scaled, pca_coords, feature_names, scaler, report = preprocess(
+            df,
+            return_report=True,
+        )
     except Exception as e:
         return jsonify({"error": f"Preprocessing failed: {e}"}), 422
 
@@ -236,18 +281,38 @@ def cluster():
             try:
                 raw = _run_algorithm(X_scaled, algo, params)
                 results[algo] = _build_response(
-                    raw, cleaned_df, X_scaled, pca_coords, feature_names, scaler, params
+                    raw,
+                    cleaned_df,
+                    X_scaled,
+                    pca_coords,
+                    feature_names,
+                    scaler,
+                    params,
+                    report,
                 )
             except Exception as e:
                 results[algo] = {"error": str(e)}
 
-        return jsonify({"all": results, "algorithm": "all", "feature_names": feature_names})
+        return jsonify({
+            "all": results,
+            "algorithm": "all",
+            "feature_names": feature_names,
+            "preprocessing": report,
+            "warnings": _preprocessing_warnings(report),
+        })
 
     else:
         try:
             raw = _run_algorithm(X_scaled, algorithm, params)
             response = _build_response(
-                raw, cleaned_df, X_scaled, pca_coords, feature_names, scaler, params
+                raw,
+                cleaned_df,
+                X_scaled,
+                pca_coords,
+                feature_names,
+                scaler,
+                params,
+                report,
             )
             return jsonify(response)
         except ValueError as e:

@@ -1,43 +1,45 @@
-"""utils/risk_labeler.py — Maps cluster IDs to clinical risk tiers."""
+"""utils/risk_labeler.py - Maps cluster IDs to configurable risk tiers."""
 
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 
 
-# Clinical risk weight priorities (higher weight = stronger influence on risk)
-RISK_FEATURES = {
-    "glucose": 3.0,
-    "systolic_bp": 2.5,
-    "hba1c": 3.0,
-    "bmi": 2.0,
-    "cholesterol": 1.5,
-    "ldl": 1.5,
-    "triglycerides": 1.2,
-    "diastolic_bp": 1.5,
-    "age": 1.0,
-    "heart_rate": 0.8,
-    "num_medications": 1.0,
-    # Inverse risk (higher is better) — subtract these
-    "hdl": -1.5,
-    "spo2": -2.0,
-}
-
 RISK_TIERS = ["Low", "Moderate", "High", "Critical"]
 
 
-def _composite_score(centroid: np.ndarray, feature_names: list, scaler: StandardScaler) -> float:
+def _normalize_weights(risk_feature_weights: dict | None) -> dict:
+    """Normalize optional feature weights from API params."""
+    if not isinstance(risk_feature_weights, dict):
+        return {}
+
+    weights = {}
+    for feature, weight in risk_feature_weights.items():
+        try:
+            weights[str(feature).lower()] = float(weight)
+        except (TypeError, ValueError):
+            continue
+    return weights
+
+
+def _composite_score(
+    centroid: np.ndarray,
+    feature_names: list,
+    scaler: StandardScaler,
+    risk_feature_weights: dict | None,
+) -> float:
     """
     Compute a scalar composite risk score for a single cluster centroid.
-    Centroid is in scaled space; inverse-transform to get original scale.
+    Centroid is already in scaled space, so the default score is data-relative
+    rather than tied to hardcoded clinical feature names. API callers can pass
+    params.risk_feature_weights to emphasize, de-emphasize, or invert features.
     """
-    # Inverse-transform to original feature values
-    original = scaler.inverse_transform(centroid.reshape(1, -1))[0]
-
+    _ = scaler  # Retained for backward-compatible function shape.
+    weights = _normalize_weights(risk_feature_weights)
     score = 0.0
+
     for i, fname in enumerate(feature_names):
-        key = fname.lower()
-        weight = RISK_FEATURES.get(key, 0.5)  # default moderate weight for unknowns
-        score += weight * original[i]
+        weight = weights.get(str(fname).lower(), 1.0)
+        score += weight * float(centroid[i])
 
     return score
 
@@ -47,27 +49,29 @@ def label_risk_tiers(
     centroids_or_means: np.ndarray,
     feature_names: list,
     scaler: StandardScaler,
+    risk_feature_weights: dict | None = None,
 ) -> dict:
     """
-    Map cluster IDs → risk tier strings.
+    Map cluster IDs to risk tier strings.
 
     Algorithm:
-    1. Compute composite risk score for each cluster centroid
-    2. Sort clusters by ascending risk score
-    3. Assign tiers: Low → Moderate → High → Critical
-       (buckets into 4 tiers; fewer clusters get every-other tier)
+    1. Compute composite risk score for each cluster centroid from scaled data
+       and optional params.risk_feature_weights.
+    2. Sort clusters by ascending risk score.
+    3. Assign tiers: Low, Moderate, High, Critical.
 
     Parameters
     ----------
-    labels            : cluster label array (−1 = noise)
-    centroids_or_means: (K, features) array of cluster centres in scaled space
+    labels            : cluster label array (-1 = noise)
+    centroids_or_means: (K, features) array of cluster centers in scaled space
     feature_names     : list of feature column names
-    scaler            : fitted StandardScaler for inverse-transform
+    scaler            : fitted StandardScaler, retained for API compatibility
+    risk_feature_weights: optional dict of feature name to numeric weight
 
     Returns
     -------
-    dict mapping cluster_id (int) → risk_tier (str)
-        Special: −1 (noise) → "Noise"
+    dict mapping cluster_id (int) to risk_tier (str)
+        Special: -1 (noise) maps to "Noise"
     """
     unique_clusters = sorted([c for c in np.unique(labels) if c != -1])
     mapping = {}
@@ -80,14 +84,15 @@ def label_risk_tiers(
     for cid in unique_clusters:
         if centroids_or_means is not None and cid < len(centroids_or_means):
             centroid = centroids_or_means[cid]
-            scores[cid] = _composite_score(centroid, feature_names, scaler)
+            scores[cid] = _composite_score(
+                centroid,
+                feature_names,
+                scaler,
+                risk_feature_weights,
+            )
         else:
-            # Fallback: use mean of samples in cluster
-            cluster_mask = labels == cid
-            if cluster_mask.sum() == 0:
-                scores[cid] = 0.0
-            else:
-                scores[cid] = float(cid)  # preserve original order as tie-breaker
+            # Fallback: preserve original order as tie-breaker
+            scores[cid] = float(cid)
 
     # Sort clusters by ascending risk score
     sorted_clusters = sorted(unique_clusters, key=lambda c: scores[c])
@@ -95,7 +100,7 @@ def label_risk_tiers(
 
     # Assign tiers by percentile rank within [0, 4) buckets
     for rank, cid in enumerate(sorted_clusters):
-        tier_idx = int(rank * 4 / n)  # maps rank → 0..3
+        tier_idx = int(rank * 4 / n)
         tier_idx = min(tier_idx, 3)
         mapping[cid] = RISK_TIERS[tier_idx]
 
