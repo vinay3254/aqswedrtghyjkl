@@ -175,4 +175,54 @@ export async function deleteReminder(id) {
   return res.data;
 }
 
+// ── ARIA Ambulance Dispatch ───────────────────────────────────────────────────
+
+/** Seed demo ambulances and hospitals (call once). */
+export async function seedDispatch() {
+  const res = await api.post("/dispatch/seed");
+  return res.data;
+}
+
+/** List all ambulances with current status. */
+export async function listAmbulances() {
+  const res = await api.get("/dispatch/ambulances");
+  return res.data;
+}
+
+/** Update ambulance status (available | en_route | at_scene). */
+export async function updateAmbulanceStatus(ambulanceId, status) {
+  const res = await api.patch(`/dispatch/ambulances/${ambulanceId}`, { status });
+  return res.data;
+}
+
+/** List all hospitals with bed availability. */
+export async function listHospitals() {
+  const res = await api.get("/dispatch/hospitals");
+  return res.data;
+}
+
+/** Update hospital bed count. */
+export async function updateHospitalBeds(hospitalId, available_beds) {
+  const res = await api.patch(`/dispatch/hospitals/${hospitalId}`, { available_beds });
+  return res.data;
+}
+
+/** Submit emergency to ARIA and get dispatch decision. */
+export async function dispatchEmergency(data) {
+  const res = await api.post("/dispatch/emergency", data, { timeout: 30_000 });
+  return res.data;
+}
+
+/** Get recent dispatch history. */
+export async function getDispatchHistory() {
+  const res = await api.get("/dispatch/history");
+  return res.data;
+}
+
+/** Update dispatch status (resolved | cancelled). */
+export async function updateDispatchStatus(dispatchId, status) {
+  const res = await api.patch(`/dispatch/history/${dispatchId}/status`, { status });
+  return res.data;
+}
+
 export default api;

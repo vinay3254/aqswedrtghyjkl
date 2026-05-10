@@ -8,6 +8,7 @@ import ImagingPage from "./pages/ImagingPage";
 import PredictPage from "./pages/PredictPage";
 import PatientPage from "./pages/PatientPage";
 import RemindersPage from "./pages/RemindersPage";
+import DispatchPage from "./pages/DispatchPage";
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="/patient/:patientId" element={<PatientPage />} />
           <Route path="/reminders" element={<RemindersPage />} />
           <Route path="/reminders/:patientId" element={<RemindersPage />} />
+          <Route path="/dispatch" element={<DispatchPage />} />
         </Routes>
       </main>
     </div>
