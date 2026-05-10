@@ -429,7 +429,7 @@ git commit -m "feat: add image validation and clinical info to analyzer"
 - Modify: `medicluster/backend/.env` (add ANTHROPIC_API_KEY)
 - Modify: `medicluster/backend/package.json` (add @anthropic-ai/sdk)
 
-- [ ] **Step 1: Install Anthropic SDK**
+- [x] **Step 1: Install Anthropic SDK**
 
 ```bash
 cd medicluster/backend
@@ -438,7 +438,7 @@ npm install @anthropic-ai/sdk
 
 Expected: package added to `node_modules` and `package.json`.
 
-- [ ] **Step 2: Add `ANTHROPIC_API_KEY` to `.env`**
+- [x] **Step 2: Add `ANTHROPIC_API_KEY` to `.env`**
 
 Open `medicluster/backend/.env` and add:
 ```
@@ -447,7 +447,7 @@ ANTHROPIC_API_KEY=sk-ant-your-key-here
 
 Replace `sk-ant-your-key-here` with your actual Anthropic API key from https://console.anthropic.com
 
-- [ ] **Step 3: Update the analyze endpoint to pass through clinical fields**
+- [x] **Step 3: Update the analyze endpoint to pass through clinical fields**
 
 In `medicluster/backend/routes/mediaRoutes.js`, find the `POST /analyze/:fileId` route (around line 142). Replace this block:
 
@@ -471,7 +471,7 @@ With:
     };
 ```
 
-- [ ] **Step 4: Add the explain endpoint to `mediaRoutes.js`**
+- [x] **Step 4: Add the explain endpoint to `mediaRoutes.js`**
 
 Add this new route **before** the `GET /:patientId` route (i.e. before line 191 in the original file). Add it after the analyze route:
 
@@ -522,7 +522,7 @@ Be clear, concise, and avoid unnecessary medical jargon. Do not provide a specif
 });
 ```
 
-- [ ] **Step 5: Restart backend and smoke-test the analyze endpoint**
+- [x] **Step 5: Restart backend and smoke-test the analyze endpoint**
 
 ```bash
 cd medicluster/backend
@@ -537,7 +537,7 @@ curl http://localhost:5000/api/health
 
 Expected: `{"status":"ok","service":"medicluster-backend"}`
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add medicluster/backend/routes/mediaRoutes.js medicluster/backend/package.json medicluster/backend/package-lock.json
