@@ -134,6 +134,144 @@ router.get("/history/:datasetId", async (req, res, next) => {
   }
 });
 
+// ── POST /api/cluster/predict ──────────────────────────────────────────────
+router.post("/predict", async (req, res, next) => {
+  const { resultId, vitals } = req.body;
+
+  if (!resultId || !mongoose.isValidObjectId(resultId)) {
+    return res.status(400).json({ error: "resultId must be a valid MongoDB ObjectId" });
+  }
+  if (!vitals || typeof vitals !== "object" || Array.isArray(vitals)) {
+    return res.status(400).json({ error: "vitals must be a non-empty object" });
+  }
+
+  try {
+    const result = await ClusterResult.findById(resultId).lean();
+    if (!result) return res.status(404).json({ error: "ClusterResult not found" });
+
+    const profiles = denormalizeClusterProfiles(result.clusterProfiles || []);
+
+    if (profiles.length === 0) {
+      return res.status(400).json({ error: "This result has no cluster profiles to compare against" });
+    }
+
+    const distances = profiles.map((profile) => {
+      const centroid = profile.centroid_features || {};
+      const sharedFeatures = Object.keys(centroid).filter(
+        (f) => vitals[f] !== undefined && vitals[f] !== null && !isNaN(Number(vitals[f]))
+      );
+      if (sharedFeatures.length === 0) {
+        return { cluster_id: profile.cluster_id, risk_tier: profile.risk_tier, distance: Infinity, sharedCount: 0 };
+      }
+      const sumSq = sharedFeatures.reduce((acc, f) => {
+        const diff = Number(vitals[f]) - Number(centroid[f]);
+        return acc + diff * diff;
+      }, 0);
+      return {
+        cluster_id: profile.cluster_id,
+        risk_tier: profile.risk_tier,
+        distance: Math.sqrt(sumSq),
+        sharedCount: sharedFeatures.length,
+      };
+    });
+
+    distances.sort((a, b) => a.distance - b.distance);
+    const nearest = distances[0];
+    const nearestProfile = profiles.find((p) => p.cluster_id === nearest.cluster_id);
+    const centroid = nearestProfile?.centroid_features || {};
+
+    const deviationFeatures = Object.keys(centroid).filter(
+      (f) => vitals[f] !== undefined && !isNaN(Number(vitals[f]))
+    );
+    const featureDeviations = deviationFeatures
+      .map((f) => ({
+        feature: f,
+        patient_value: Number(vitals[f]),
+        centroid_value: Number(centroid[f]),
+        deviation: Number(vitals[f]) - Number(centroid[f]),
+      }))
+      .sort((a, b) => Math.abs(b.deviation) - Math.abs(a.deviation))
+      .slice(0, 5);
+
+    const finiteDists = distances.filter((d) => isFinite(d.distance));
+    const totalDist = finiteDists.reduce((a, d) => a + d.distance, 0);
+    const confidence = totalDist > 0 ? 1 - nearest.distance / totalDist : 1;
+
+    return res.json({
+      risk_tier: nearest.risk_tier,
+      cluster_id: nearest.cluster_id,
+      confidence: Math.max(0, Math.min(1, confidence)),
+      cluster_profile: {
+        size: nearestProfile?.size ?? 0,
+        centroid_features: centroid,
+      },
+      feature_deviations: featureDeviations,
+      algorithm: result.algorithm,
+      all_distances: distances.map(({ cluster_id, risk_tier, distance }) => ({
+        cluster_id,
+        risk_tier,
+        distance: isFinite(distance) ? Math.round(distance * 100) / 100 : null,
+      })),
+    });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// ── GET /api/cluster/results ───────────────────────────────────────────────
+router.get("/results", async (req, res, next) => {
+  try {
+    const results = await ClusterResult.find(
+      {},
+      { patients: 0, linkageMatrix: 0, clusterProfiles: 0, warnings: 0 }
+    )
+      .sort({ createdAt: -1 })
+      .lean();
+    return res.json(results);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// ── GET /api/cluster/patient/:patientId ───────────────────────────────────
+router.get("/patient/:patientId", async (req, res, next) => {
+  const { patientId } = req.params;
+  if (!patientId || patientId.trim() === "") {
+    return res.status(400).json({ error: "patientId is required" });
+  }
+
+  try {
+    const results = await ClusterResult.find(
+      { "patients.patient_id": patientId },
+      {
+        algorithm: 1,
+        createdAt: 1,
+        "patients.$": 1,
+      }
+    )
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean();
+
+    const history = results.map((r) => {
+      const p = (r.patients || [])[0];
+      return {
+        resultId: r._id,
+        algorithm: r.algorithm,
+        createdAt: r.createdAt,
+        cluster_id: p?.cluster_id ?? null,
+        risk_tier: p?.risk_tier ?? null,
+        pca_x: p?.pca_x ?? null,
+        pca_y: p?.pca_y ?? null,
+      };
+    });
+
+    return res.json(history);
+  } catch (err) {
+    return next(err);
+  }
+});
+
 // ── GET /api/cluster/:id ───────────────────────────────────────────────────
 router.get("/:id", async (req, res, next) => {
   try {
