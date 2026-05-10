@@ -3,6 +3,17 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Box } from '@mui/material';
 
+/**
+ * Haversine formula — returns great-circle distance in km between two lat/lng points.
+ */
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
 const AMBULANCE_ICON = L.divIcon({
   html: '<div style="font-size: 24px; text-shadow: 1px 1px 2px white;">🚑</div>',
   iconSize: [30, 30],
@@ -44,11 +55,12 @@ const INCIDENT_ICONS = {
   })
 };
 
-export default function DispatchMap({ 
-  incidents = [], 
-  ambulances = [], 
+export default function DispatchMap({
+  incidents = [],
+  ambulances = [],
   hospitals = [],
   selectedIncident,
+  activeAssignment,
   onIncidentClick,
   onAmbulanceClick,
   onHospitalClick,
@@ -62,7 +74,10 @@ export default function DispatchMap({
     ambulances: new Map(),
     hospitals: new Map()
   });
+  // routeLayerRef: active-assignment confirmed route lines
   const routeLayerRef = useRef(null);
+  // nearbyLayerRef: preview nearby-ambulance and hospital proximity lines (cleared when assignment arrives)
+  const nearbyLayerRef = useRef(null);
 
   useEffect(() => {
     if (mapInstanceRef.current) return;
@@ -74,6 +89,7 @@ export default function DispatchMap({
     }).addTo(mapInstanceRef.current);
 
     routeLayerRef.current = L.layerGroup().addTo(mapInstanceRef.current);
+    nearbyLayerRef.current = L.layerGroup().addTo(mapInstanceRef.current);
 
     return () => {
       if (mapInstanceRef.current) {
@@ -190,15 +206,151 @@ export default function DispatchMap({
     });
   }, [hospitals, onHospitalClick]);
 
-  // Highlight selected incident
+  /**
+   * Effect 1 — Preview nearby ambulance + top-3 hospitals when an incident is selected.
+   * Skipped entirely when activeAssignment is present (Effect 2 owns the map in that state).
+   * Deps include activeAssignment so this effect re-runs and clears layers when assignment arrives.
+   */
   useEffect(() => {
-    if (!mapInstanceRef.current || !selectedIncident) return;
-    
-    mapInstanceRef.current.setView(
-      [selectedIncident.location_lat, selectedIncident.location_lng],
-      14
-    );
-  }, [selectedIncident]);
+    if (!mapInstanceRef.current) return;
+
+    // Clear both layers whenever this effect runs
+    if (routeLayerRef.current) routeLayerRef.current.clearLayers();
+    if (nearbyLayerRef.current) nearbyLayerRef.current.clearLayers();
+
+    // Nothing selected or an assignment has taken over — stop here
+    if (!selectedIncident || activeAssignment) return;
+
+    const iLat = selectedIncident.location_lat;
+    const iLng = selectedIncident.location_lng;
+
+    // Pulsing red circle at incident location
+    L.circle([iLat, iLng], {
+      radius: 300,
+      color: '#ef4444',
+      fillColor: '#ef4444',
+      fillOpacity: 0.15,
+      dashArray: '6,4',
+    }).addTo(nearbyLayerRef.current);
+
+    // Find nearest ambulance (only those that carry lat/lng)
+    const ambs = ambulances.filter(a => a.latitude && a.longitude);
+    if (ambs.length > 0) {
+      const nearest = ambs.reduce((best, a) => {
+        const d = haversine(a.latitude, a.longitude, iLat, iLng);
+        return d < best.dist ? { amb: a, dist: d } : best;
+      }, { amb: null, dist: Infinity });
+
+      if (nearest.amb) {
+        L.polyline(
+          [[nearest.amb.latitude, nearest.amb.longitude], [iLat, iLng]],
+          { color: '#f97316', weight: 3, dashArray: '8,6', opacity: 0.8 }
+        ).addTo(nearbyLayerRef.current);
+      }
+    }
+
+    // Sort hospitals by distance to incident, take top 3
+    const RANK_COLORS = ['#22c55e', '#3b82f6', '#a78bfa'];
+    const hosps = hospitals
+      .filter(h => h.latitude && h.longitude)
+      .map(h => ({ h, dist: haversine(iLat, iLng, h.latitude, h.longitude) }))
+      .sort((a, b) => a.dist - b.dist)
+      .slice(0, 3);
+
+    hosps.forEach(({ h, dist }, rank) => {
+      const color = RANK_COLORS[rank];
+
+      // Dashed colored polyline from incident to hospital
+      L.polyline(
+        [[iLat, iLng], [h.latitude, h.longitude]],
+        { color, weight: 2, dashArray: '4,8', opacity: 0.6 }
+      ).addTo(nearbyLayerRef.current);
+
+      // Proximity circle around hospital
+      L.circle([h.latitude, h.longitude], {
+        radius: 200,
+        color,
+        fillColor: color,
+        fillOpacity: 0.15,
+      }).addTo(nearbyLayerRef.current);
+
+      // Distance label pill badge
+      L.marker([h.latitude, h.longitude], {
+        icon: L.divIcon({
+          html: `<div style="background:${color};color:white;padding:2px 6px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 4px rgba(0,0,0,0.5)">${dist.toFixed(1)}km</div>`,
+          className: '',
+          iconAnchor: [0, -16],
+        }),
+        interactive: false,
+      }).addTo(nearbyLayerRef.current);
+    });
+
+    // Pan map to the incident
+    mapInstanceRef.current.setView([iLat, iLng], 13);
+  }, [selectedIncident, ambulances, hospitals, activeAssignment]);
+
+  /**
+   * Effect 2 — Draw confirmed assignment route: ambulance → incident → hospital.
+   * Clears both layer groups and draws solid lines for the dispatched assignment.
+   */
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    if (!activeAssignment) return;
+
+    // Clear both layer groups
+    if (routeLayerRef.current) routeLayerRef.current.clearLayers();
+    if (nearbyLayerRef.current) nearbyLayerRef.current.clearLayers();
+
+    const { incident, ambulance, hospital } = activeAssignment;
+    const iLat = incident?.location_lat;
+    const iLng = incident?.location_lng;
+
+    if (!iLat || !iLng) return;
+
+    const boundsPoints = [[iLat, iLng]];
+
+    // Ambulance → incident (solid red)
+    if (ambulance?.latitude && ambulance?.longitude) {
+      const line = L.polyline(
+        [[ambulance.latitude, ambulance.longitude], [iLat, iLng]],
+        { color: '#ef4444', weight: 5, opacity: 0.9 }
+      ).addTo(routeLayerRef.current);
+      line.bindTooltip('🚑 Ambulance en route to scene', { sticky: true });
+      boundsPoints.push([ambulance.latitude, ambulance.longitude]);
+    }
+
+    // Pulsing red circle at incident
+    L.circle([iLat, iLng], {
+      radius: 250,
+      color: '#ef4444',
+      fillColor: '#ef4444',
+      fillOpacity: 0.2,
+    }).addTo(routeLayerRef.current);
+
+    // Incident → hospital (solid blue)
+    if (hospital?.latitude && hospital?.longitude) {
+      const line = L.polyline(
+        [[iLat, iLng], [hospital.latitude, hospital.longitude]],
+        { color: '#3b82f6', weight: 5, opacity: 0.9 }
+      ).addTo(routeLayerRef.current);
+      line.bindTooltip('🏥 Transport route to hospital', { sticky: true });
+
+      // Green proximity circle at hospital
+      L.circle([hospital.latitude, hospital.longitude], {
+        radius: 200,
+        color: '#22c55e',
+        fillColor: '#22c55e',
+        fillOpacity: 0.2,
+      }).addTo(routeLayerRef.current);
+
+      boundsPoints.push([hospital.latitude, hospital.longitude]);
+    }
+
+    // Fit map to show all three points
+    if (boundsPoints.length > 1) {
+      mapInstanceRef.current.fitBounds(L.latLngBounds(boundsPoints), { padding: [60, 60] });
+    }
+  }, [activeAssignment]);
 
   return (
     <Box

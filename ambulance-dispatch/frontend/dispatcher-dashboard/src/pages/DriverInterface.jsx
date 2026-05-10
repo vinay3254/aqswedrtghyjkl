@@ -315,7 +315,27 @@ export default function DriverInterface({ onBack }) {
     };
 
     const handleAssigned = (assignment) => {
-      setToast({ msg: `✅ Assignment received: ${assignment?.ambulance?.call_sign || 'Unit'} dispatched`, sev: 'success' });
+      if (assignment?._isAssignment && assignment?.incident_type) {
+        const incidentData = {
+          id: assignment.id || `ASN-${Date.now()}`,
+          incident_type: assignment.incident_type,
+          severity: assignment.severity || 'HIGH',
+          location_address: assignment.location_address || 'Location pending',
+          caller_name: assignment.caller_name || 'Dispatch Center',
+          caller_phone: assignment.caller_phone || '+91 100',
+          patients_count: assignment.patients_count || 1,
+          description: assignment.description || `Dispatched to ${assignment.hospital_name || 'hospital'}`,
+          is_sos: assignment.is_sos || false,
+          distance: assignment.distance || '? km',
+          eta: assignment.eta || '? min',
+          _isAssignment: true,
+        };
+        setIncidentQueue(q => q.find(i => i.id === incidentData.id) ? q : [incidentData, ...q]);
+        setAlertIncident(incidentData);
+        setToast({ msg: `🚑 Dispatch: ${incidentData.incident_type} → ${assignment.hospital_name || 'hospital'}`, sev: 'success' });
+      } else {
+        setToast({ msg: `✅ Assignment: ${assignment?.ambulance?.call_sign || 'Unit'} dispatched`, sev: 'success' });
+      }
     };
 
     dispatchBroadcast.on(DISPATCH_EVENTS.SOS_CREATED, handleSOS);

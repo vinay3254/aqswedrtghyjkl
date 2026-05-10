@@ -34,6 +34,7 @@ export default function DashboardPage({ user, onLogout }) {
   const incidents = [...sosIncidents, ...remoteIncidents];
 
   const [selectedIncident, setSelectedIncident] = useState(null);
+  const [activeAssignment, setActiveAssignment] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(true);
   const [tabValue, setTabValue] = useState(0);
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -50,6 +51,8 @@ export default function DashboardPage({ user, onLogout }) {
 
   const handleIncidentSelect = (incident) => {
     setSelectedIncident(incident);
+    // Clear any previously confirmed assignment route when a new incident is selected
+    setActiveAssignment(null);
   };
 
   const handleAcknowledge = async () => {
@@ -74,13 +77,39 @@ export default function DashboardPage({ user, onLogout }) {
   const handleAssign = () => setWizardOpen(true);
 
   const handleAssignmentCreated = (assignment) => {
+    const currentIncident = selectedIncident; // capture before clearing
     refetchIncidents();
     refetchAmbulances();
-    setSelectedIncident(null);
-    // Notify driver tab
-    if (assignment) {
-      dispatchBroadcast.send(DISPATCH_EVENTS.INCIDENT_ASSIGNED, assignment);
+    if (assignment && currentIncident) {
+      // Enrich ambulance with lat/lng from live ambulances array
+      const fullAmbulance = ambulances.find(a => a.id === assignment.ambulance?.id) || assignment.ambulance;
+      // Enrich hospital with lat/lng from live hospitals array
+      const fullHospital = hospitals.find(h => h.id === assignment.hospital?.id) || assignment.hospital;
+      const enriched = {
+        ambulance: fullAmbulance,
+        hospital: fullHospital,
+        incident: currentIncident,
+        // flat fields for driver interface
+        id: currentIncident.id,
+        incident_type: currentIncident.incident_type,
+        severity: currentIncident.severity,
+        location_address: currentIncident.location_address,
+        location_lat: currentIncident.location_lat,
+        location_lng: currentIncident.location_lng,
+        caller_name: currentIncident.caller_name,
+        caller_phone: currentIncident.caller_phone,
+        patients_count: currentIncident.patients_count || 1,
+        description: currentIncident.description,
+        is_sos: currentIncident.is_sos,
+        distance: `${(Math.random()*4+1).toFixed(1)} km`,
+        eta: `${fullAmbulance?.eta_minutes || 6} min`,
+        hospital_name: fullHospital?.name,
+        _isAssignment: true,
+      };
+      setActiveAssignment(enriched);
+      dispatchBroadcast.send(DISPATCH_EVENTS.INCIDENT_ASSIGNED, enriched);
     }
+    setSelectedIncident(null);
   };
 
   const handleSOSCreated = useCallback((newIncident) => {
@@ -315,6 +344,7 @@ export default function DashboardPage({ user, onLogout }) {
               ambulances={ambulances}
               hospitals={hospitals}
               selectedIncident={selectedIncident}
+              activeAssignment={activeAssignment}
               onIncidentClick={handleIncidentSelect}
               onAmbulanceClick={(amb) => console.log('Ambulance clicked:', amb)}
               onHospitalClick={(hosp) => console.log('Hospital clicked:', hosp)}
