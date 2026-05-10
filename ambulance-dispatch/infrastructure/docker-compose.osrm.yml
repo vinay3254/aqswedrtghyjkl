@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  osrm:
+    image: osrm/osrm-backend:latest
+    container_name: osrm-backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./osrm-data:/data
+    # For initial setup without map data, use the following command:
+    # command: tail -f /dev/null
+    # Then download and prepare map data before starting the routing service
+    command: osrm-routed --algorithm mld /data/india-latest.osrm
+    networks:
+      - ambulance-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/route/v1/driving/77.2090,28.6139;77.1025,28.7041"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    environment:
+      - OSRM_MAX_TABLE_SIZE=10000
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+
+networks:
+  ambulance-network:
+    external: true
+    name: ambulance-network

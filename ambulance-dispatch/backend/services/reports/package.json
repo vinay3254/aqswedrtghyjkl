@@ -1,0 +1,27 @@
+{
+  "name": "ambulance-incident-reports",
+  "version": "1.0.0",
+  "description": "Digital Incident Report Generation System for Ambulance Dispatch",
+  "main": "report-api.js",
+  "scripts": {
+    "test": "node test-reports.js",
+    "generate-sample": "node generate-sample.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "pdfkit": "^0.13.0",
+    "uuid": "^9.0.0",
+    "date-fns": "^2.30.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "ambulance",
+    "incident-report",
+    "pdf-generation",
+    "emergency-services"
+  ],
+  "author": "Ambulance Dispatch Team",
+  "license": "MIT"
+}

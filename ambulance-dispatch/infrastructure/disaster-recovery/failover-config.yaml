@@ -1,0 +1,683 @@
+# Failover Configuration - Ambulance Dispatch System
+# Kubernetes-based active-passive failover with Docker container orchestration
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ambulance-dispatch-dr
+  labels:
+    app: ambulance-dispatch
+    environment: disaster-recovery
+
+---
+# ConfigMap for failover settings
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: failover-config
+  namespace: ambulance-dispatch-dr
+data:
+  PRIMARY_REGION: "us-east-1"
+  SECONDARY_REGION: "us-west-2"
+  FAILOVER_THRESHOLD: "3"  # Number of health check failures before failover
+  HEALTH_CHECK_INTERVAL: "10"  # Seconds
+  HEALTH_CHECK_TIMEOUT: "5"  # Seconds
+  FAILOVER_TIMEOUT: "300"  # Seconds (5 minutes)
+  ENABLE_AUTO_FAILOVER: "true"
+  ENABLE_AUTO_FAILBACK: "true"
+
+---
+# Deployment: Failover Controller
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: failover-controller
+  namespace: ambulance-dispatch-dr
+  labels:
+    app: ambulance-dispatch
+    component: failover-controller
+spec:
+  replicas: 3  # High availability with 3 instances
+  selector:
+    matchLabels:
+      app: failover-controller
+  template:
+    metadata:
+      labels:
+        app: failover-controller
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+    spec:
+      serviceAccountName: failover-controller
+      containers:
+      - name: failover-controller
+        image: ambulance-dispatch/failover-controller:latest
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: metrics
+          containerPort: 9090
+        env:
+        - name: PRIMARY_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: failover-config
+              key: PRIMARY_REGION
+        - name: SECONDARY_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: failover-config
+              key: SECONDARY_REGION
+        - name: FAILOVER_THRESHOLD
+          valueFrom:
+            configMapKeyRef:
+              name: failover-config
+              key: FAILOVER_THRESHOLD
+        - name: HEALTH_CHECK_INTERVAL
+          valueFrom:
+            configMapKeyRef:
+              name: failover-config
+              key: HEALTH_CHECK_INTERVAL
+        - name: ENABLE_AUTO_FAILOVER
+          valueFrom:
+            configMapKeyRef:
+              name: failover-config
+              key: ENABLE_AUTO_FAILOVER
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - failover-controller
+              topologyKey: kubernetes.io/hostname
+
+---
+# Service for Failover Controller
+apiVersion: v1
+kind: Service
+metadata:
+  name: failover-controller
+  namespace: ambulance-dispatch-dr
+spec:
+  type: ClusterIP
+  selector:
+    app: failover-controller
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+
+---
+# ServiceAccount for Failover Controller
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: failover-controller
+  namespace: ambulance-dispatch-dr
+
+---
+# ClusterRole for Failover Controller
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: failover-controller
+rules:
+- apiGroups: [""]
+  resources: ["endpoints"]
+  verbs: ["get", "list", "watch", "patch", "update"]
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets"]
+  verbs: ["get", "list", "watch", "patch", "update"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create", "patch"]
+
+---
+# ClusterRoleBinding for Failover Controller
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: failover-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: failover-controller
+subjects:
+- kind: ServiceAccount
+  name: failover-controller
+  namespace: ambulance-dispatch-dr
+
+---
+# StatefulSet: Primary Dispatch Service
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: dispatch-service-primary
+  namespace: ambulance-dispatch-dr
+spec:
+  serviceName: dispatch-service
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dispatch-service
+      tier: primary
+  template:
+    metadata:
+      labels:
+        app: dispatch-service
+        tier: primary
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - dispatch-service
+            topologyKey: kubernetes.io/hostname
+      containers:
+      - name: dispatch-service
+        image: ambulance-dispatch/dispatch-service:latest
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 3000
+        - name: metrics
+          containerPort: 9090
+        env:
+        - name: REGION
+          value: "primary"
+        - name: DATABASE_HOST
+          value: "postgres-primary.ambulance-dispatch-dr"
+        - name: REPLICA_DATABASE_HOST
+          value: "postgres-replica.ambulance-dispatch-dr"
+        - name: CACHE_HOST
+          value: "redis-primary.ambulance-dispatch-dr"
+        - name: LOG_LEVEL
+          value: "info"
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+
+---
+# Service: Dispatch Service Load Balancer
+apiVersion: v1
+kind: Service
+metadata:
+  name: dispatch-service
+  namespace: ambulance-dispatch-dr
+  labels:
+    app: dispatch-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: dispatch-service
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3000
+    protocol: TCP
+  - name: https
+    port: 443
+    targetPort: 3000
+    protocol: TCP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+
+---
+# HorizontalPodAutoscaler for Dispatch Service
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: dispatch-service-hpa
+  namespace: ambulance-dispatch-dr
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: dispatch-service-primary
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 30
+      - type: Pods
+        value: 2
+        periodSeconds: 30
+      selectPolicy: Max
+
+---
+# NetworkPolicy for Failover Traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: dispatch-failover-policy
+  namespace: ambulance-dispatch-dr
+spec:
+  podSelector:
+    matchLabels:
+      app: dispatch-service
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ambulance-dispatch-dr
+    - podSelector:
+        matchLabels:
+          app: load-balancer
+    ports:
+    - protocol: TCP
+      port: 3000
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: ambulance-dispatch-dr
+    ports:
+    - protocol: TCP
+      port: 5432  # PostgreSQL
+    - protocol: TCP
+      port: 6379  # Redis
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: TCP
+      port: 53  # DNS
+    - protocol: UDP
+      port: 53
+
+---
+# PodDisruptionBudget for high availability
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: dispatch-service-pdb
+  namespace: ambulance-dispatch-dr
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: dispatch-service
+
+---
+# Endpoint Failover Rule
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: dispatch-failover-endpoint
+  namespace: ambulance-dispatch-dr
+subsets:
+- name: primary
+  addresses:
+  - ip: "10.0.1.10"
+    hostname: "dispatch-primary.ambulance-dispatch.local"
+  - ip: "10.0.1.11"
+    hostname: "dispatch-primary-2.ambulance-dispatch.local"
+  - ip: "10.0.1.12"
+    hostname: "dispatch-primary-3.ambulance-dispatch.local"
+  ports:
+  - name: http
+    port: 3000
+- name: secondary
+  addresses:
+  - ip: "10.0.2.10"
+    hostname: "dispatch-secondary.ambulance-dispatch.local"
+  - ip: "10.0.2.11"
+    hostname: "dispatch-secondary-2.ambulance-dispatch.local"
+  - ip: "10.0.2.12"
+    hostname: "dispatch-secondary-3.ambulance-dispatch.local"
+  ports:
+  - name: http
+    port: 3000
+
+---
+# Docker Compose Failover (Alternative for non-Kubernetes environments)
+version: '3.9'
+
+services:
+  failover-controller:
+    image: ambulance-dispatch/failover-controller:latest
+    container_name: failover-controller
+    environment:
+      PRIMARY_REGION: "us-east-1"
+      SECONDARY_REGION: "us-west-2"
+      FAILOVER_THRESHOLD: "3"
+      HEALTH_CHECK_INTERVAL: "10"
+      ENABLE_AUTO_FAILOVER: "true"
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./failover-state.json:/app/state/failover-state.json
+    restart: always
+    networks:
+      - ambulance-dr-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  dispatch-service-primary:
+    image: ambulance-dispatch/dispatch-service:latest
+    container_name: dispatch-service-primary
+    environment:
+      REGION: "primary"
+      DATABASE_HOST: "postgres-primary"
+      CACHE_HOST: "redis-primary"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres-primary
+      - redis-primary
+    networks:
+      - ambulance-dr-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  dispatch-service-secondary:
+    image: ambulance-dispatch/dispatch-service:latest
+    container_name: dispatch-service-secondary
+    environment:
+      REGION: "secondary"
+      DATABASE_HOST: "postgres-replica"
+      CACHE_HOST: "redis-replica"
+    ports:
+      - "3001:3000"
+    depends_on:
+      - postgres-replica
+      - redis-replica
+    networks:
+      - ambulance-dr-network
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  postgres-primary:
+    image: postgres:13-alpine
+    container_name: postgres-primary
+    environment:
+      POSTGRES_DB: ambulance_db
+      POSTGRES_USER: dispatch_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres-primary-data:/var/lib/postgresql/data
+      - ./db-init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ambulance-dr-network
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dispatch_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-replica:
+    image: postgres:13-alpine
+    container_name: postgres-replica
+    environment:
+      POSTGRES_DB: ambulance_db
+      POSTGRES_USER: dispatch_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres-replica-data:/var/lib/postgresql/data
+    networks:
+      - ambulance-dr-network
+    restart: always
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dispatch_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-primary:
+    image: redis:7-alpine
+    container_name: redis-primary
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-primary-data:/data
+    networks:
+      - ambulance-dr-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  redis-replica:
+    image: redis:7-alpine
+    container_name: redis-replica
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-replica-data:/data
+    networks:
+      - ambulance-dr-network
+    restart: always
+    depends_on:
+      - redis-primary
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  postgres-primary-data:
+  postgres-replica-data:
+  redis-primary-data:
+  redis-replica-data:
+
+networks:
+  ambulance-dr-network:
+    driver: bridge
+
+---
+# Failover Triggers and Rules
+failover_rules:
+  - name: "Primary Database Down"
+    condition:
+      type: "health_check_failure"
+      target: "postgres-primary"
+      failures: 3
+      window: 30s
+    action:
+      type: "failover"
+      target_service: "dispatch-service"
+      switch_to: "secondary"
+      graceful_timeout: 60
+      notify: ["ops-team", "dispatch-center"]
+
+  - name: "Primary Region Unreachable"
+    condition:
+      type: "network_partition"
+      target: "primary-region"
+      timeout: 10s
+    action:
+      type: "failover"
+      target_service: "all"
+      switch_to: "secondary"
+      cut_connections: true
+
+  - name: "High Latency"
+    condition:
+      type: "latency"
+      threshold: 500ms
+      duration: 60s
+    action:
+      type: "alert"
+      severity: "warning"
+
+---
+# Failback Strategy
+failback_rules:
+  - name: "Automatic Failback to Primary"
+    condition:
+      type: "primary_healthy"
+      healthcheck_passed: 5
+      window: 300s
+    action:
+      type: "failback"
+      target_service: "dispatch-service"
+      gradual_migration: true
+      migration_duration: 600s
+      traffic_percentage:
+        - minute: 0
+          percentage: 0
+        - minute: 5
+          percentage: 25
+        - minute: 10
+          percentage: 50
+        - minute: 15
+          percentage: 75
+        - minute: 20
+          percentage: 100
+
+---
+# Monitoring and Alerting Configuration
+monitoring:
+  prometheus_scrape_interval: 15s
+  alert_manager_url: "http://alertmanager:9093"
+  
+  alerts:
+    - name: "FailoverTriggered"
+      threshold: "failover_event == 1"
+      severity: "critical"
+      
+    - name: "PrimaryUnhealthy"
+      threshold: "health_check_failures > 3"
+      severity: "critical"
+      
+    - name: "SecondaryUnhealthy"
+      threshold: "secondary_health_check_failures > 3"
+      severity: "warning"
+
+---
+# Failover State Tracking
+failover_state:
+  current_active: "primary"
+  last_failover: null
+  failover_count: 0
+  last_failback: null
+  failback_count: 0
+  
+---
+# DNS Configuration for Failover
+dns_failover:
+  primary_zone: "ambulance-dispatch.local"
+  
+  records:
+    - name: "dispatch.ambulance-dispatch.local"
+      type: "A"
+      primary_ip: "10.0.1.10"
+      secondary_ip: "10.0.2.10"
+      health_check_interval: 30s
+      failover_ttl: 60s
+      
+    - name: "api.ambulance-dispatch.local"
+      type: "CNAME"
+      primary: "dispatch-primary.ambulance-dispatch.local"
+      secondary: "dispatch-secondary.ambulance-dispatch.local"
+

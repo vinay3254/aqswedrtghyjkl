@@ -1,0 +1,10 @@
+numpy
+scipy
+sounddevice
+opencv-python
+pytesseract
+Pillow
+colorama
+fastapi
+uvicorn
+python-multipart

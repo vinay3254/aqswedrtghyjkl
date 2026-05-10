@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Handover Summary - {{reportId}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.5;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            padding: 35px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #e74c3c;
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #e74c3c;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .report-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+            font-size: 12px;
+        }
+
+        .meta-item {
+            text-align: center;
+            padding: 8px;
+            background-color: #ecf0f1;
+            border-radius: 3px;
+        }
+
+        .meta-label {
+            color: #7f8c8d;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .meta-value {
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section h2 {
+            font-size: 15px;
+            color: white;
+            background-color: #e74c3c;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            border-radius: 3px;
+        }
+
+        .section h3 {
+            font-size: 13px;
+            color: #2c3e50;
+            margin-top: 12px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #e74c3c;
+            padding-bottom: 5px;
+        }
+
+        /* Patient Card */
+        .patient-card {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .patient-name {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            padding-bottom: 10px;
+        }
+
+        .patient-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        .patient-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .patient-info label {
+            font-weight: bold;
+            opacity: 0.9;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .patient-info value {
+            font-size: 14px;
+            margin-top: 3px;
+        }
+
+        /* Alert Box */
+        .alert-box {
+            padding: 12px;
+            margin-bottom: 15px;
+            border-left: 4px solid #e74c3c;
+            background-color: #fadbd8;
+            border-radius: 3px;
+        }
+
+        .alert-title {
+            font-weight: bold;
+            color: #c0392b;
+            margin-bottom: 8px;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .alert-item {
+            color: #a93226;
+            font-size: 13px;
+            margin-bottom: 5px;
+            padding-left: 15px;
+        }
+
+        /* Assessment Box */
+        .assessment-box {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-left: 4px solid #3498db;
+            border-radius: 3px;
+            margin-bottom: 15px;
+        }
+
+        .assessment-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .assessment-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .assessment-item:last-child {
+            border-bottom: none;
+        }
+
+        .assessment-label {
+            font-weight: bold;
+            color: #34495e;
+        }
+
+        .assessment-value {
+            color: #555;
+        }
+
+        /* Vitals Display */
+        .vitals-display {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .vital-item {
+            background: linear-gradient(135deg, #ecf0f1 0%, #d5dbdb 100%);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .vital-label {
+            font-size: 11px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .vital-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        /* Action List */
+        .action-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .action-list li {
+            padding: 10px;
+            background-color: #ecf0f1;
+            margin-bottom: 8px;
+            border-left: 3px solid #27ae60;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+
+        .action-list li::before {
+            content: '✓ ';
+            color: #27ae60;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        /* Hospital Info */
+        .hospital-info {
+            background-color: #f0f7ff;
+            padding: 15px;
+            border-left: 4px solid #3498db;
+            border-radius: 3px;
+            margin-bottom: 15px;
+        }
+
+        .hospital-info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #d5e8f7;
+            font-size: 13px;
+        }
+
+        .hospital-info-row:last-child {
+            border-bottom: none;
+        }
+
+        .hospital-info-label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .hospital-info-value {
+            color: #555;
+        }
+
+        /* Clinical Notes */
+        .clinical-notes {
+            background-color: #fffef0;
+            padding: 15px;
+            border-left: 4px solid #f39c12;
+            border-radius: 3px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        /* Medication Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        table thead {
+            background-color: #34495e;
+            color: white;
+        }
+
+        table th {
+            padding: 10px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        table td {
+            padding: 10px;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 13px;
+        }
+
+        table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        /* Signature Section */
+        .signature-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #ecf0f1;
+        }
+
+        .signature-title {
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .signature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .signature-box {
+            text-align: center;
+        }
+
+        .signature-line {
+            border-top: 2px solid #333;
+            height: 50px;
+            margin: 10px 0;
+        }
+
+        .signature-name {
+            font-size: 12px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .signature-role {
+            font-size: 11px;
+            color: #7f8c8d;
+            margin-top: 3px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #ecf0f1;
+            font-size: 11px;
+            color: #999;
+        }
+
+        .footer-note {
+            margin: 5px 0;
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background-color: white;
+            }
+
+            .container {
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .report-meta {
+                grid-template-columns: 1fr;
+            }
+
+            .vitals-display {
+                grid-template-columns: 1fr;
+            }
+
+            .signature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .patient-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>HOSPITAL HANDOVER SUMMARY</h1>
+            <p>Emergency Medical Services Patient Transfer</p>
+            <div class="report-meta">
+                <div class="meta-item">
+                    <span class="meta-label">Report ID</span>
+                    <span class="meta-value">{{reportId}}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Date</span>
+                    <span class="meta-value">{{handover.arrivalTime}}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Hospital</span>
+                    <span class="meta-value">{{handover.hospitalName}}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Patient Identification -->
+        <div class="section">
+            <div class="patient-card">
+                <div class="patient-name">
+                    {{patient.firstName}} {{patient.lastName}}
+                </div>
+                <div class="patient-grid">
+                    <div class="patient-info">
+                        <label>Age</label>
+                        <value>{{patient.age}} years</value>
+                    </div>
+                    <div class="patient-info">
+                        <label>Gender</label>
+                        <value>{{patient.gender}}</value>
+                    </div>
+                    <div class="patient-info">
+                        <label>Patient ID</label>
+                        <value>{{patient.patientId}}</value>
+                    </div>
+                    <div class="patient-info">
+                        <label>Phone</label>
+                        <value>{{patient.phoneNumber}}</value>
+                    </div>
+                </div>
+            </div>
+
+            {{#if patient.allergies}}
+            <div class="alert-box">
+                <div class="alert-title">⚠️ ALLERGIES</div>
+                {{#each patient.allergies}}
+                <div class="alert-item">• {{this}}</div>
+                {{/each}}
+            </div>
+            {{/if}}
+        </div>
+
+        <!-- Chief Complaint & Assessment -->
+        <div class="section">
+            <h2>Clinical Assessment</h2>
+
+            <div class="assessment-box">
+                <div class="assessment-title">Chief Complaint</div>
+                <div style="color: #555; font-size: 14px; padding: 10px;">
+                    {{paramedic.assessment.primaryComplaint}}
+                </div>
+            </div>
+
+            <h3>Patient Status</h3>
+            <div class="assessment-box">
+                <div class="assessment-item">
+                    <span class="assessment-label">Consciousness Level:</span>
+                    <span class="assessment-value">{{paramedic.assessment.consciousness}}</span>
+                </div>
+                <div class="assessment-item">
+                    <span class="assessment-label">Breathing:</span>
+                    <span class="assessment-value">{{paramedic.assessment.breathing}}</span>
+                </div>
+                <div class="assessment-item">
+                    <span class="assessment-label">Circulation:</span>
+                    <span class="assessment-value">{{paramedic.assessment.circulation}}</span>
+                </div>
+                <div class="assessment-item">
+                    <span class="assessment-label">Skin Condition:</span>
+                    <span class="assessment-value">{{paramedic.assessment.skinColor}}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vital Signs -->
+        <div class="section">
+            <h2>Vital Signs at Handover</h2>
+            <div class="vitals-display">
+                <div class="vital-item">
+                    <div class="vital-label">Blood Pressure</div>
+                    <div class="vital-value">{{paramedic.vitals.bloodPressure}}</div>
+                </div>
+                <div class="vital-item">
+                    <div class="vital-label">Heart Rate</div>
+                    <div class="vital-value">{{paramedic.vitals.heartRate}}<span style="font-size: 12px;"> bpm</span></div>
+                </div>
+                <div class="vital-item">
+                    <div class="vital-label">Respiration Rate</div>
+                    <div class="vital-value">{{paramedic.vitals.respirationRate}}<span style="font-size: 12px;"> bpm</span></div>
+                </div>
+                <div class="vital-item">
+                    <div class="vital-label">Temperature</div>
+                    <div class="vital-value">{{paramedic.vitals.temperature}}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hospital Information -->
+        <div class="section">
+            <h2>Hospital Handover Information</h2>
+            <div class="hospital-info">
+                <div class="hospital-info-row">
+                    <span class="hospital-info-label">Hospital Name:</span>
+                    <span class="hospital-info-value">{{handover.hospitalName}}</span>
+                </div>
+                <div class="hospital-info-row">
+                    <span class="hospital-info-label">Department:</span>
+                    <span class="hospital-info-value">{{handover.department}}</span>
+                </div>
+                <div class="hospital-info-row">
+                    <span class="hospital-info-label">Receiving Staff:</span>
+                    <span class="hospital-info-value">{{handover.receivingStaff.name}}</span>
+                </div>
+                <div class="hospital-info-row">
+                    <span class="hospital-info-label">Arrival Time:</span>
+                    <span class="hospital-info-value">{{handover.arrivalTime}}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Signatures -->
+        <div class="signature-section">
+            <div class="signature-title">AUTHORIZING SIGNATURES</div>
+            <div class="signature-grid">
+                <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div class="signature-name">Paramedic 1</div>
+                </div>
+                <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div class="signature-name">Paramedic 2</div>
+                </div>
+                <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div class="signature-name">Supervisor</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-note">This handover summary is an official medical document.</div>
+            <div class="footer-note">Information contained herein is confidential and for authorized personnel only.</div>
+            <div class="footer-note" style="margin-top: 10px; font-size: 10px; color: #bbb;">
+                Generated: {{generatedAt}} | Report ID: {{reportId}}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

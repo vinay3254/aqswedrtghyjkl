@@ -1,0 +1,470 @@
+---
+# PostgreSQL Streaming Replication Configuration
+# Ensures data redundancy and enables read scaling
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-primary-config
+  namespace: ambulance-dispatch
+data:
+  postgresql.conf: |
+    # PostgreSQL Configuration for Primary (Master)
+    
+    # Network & Connection Settings
+    listen_addresses = '*'
+    port = 5432
+    max_connections = 200
+    superuser_reserved_connections = 10
+    
+    # Memory Settings
+    shared_buffers = 256MB
+    effective_cache_size = 1GB
+    maintenance_work_mem = 64MB
+    work_mem = 4MB
+    
+    # WAL (Write-Ahead Logging) Configuration for Replication
+    wal_level = replica
+    wal_buffers = 16MB
+    wal_keep_size = 4GB
+    
+    # Checkpointing
+    checkpoint_timeout = 15min
+    checkpoint_completion_target = 0.9
+    max_wal_size = 4GB
+    min_wal_size = 1GB
+    
+    # Replication Settings
+    max_wal_senders = 10
+    max_replication_slots = 10
+    
+    # Replication slots
+    slot_name = 'replica_slot_1'
+    slot_type = 'physical'
+    
+    # Standby feedback (replication aware)
+    hot_standby_feedback = on
+    wal_receiver_timeout = 60s
+    wal_retrieve_retry_interval = 5s
+    
+    # Logging
+    logging_collector = on
+    log_directory = 'pg_log'
+    log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+    log_truncate_on_rotation = on
+    log_rotation_age = 1d
+    log_rotation_size = 100MB
+    log_min_duration_statement = 1000
+    log_statement = 'all'
+    log_duration = on
+    log_lock_waits = on
+    
+    # Autovacuum
+    autovacuum = on
+    autovacuum_max_workers = 3
+    autovacuum_naptime = 10s
+    
+    # Extension configuration
+    shared_preload_libraries = 'pg_stat_statements,pg_trgm'
+    
+    # Synchronous Replication (optional - for 0-loss HA)
+    synchronous_commit = remote_apply
+    synchronous_standby_names = '*'
+
+  pg_hba.conf: |
+    # PostgreSQL Client Authentication Configuration
+    
+    # TYPE  DATABASE        USER            ADDRESS                 METHOD
+    local   all             all                                     trust
+    host    all             all             127.0.0.1/32            md5
+    host    all             all             ::1/128                 md5
+    
+    # Replication privilege for replica connections
+    host    replication     replicator      10.0.0.0/8              md5
+    host    replication     replicator      172.16.0.0/12           md5
+    
+    # Application connections
+    host    ambulance_db    app_user        10.0.0.0/8              md5
+    host    ambulance_db    app_user        172.16.0.0/12           md5
+    
+    # Accept from anywhere (configure properly in production)
+    host    all             all             0.0.0.0/0               md5
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-replica-config
+  namespace: ambulance-dispatch
+data:
+  postgresql.conf: |
+    # PostgreSQL Configuration for Replica (Standby)
+    
+    # Network & Connection Settings
+    listen_addresses = '*'
+    port = 5432
+    max_connections = 100
+    
+    # Memory Settings
+    shared_buffers = 256MB
+    effective_cache_size = 1GB
+    maintenance_work_mem = 64MB
+    work_mem = 4MB
+    
+    # WAL Settings
+    wal_level = replica
+    wal_buffers = 16MB
+    
+    # Hot Standby Settings
+    hot_standby = on
+    hot_standby_feedback = on
+    wal_receiver_timeout = 60s
+    wal_retrieve_retry_interval = 5s
+    recovery_min_apply_delay = 0
+    
+    # Logging
+    logging_collector = on
+    log_directory = 'pg_log'
+    log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+    log_min_duration_statement = 1000
+    
+    # Autovacuum
+    autovacuum = on
+    autovacuum_max_workers = 2
+
+  recovery.conf: |
+    # PostgreSQL Recovery Configuration for Standby
+    
+    # Replication settings
+    standby_mode = 'on'
+    primary_conninfo = 'host=postgres-primary.ambulance-dispatch.svc.cluster.local port=5432 user=replicator password=replicator-password application_name=replica-1'
+    
+    # Primary slot name for replication
+    primary_slot_name = 'replica_slot_1'
+    
+    # Restore settings
+    restore_command = 'cp /pg_wal_archive/%f "%p"'
+    archive_cleanup_command = 'pg_archivecleanup /pg_wal_archive %r'
+    
+    # Recovery target settings
+    recovery_target_timeline = 'latest'
+
+  pg_hba.conf: |
+    # PostgreSQL Client Authentication for Replica
+    
+    local   all             all                                     trust
+    host    all             all             127.0.0.1/32            md5
+    host    all             all             ::1/128                 md5
+    
+    # Accept connections from monitoring/applications
+    host    ambulance_db    app_user        10.0.0.0/8              md5
+    host    ambulance_db    readonly_user   10.0.0.0/8              md5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-primary
+  namespace: ambulance-dispatch
+  labels:
+    role: primary
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+      name: postgres
+  selector:
+    app: postgres
+    role: primary
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-replicas
+  namespace: ambulance-dispatch
+  labels:
+    role: replica
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+      name: postgres
+  selector:
+    app: postgres
+    role: replica
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-read-pool
+  namespace: ambulance-dispatch
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+      name: postgres
+  selector:
+    app: postgres
+  sessionAffinity: ClientIP
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-primary
+  namespace: ambulance-dispatch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+      role: primary
+  template:
+    metadata:
+      labels:
+        app: postgres
+        role: primary
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432
+              name: postgres
+          
+          env:
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: password
+            - name: POSTGRES_DB
+              value: ambulance_db
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+          
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U postgres
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U postgres
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+          
+          volumeMounts:
+            - name: postgres-primary-config
+              mountPath: /etc/postgresql
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+            - name: postgres-wal-archive
+              mountPath: /pg_wal_archive
+      
+      volumes:
+        - name: postgres-primary-config
+          configMap:
+            name: postgres-primary-config
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-primary-pvc
+        - name: postgres-wal-archive
+          persistentVolumeClaim:
+            claimName: postgres-wal-archive-pvc
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-replica
+  namespace: ambulance-dispatch
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: postgres
+      role: replica
+  template:
+    metadata:
+      labels:
+        app: postgres
+        role: replica
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - postgres
+                  - key: role
+                    operator: In
+                    values:
+                      - replica
+              topologyKey: kubernetes.io/hostname
+      
+      initContainers:
+        - name: pg-basebackup
+          image: postgres:15-alpine
+          command:
+            - /bin/sh
+            - -c
+            - |
+              if [ ! -f /var/lib/postgresql/data/pgdata/PG_VERSION ]; then
+                pg_basebackup -h postgres-primary -D /var/lib/postgresql/data/pgdata -U replicator -v -P
+              fi
+          env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: replicator-password
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+      
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          ports:
+            - containerPort: 5432
+              name: postgres
+          
+          env:
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: password
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+          
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U postgres
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "pg_isready -U postgres && psql -U postgres -c 'SELECT 1' > /dev/null 2>&1"
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+          
+          volumeMounts:
+            - name: postgres-replica-config
+              mountPath: /etc/postgresql
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+      
+      volumes:
+        - name: postgres-replica-config
+          configMap:
+            name: postgres-replica-config
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-replica-pvc
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-primary-pvc
+  namespace: ambulance-dispatch
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: fast-ssd
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-replica-pvc
+  namespace: ambulance-dispatch
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: fast-ssd
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-wal-archive-pvc
+  namespace: ambulance-dispatch
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-storage
+  resources:
+    requests:
+      storage: 50Gi
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secrets
+  namespace: ambulance-dispatch
+type: Opaque
+data:
+  # Base64 encoded passwords
+  password: cG9zdGdyZXMtcGFzc3dvcmQtMTIz
+  replicator-password: cmVwbGljYXRvci1wYXNzd29yZC00NTY=

@@ -36,7 +36,6 @@ export default function Navbar() {
             { to: "/predict",   label: "Predict" },
             { to: "/patient",   label: "Patients" },
             { to: "/reminders", label: "Reminders" },
-            { to: "/dispatch",  label: "Dispatch"  },
             { to: "/mci",      label: "MCI Board" },
           ].map(({ to, label }) => (
             <Link
@@ -51,6 +50,12 @@ export default function Navbar() {
               {label}
             </Link>
           ))}
+          <a
+            href="http://localhost:5174"
+            className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+          >
+            Dispatch
+          </a>
         </nav>
 
         {/* CTA — only on home */}

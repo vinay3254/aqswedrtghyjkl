@@ -1,0 +1,311 @@
+---
+# Redis Sentinel Configuration for High Availability
+# Provides automatic failover and monitoring for Redis instances
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-sentinel-config
+  namespace: ambulance-dispatch
+data:
+  sentinel.conf: |
+    # Redis Sentinel Configuration
+    port 26379
+    
+    # Working directory
+    dir /data
+    
+    # Sentinel monitoring configuration
+    # Format: sentinel monitor <master-group-name> <ip> <port> <quorum>
+    # Quorum: number of Sentinels that must agree for failover
+    sentinel monitor redis-master 10.0.1.100 6379 2
+    
+    # Master down after 5 seconds of no ping
+    sentinel down-after-milliseconds redis-master 5000
+    
+    # Parallel sync during failover (1 replica at a time)
+    sentinel parallel-syncs redis-master 1
+    
+    # Failover timeout (180 seconds)
+    sentinel failover-timeout redis-master 180000
+    
+    # Authentication
+    sentinel auth-pass redis-master redis-password-123
+    masterauth redis-password-123
+    requirepass sentinel-password-456
+    
+    # Notification script when failover occurs
+    sentinel notification-script redis-master /scripts/notification.sh
+    
+    # Client reconfig script
+    sentinel client-reconfig-script redis-master /scripts/client-reconfig.sh
+    
+    # Logging configuration
+    loglevel notice
+    logfile /var/log/sentinel.log
+    
+    # Persistence
+    save 900 1
+    save 300 10
+    save 60 10000
+    
+    # Database selection (0-15)
+    databases 16
+    
+    # Advanced Sentinel options
+    sentinel deny-scripts-reconfig yes
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-sentinel-service
+  namespace: ambulance-dispatch
+  labels:
+    app: redis-sentinel
+spec:
+  ports:
+    - port: 26379
+      targetPort: 26379
+      name: sentinel
+  selector:
+    app: redis-sentinel
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-sentinel
+  namespace: ambulance-dispatch
+  labels:
+    app: redis-sentinel
+spec:
+  serviceName: redis-sentinel-service
+  replicas: 3
+  selector:
+    matchLabels:
+      app: redis-sentinel
+  template:
+    metadata:
+      labels:
+        app: redis-sentinel
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - redis-sentinel
+              topologyKey: kubernetes.io/hostname
+      
+      containers:
+        - name: redis-sentinel
+          image: redis:7-alpine
+          imagePullPolicy: IfNotPresent
+          command:
+            - redis-sentinel
+            - /etc/sentinel/sentinel.conf
+          
+          ports:
+            - containerPort: 26379
+              name: sentinel
+              protocol: TCP
+          
+          # Resource requests and limits
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          
+          # Liveness probe - checks if Sentinel is responding
+          livenessProbe:
+            tcpSocket:
+              port: 26379
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          # Readiness probe
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - -p
+                - "26379"
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          
+          # Volume mounts
+          volumeMounts:
+            - name: sentinel-config
+              mountPath: /etc/sentinel
+            - name: sentinel-data
+              mountPath: /data
+            - name: scripts
+              mountPath: /scripts
+          
+          # Environment variables
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: password
+            - name: SENTINEL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: sentinel-password
+      
+      # Volumes
+      volumes:
+        - name: sentinel-config
+          configMap:
+            name: redis-sentinel-config
+            defaultMode: 0644
+        - name: scripts
+          configMap:
+            name: redis-sentinel-scripts
+            defaultMode: 0755
+      
+      # Pod restart policy
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+  
+  # Persistent volume for Sentinel data
+  volumeClaimTemplates:
+    - metadata:
+        name: sentinel-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: fast-ssd
+        resources:
+          requests:
+            storage: 10Gi
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-sentinel-scripts
+  namespace: ambulance-dispatch
+data:
+  notification.sh: |
+    #!/bin/bash
+    # Notification script triggered on failover events
+    
+    MASTER_NAME=$1
+    EVENT_TYPE=$2
+    INSTANCE_ROLE=$3
+    FROM_IP=$4
+    FROM_PORT=$5
+    TO_IP=$6
+    TO_PORT=$7
+    
+    echo "$(date): Sentinel Event - Master: $MASTER_NAME, Event: $EVENT_TYPE" >> /var/log/sentinel-notifications.log
+    echo "  From: $FROM_IP:$FROM_PORT ($INSTANCE_ROLE) -> To: $TO_IP:$TO_PORT" >> /var/log/sentinel-notifications.log
+    
+    # Send alert to monitoring system
+    if [ "$EVENT_TYPE" = "failover-end" ]; then
+      # Trigger deployment restart or other recovery actions
+      echo "Failover completed. New master: $TO_IP:$TO_PORT"
+      # curl -X POST http://monitoring:8080/alert -d "event=redis_failover&new_master=$TO_IP:$TO_PORT"
+    fi
+    
+    exit 0
+
+  client-reconfig.sh: |
+    #!/bin/bash
+    # Client reconfig script - updates clients to new master
+    
+    MASTER_NAME=$1
+    ROLE=$2
+    STATE=$3
+    FROM_IP=$4
+    FROM_PORT=$5
+    TO_IP=$6
+    TO_PORT=$7
+    
+    echo "$(date): Client Reconfig - Master: $MASTER_NAME" >> /var/log/sentinel-reconfig.log
+    echo "  Role: $ROLE, State: $STATE" >> /var/log/sentinel-reconfig.log
+    echo "  New Address: $TO_IP:$TO_PORT" >> /var/log/sentinel-reconfig.log
+    
+    # Update application configuration or restart services
+    # This could trigger Kubernetes configmap updates or service updates
+    
+    exit 0
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-secrets
+  namespace: ambulance-dispatch
+type: Opaque
+data:
+  # Base64 encoded: redis-password-123
+  password: cmVkaXMtcGFzc3dvcmQtMTIz
+  # Base64 encoded: sentinel-password-456
+  sentinel-password: c2VudGluZWwtcGFzc3dvcmQtNDU2
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: redis-sentinel-alerts
+  namespace: ambulance-dispatch
+spec:
+  groups:
+    - name: redis-sentinel
+      interval: 30s
+      rules:
+        # Alert when Sentinel master is down
+        - alert: RedisSentinelMasterDown
+          expr: redis_sentinel_masters{state="down"} > 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Redis Master is down"
+            description: "Redis master {{ $labels.master_name }} is down"
+
+        # Alert when replicas are disconnected
+        - alert: RedisSentinelReplicaDown
+          expr: redis_sentinel_replicas{state="disconnected"} > 0
+          for: 3m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Redis replica disconnected"
+            description: "Redis replica {{ $labels.replica_name }} is disconnected"
+
+        # Alert on failover activity
+        - alert: RedisSentinelFailover
+          expr: increase(redis_sentinel_failovers_total[5m]) > 0
+          labels:
+            severity: warning
+          annotations:
+            summary: "Redis failover occurring"
+            description: "Redis failover initiated for master {{ $labels.master_name }}"
+
+        # Alert when not enough Sentinels are operational
+        - alert: RedisSentinelQuorumError
+          expr: redis_sentinel_sentinels < 2
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Insufficient Sentinels"
+            description: "Only {{ $value }} Sentinel nodes available (need minimum 2)"

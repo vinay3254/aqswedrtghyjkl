@@ -1,0 +1,538 @@
+-- Development seed data for the canonical Phase 1 schema.
+-- Seed users share the password "password123" (bcrypt hash below).
+
+INSERT INTO users (
+  id, email, password_hash, first_name, last_name, role, phone_number, is_active, is_verified
+) VALUES
+  ('550e8400-e29b-41d4-a716-446655440001', 'admin@ambulance.local', '$2b$10$rqVLqJBXVvXE2M3HzJ8GmuJx.OO.PaH5A2DxP2Yq7YqnGqyQP9K6e', 'System', 'Administrator', 'ADMIN', '+14155550001', true, true),
+  ('550e8400-e29b-41d4-a716-446655440002', 'dispatcher1@ambulance.local', '$2b$10$rqVLqJBXVvXE2M3HzJ8GmuJx.OO.PaH5A2DxP2Yq7YqnGqyQP9K6e', 'Sarah', 'Johnson', 'DISPATCHER', '+14155550002', true, true),
+  ('550e8400-e29b-41d4-a716-446655440003', 'driver1@ambulance.local', '$2b$10$rqVLqJBXVvXE2M3HzJ8GmuJx.OO.PaH5A2DxP2Yq7YqnGqyQP9K6e', 'David', 'Martinez', 'DRIVER', '+14155550003', true, true),
+  ('550e8400-e29b-41d4-a716-446655440004', 'hospital1@ambulance.local', '$2b$10$rqVLqJBXVvXE2M3HzJ8GmuJx.OO.PaH5A2DxP2Yq7YqnGqyQP9K6e', 'Priya', 'Nair', 'HOSPITAL_STAFF', '+14155550004', true, true),
+  ('550e8400-e29b-41d4-a716-446655440005', 'citizen1@ambulance.local', '$2b$10$rqVLqJBXVvXE2M3HzJ8GmuJx.OO.PaH5A2DxP2Yq7YqnGqyQP9K6e', 'Arun', 'Patel', 'CITIZEN', '+14155550005', true, true),
+  ('550e8400-e29b-41d4-a716-446655440006', 'driver2@ambulance.local', '$2b$10$rqVLqJBXVvXE2M3HzJ8GmuJx.OO.PaH5A2DxP2Yq7YqnGqyQP9K6e', 'Lisa', 'Anderson', 'DRIVER', '+14155550006', true, true)
+ON CONFLICT (email) DO NOTHING;
+
+INSERT INTO hospitals (
+  id,
+  name,
+  address,
+  latitude,
+  longitude,
+  phone,
+  email,
+  total_beds,
+  available_beds,
+  icu_beds,
+  available_icu_beds,
+  trauma_bays,
+  available_trauma_bays,
+  emergency_beds,
+  trauma_level,
+  emergency_capacity,
+  current_wait_time,
+  status,
+  specialties,
+  services,
+  equipment,
+  blood_inventory,
+  is_accepting_patients
+) VALUES
+  (
+    '750e8400-e29b-41d4-a716-446655440001',
+    'City General Hospital',
+    '1001 Potrero Ave, San Francisco, CA 94110',
+    37.75580000,
+    -122.40380000,
+    '+14152066000',
+    'er@citygeneral.local',
+    120,
+    34,
+    18,
+    6,
+    8,
+    3,
+    12,
+    'LEVEL_1',
+    50,
+    12,
+    'active',
+    ARRAY['Emergency', 'Trauma Center', 'Cardiology'],
+    '["Emergency","Trauma Center","Cardiology"]'::jsonb,
+    '{"ct_scan": true, "ventilators": 12}'::jsonb,
+    '{"O+": 8, "A+": 5, "B+": 3, "AB+": 2}'::jsonb,
+    true
+  ),
+  (
+    '750e8400-e29b-41d4-a716-446655440002',
+    'Uptown Medical Center',
+    '505 Parnassus Ave, San Francisco, CA 94143',
+    37.76250000,
+    -122.45860000,
+    '+14154761000',
+    'er@uptown.local',
+    95,
+    22,
+    14,
+    4,
+    4,
+    1,
+    7,
+    'LEVEL_2',
+    40,
+    18,
+    'active',
+    ARRAY['Emergency', 'Neurology', 'Stroke Unit'],
+    '["Emergency","Neurology","Stroke Unit"]'::jsonb,
+    '{"ct_scan": true, "mri": true, "ventilators": 8}'::jsonb,
+    '{"O+": 6, "A+": 4, "O-": 2}'::jsonb,
+    true
+  ),
+  (
+    '750e8400-e29b-41d4-a716-446655440003',
+    'Lakeside Women and Children Hospital',
+    '2333 Buchanan St, San Francisco, CA 94115',
+    37.78830000,
+    -122.43640000,
+    '+14156002000',
+    'er@lakeside.local',
+    80,
+    16,
+    10,
+    3,
+    2,
+    1,
+    5,
+    'LEVEL_3',
+    25,
+    10,
+    'active',
+    ARRAY['Emergency', 'Maternity', 'Pediatrics'],
+    '["Emergency","Maternity","Pediatrics"]'::jsonb,
+    '{"nicu": true, "ultrasound": true}'::jsonb,
+    '{"A+": 4, "B+": 2, "AB+": 1}'::jsonb,
+    true
+  )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO ambulances (
+  id,
+  call_sign,
+  vehicle_number,
+  type,
+  equipment_type,
+  status,
+  latitude,
+  longitude,
+  current_location_lat,
+  current_location_lng,
+  fuel_level,
+  base_station,
+  equipment,
+  metadata,
+  driver_id,
+  driver_name,
+  driver_phone,
+  crew_capacity,
+  is_active,
+  last_maintenance_date,
+  next_maintenance_date,
+  mileage
+) VALUES
+  (
+    '650e8400-e29b-41d4-a716-446655440001',
+    'AMB-001',
+    'AMB-001',
+    'ALS',
+    'ALS',
+    'DISPATCHED',
+    37.77490000,
+    -122.41940000,
+    37.77490000,
+    -122.41940000,
+    78,
+    'Central Station',
+    '["defibrillator","ventilator","oxygen"]'::jsonb,
+    '{"region": "central"}'::jsonb,
+    '550e8400-e29b-41d4-a716-446655440003',
+    'David Martinez',
+    '+14155550003',
+    3,
+    true,
+    NOW() - INTERVAL '12 days',
+    NOW() + INTERVAL '18 days',
+    24500
+  ),
+  (
+    '650e8400-e29b-41d4-a716-446655440002',
+    'AMB-002',
+    'AMB-002',
+    'BLS',
+    'BLS',
+    'AVAILABLE',
+    37.78490000,
+    -122.40890000,
+    37.78490000,
+    -122.40890000,
+    61,
+    'North Station',
+    '["oxygen","splint_kit"]'::jsonb,
+    '{"region": "north"}'::jsonb,
+    '550e8400-e29b-41d4-a716-446655440006',
+    'Lisa Anderson',
+    '+14155550006',
+    2,
+    true,
+    NOW() - INTERVAL '8 days',
+    NOW() + INTERVAL '22 days',
+    19840
+  ),
+  (
+    '650e8400-e29b-41d4-a716-446655440003',
+    'AMB-003',
+    'AMB-003',
+    'ALS',
+    'ALS',
+    'OFFLINE',
+    37.76490000,
+    -122.42940000,
+    37.76490000,
+    -122.42940000,
+    44,
+    'West Station',
+    '["defibrillator","oxygen"]'::jsonb,
+    '{"region": "west"}'::jsonb,
+    NULL,
+    NULL,
+    NULL,
+    3,
+    true,
+    NOW() - INTERVAL '20 days',
+    NOW() + INTERVAL '10 days',
+    30510
+  )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO ambulance_drivers (
+  id,
+  user_id,
+  license_number,
+  license_expiry,
+  certifications,
+  shift_status,
+  current_ambulance_id,
+  shift_start_time,
+  shift_end_time,
+  latitude,
+  longitude,
+  performance_metrics
+) VALUES
+  (
+    '660e8400-e29b-41d4-a716-446655440001',
+    '550e8400-e29b-41d4-a716-446655440003',
+    'DL-EMS-0001',
+    CURRENT_DATE + INTERVAL '365 days',
+    '["ALS","BLS"]'::jsonb,
+    'ON_DUTY',
+    '650e8400-e29b-41d4-a716-446655440001',
+    NOW() - INTERVAL '3 hours',
+    NOW() + INTERVAL '9 hours',
+    37.77490000,
+    -122.41940000,
+    '{"acceptance_rate": 0.98}'::jsonb
+  ),
+  (
+    '660e8400-e29b-41d4-a716-446655440002',
+    '550e8400-e29b-41d4-a716-446655440006',
+    'DL-EMS-0002',
+    CURRENT_DATE + INTERVAL '420 days',
+    '["BLS"]'::jsonb,
+    'ON_DUTY',
+    '650e8400-e29b-41d4-a716-446655440002',
+    NOW() - INTERVAL '2 hours',
+    NOW() + INTERVAL '10 hours',
+    37.78490000,
+    -122.40890000,
+    '{"acceptance_rate": 0.95}'::jsonb
+  )
+ON CONFLICT (license_number) DO NOTHING;
+
+INSERT INTO incidents (
+  id,
+  incident_number,
+  caller_name,
+  caller_phone,
+  location_lat,
+  location_lng,
+  location_address,
+  severity,
+  incident_type,
+  description,
+  patient_count,
+  priority_score,
+  status,
+  hospital_id,
+  created_by,
+  updated_by,
+  acknowledged_at,
+  dispatched_at,
+  en_route_at,
+  resolved_at,
+  created_at,
+  updated_at
+) VALUES
+  (
+    '850e8400-e29b-41d4-a716-446655440001',
+    'INC-2026-0001',
+    'Arun Patel',
+    '+14155550005',
+    37.78100000,
+    -122.41200000,
+    '123 Market St, San Francisco, CA',
+    'HIGH',
+    'CARDIAC',
+    'Caller reports chest pain and difficulty breathing.',
+    1,
+    120,
+    'EN_ROUTE',
+    '750e8400-e29b-41d4-a716-446655440001',
+    '550e8400-e29b-41d4-a716-446655440005',
+    '550e8400-e29b-41d4-a716-446655440002',
+    NOW() - INTERVAL '14 minutes',
+    NOW() - INTERVAL '11 minutes',
+    NOW() - INTERVAL '7 minutes',
+    NULL,
+    NOW() - INTERVAL '16 minutes',
+    NOW() - INTERVAL '7 minutes'
+  ),
+  (
+    '850e8400-e29b-41d4-a716-446655440002',
+    'INC-2026-0002',
+    'Maya Singh',
+    '+14155551234',
+    37.77250000,
+    -122.43100000,
+    '450 Oak St, San Francisco, CA',
+    'MEDIUM',
+    'ACCIDENT',
+    'Bike crash with possible leg fracture.',
+    1,
+    40,
+    'PENDING',
+    NULL,
+    '550e8400-e29b-41d4-a716-446655440005',
+    '550e8400-e29b-41d4-a716-446655440005',
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NOW() - INTERVAL '5 minutes',
+    NOW() - INTERVAL '5 minutes'
+  ),
+  (
+    '850e8400-e29b-41d4-a716-446655440003',
+    'INC-2026-0003',
+    'Ravi Kumar',
+    '+14155552345',
+    37.75900000,
+    -122.44700000,
+    '88 Sunset Blvd, San Francisco, CA',
+    'CRITICAL',
+    'STROKE',
+    'Sudden facial droop and speech difficulty.',
+    1,
+    160,
+    'RESOLVED',
+    '750e8400-e29b-41d4-a716-446655440002',
+    '550e8400-e29b-41d4-a716-446655440005',
+    '550e8400-e29b-41d4-a716-446655440002',
+    NOW() - INTERVAL '3 hours 26 minutes',
+    NOW() - INTERVAL '3 hours 23 minutes',
+    NOW() - INTERVAL '3 hours 18 minutes',
+    NOW() - INTERVAL '2 hours 35 minutes',
+    NOW() - INTERVAL '3 hours 30 minutes',
+    NOW() - INTERVAL '2 hours 35 minutes'
+  )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO assignments (
+  id,
+  incident_id,
+  ambulance_id,
+  hospital_id,
+  dispatcher_id,
+  status,
+  ambulance_reasoning,
+  hospital_reasoning,
+  auto_selected,
+  override_reason,
+  estimated_arrival_time,
+  route_info,
+  assigned_at,
+  accepted_at,
+  completed_at,
+  timeout_handled,
+  updated_by,
+  created_at,
+  updated_at
+) VALUES
+  (
+    '950e8400-e29b-41d4-a716-446655440001',
+    '850e8400-e29b-41d4-a716-446655440001',
+    '650e8400-e29b-41d4-a716-446655440001',
+    '750e8400-e29b-41d4-a716-446655440001',
+    '550e8400-e29b-41d4-a716-446655440002',
+    'ACCEPTED',
+    'Closest ALS unit with adequate fuel and active driver shift.',
+    'Best cardiac-capable hospital within 10 minutes.',
+    true,
+    NULL,
+    6,
+    '{"ambulance_to_incident": {"distance_km": 2.8, "estimated_time_minutes": 4}, "incident_to_hospital": {"distance_km": 3.2, "estimated_time_minutes": 6}, "total_estimated_time_minutes": 10}'::jsonb,
+    NOW() - INTERVAL '11 minutes',
+    NOW() - INTERVAL '10 minutes',
+    NULL,
+    false,
+    '550e8400-e29b-41d4-a716-446655440003',
+    NOW() - INTERVAL '11 minutes',
+    NOW() - INTERVAL '10 minutes'
+  ),
+  (
+    '950e8400-e29b-41d4-a716-446655440002',
+    '850e8400-e29b-41d4-a716-446655440003',
+    '650e8400-e29b-41d4-a716-446655440002',
+    '750e8400-e29b-41d4-a716-446655440002',
+    '550e8400-e29b-41d4-a716-446655440002',
+    'COMPLETED',
+    'Selected nearest available BLS ambulance with active crew.',
+    'Stroke-ready center with ICU capacity.',
+    true,
+    NULL,
+    7,
+    '{"ambulance_to_incident": {"distance_km": 4.2, "estimated_time_minutes": 5}, "incident_to_hospital": {"distance_km": 5.1, "estimated_time_minutes": 7}, "total_estimated_time_minutes": 12}'::jsonb,
+    NOW() - INTERVAL '3 hours 23 minutes',
+    NOW() - INTERVAL '3 hours 22 minutes',
+    NOW() - INTERVAL '2 hours 35 minutes',
+    true,
+    '550e8400-e29b-41d4-a716-446655440002',
+    NOW() - INTERVAL '3 hours 23 minutes',
+    NOW() - INTERVAL '2 hours 35 minutes'
+  )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO incident_audit_log (
+  id,
+  incident_id,
+  previous_state,
+  new_state,
+  action_type,
+  old_value,
+  new_value,
+  changed_by,
+  reason,
+  changed_at
+) VALUES
+  (
+    'a50e8400-e29b-41d4-a716-446655440001',
+    '850e8400-e29b-41d4-a716-446655440001',
+    'ACKNOWLEDGED',
+    'DISPATCHED',
+    'STATE_CHANGE',
+    NULL,
+    NULL,
+    '550e8400-e29b-41d4-a716-446655440002',
+    'Ambulance assigned automatically',
+    NOW() - INTERVAL '11 minutes'
+  ),
+  (
+    'a50e8400-e29b-41d4-a716-446655440002',
+    '850e8400-e29b-41d4-a716-446655440001',
+    'DISPATCHED',
+    'EN_ROUTE',
+    'STATE_CHANGE',
+    NULL,
+    NULL,
+    '550e8400-e29b-41d4-a716-446655440003',
+    'Driver accepted assignment',
+    NOW() - INTERVAL '10 minutes'
+  )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO audit_log (
+  id,
+  entity_type,
+  entity_id,
+  action,
+  user_id,
+  details,
+  metadata,
+  created_at
+) VALUES
+  (
+    'b50e8400-e29b-41d4-a716-446655440001',
+    'ASSIGNMENT',
+    '950e8400-e29b-41d4-a716-446655440001',
+    'CREATE',
+    '550e8400-e29b-41d4-a716-446655440002',
+    'Assignment created for cardiac incident INC-2026-0001',
+    '{"mode": "auto"}'::jsonb,
+    NOW() - INTERVAL '11 minutes'
+  )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO ambulance_status_history (
+  id,
+  ambulance_id,
+  previous_status,
+  new_status,
+  changed_by,
+  reason,
+  incident_id,
+  latitude,
+  longitude,
+  created_at
+) VALUES
+  (
+    'c50e8400-e29b-41d4-a716-446655440001',
+    '650e8400-e29b-41d4-a716-446655440001',
+    'AVAILABLE',
+    'DISPATCHED',
+    '550e8400-e29b-41d4-a716-446655440002',
+    'Assigned to INC-2026-0001',
+    '850e8400-e29b-41d4-a716-446655440001',
+    37.77490000,
+    -122.41940000,
+    NOW() - INTERVAL '11 minutes'
+  )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO ambulance_location_history (
+  ambulance_id,
+  location,
+  speed,
+  heading,
+  accuracy,
+  recorded_at
+) VALUES
+  (
+    '650e8400-e29b-41d4-a716-446655440001',
+    ST_SetSRID(ST_MakePoint(-122.41940000, 37.77490000), 4326)::geography,
+    42.50,
+    118.00,
+    6.20,
+    NOW() - INTERVAL '2 minutes'
+  ),
+  (
+    '650e8400-e29b-41d4-a716-446655440001',
+    ST_SetSRID(ST_MakePoint(-122.41780000, 37.77620000), 4326)::geography,
+    46.10,
+    122.00,
+    5.80,
+    NOW() - INTERVAL '1 minute'
+  )
+ON CONFLICT DO NOTHING;
+
+DO $$
+BEGIN
+  RAISE NOTICE 'Seed data loaded successfully.';
+  RAISE NOTICE 'Use any seeded account with password "password123".';
+END $$;
