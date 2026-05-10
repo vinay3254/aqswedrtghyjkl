@@ -37,6 +37,7 @@ export default function Navbar() {
             { to: "/patient",   label: "Patients" },
             { to: "/reminders", label: "Reminders" },
             { to: "/dispatch",  label: "Dispatch"  },
+            { to: "/mci",      label: "MCI Board" },
           ].map(({ to, label }) => (
             <Link
               key={to}

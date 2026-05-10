@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import {
   listAmbulances, listHospitals, dispatchEmergency,
   getDispatchHistory, updateDispatchStatus, updateAmbulanceStatus,
@@ -268,18 +269,24 @@ function HistoryPanel({ history, onStatusChange }) {
                   <p className="text-xs text-slate-500 truncate">{d.emergency?.reported_condition}</p>
                   <p className="text-xs text-slate-400">{d.emergency?.caller_location} · {timeAgo(d.createdAt)}</p>
                 </div>
-                {d.status === "active" && (
-                  <div className="flex gap-1 shrink-0">
-                    <button onClick={() => onStatusChange(d.dispatch_id, "resolved")}
-                      className="text-xs px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors">
-                      Resolve
-                    </button>
-                    <button onClick={() => onStatusChange(d.dispatch_id, "cancelled")}
-                      className="text-xs px-2 py-1 text-slate-500 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors">
-                      Cancel
-                    </button>
-                  </div>
-                )}
+                <div className="flex gap-1 shrink-0">
+                  <Link to={`/mci/${d.dispatch_id}`}
+                    className="text-xs px-2 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">
+                    MCI Board
+                  </Link>
+                  {d.status === "active" && (
+                    <>
+                      <button onClick={() => onStatusChange(d.dispatch_id, "resolved")}
+                        className="text-xs px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors">
+                        Resolve
+                      </button>
+                      <button onClick={() => onStatusChange(d.dispatch_id, "cancelled")}
+                        className="text-xs px-2 py-1 text-slate-500 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors">
+                        Cancel
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             );
           })}

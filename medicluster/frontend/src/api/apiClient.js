@@ -225,4 +225,48 @@ export async function updateDispatchStatus(dispatchId, status) {
   return res.data;
 }
 
+// ── Patient Triage (MCI board) ────────────────────────────────────────────────
+
+/** Get all patients for a dispatch incident. */
+export async function getIncidentPatients(incidentId) {
+  const res = await api.get(`/triage/incidents/${encodeURIComponent(incidentId)}`);
+  return res.data;
+}
+
+/** Add a patient to an incident (with optional vitals). */
+export async function addIncidentPatient(incidentId, data) {
+  const res = await api.post(`/triage/incidents/${encodeURIComponent(incidentId)}/patients`, data);
+  return res.data;
+}
+
+/** Update patient allocation, transport status, or triage category. */
+export async function updatePatient(patientId, patch) {
+  const res = await api.patch(`/triage/patients/${patientId}`, patch);
+  return res.data;
+}
+
+/** Append vitals reading + re-score triage. */
+export async function addPatientVitals(patientId, vitals) {
+  const res = await api.post(`/triage/patients/${patientId}/vitals`, vitals);
+  return res.data;
+}
+
+/** Stateless triage score from vitals (no DB write). */
+export async function scoreTriage(vitals, age, conditionText) {
+  const res = await api.post("/triage/score", { vitals, age, condition_text: conditionText });
+  return res.data;
+}
+
+/** Voice/text-to-triage: Claude extracts vitals + category from free text. */
+export async function voiceToTriage(text, incidentId) {
+  const res = await api.post("/triage/voice", { text, incidentId }, { timeout: 30_000 });
+  return res.data;
+}
+
+/** Suggest best hospital for a patient given triage category + pathway flags. */
+export async function allocateHospital(triage_category, pathway_flags, exclude_hospital_ids) {
+  const res = await api.post("/triage/allocate", { triage_category, pathway_flags, exclude_hospital_ids });
+  return res.data;
+}
+
 export default api;
