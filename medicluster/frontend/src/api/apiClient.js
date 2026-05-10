@@ -94,10 +94,31 @@ export function getMediaFileUrl(fileId) {
 
 /**
  * Run deep learning analysis on an uploaded image (CT scan / chest X-ray).
- * Returns { findings: [{label, confidence}], model, analyzedAt }
+ * Returns { findings: [{label, confidence}], model, model_label, analyzedAt }
  */
-export async function analyzePatientMedia(fileId) {
-  const res = await api.post(`/media/analyze/${fileId}`, {}, { timeout: 120_000 });
+export async function analyzePatientMedia(fileId, modelName = "densenet121-res224-all") {
+  const res = await api.post(`/media/analyze/${fileId}`, { model_name: modelName }, { timeout: 120_000 });
+  return res.data;
+}
+
+/**
+ * Request an AI plain-English explanation for a set of findings.
+ * Returns { explanation: string | null, error?: string }
+ */
+export async function explainFindings(fileId, findings, modelName = "densenet121-res224-chex") {
+  const res = await api.post(
+    `/media/explain/${fileId}`,
+    { findings, model_name: modelName },
+    { timeout: 30_000 }
+  );
+  return res.data;
+}
+
+/**
+ * List available AI models from the ML engine.
+ */
+export async function listModels() {
+  const res = await api.get("/media/models");
   return res.data;
 }
 
