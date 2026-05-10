@@ -122,4 +122,31 @@ export async function listModels() {
   return res.data;
 }
 
+/**
+ * List all saved ClusterResults (id, algorithm, createdAt, riskDistribution).
+ */
+export async function listClusterResults() {
+  const res = await api.get("/cluster/results");
+  return res.data;
+}
+
+/**
+ * Predict risk tier for new patient vitals against a saved cluster result.
+ * @param {string} resultId  MongoDB ObjectId of the ClusterResult
+ * @param {object} vitals    { age, bmi, glucose, ... }
+ */
+export async function predictRisk(resultId, vitals) {
+  const res = await api.post("/cluster/predict", { resultId, vitals });
+  return res.data;
+}
+
+/**
+ * Get clustering history for a specific patient (up to 5 most recent results).
+ * Returns [{ resultId, algorithm, createdAt, cluster_id, risk_tier, pca_x, pca_y }]
+ */
+export async function getPatientClusterHistory(patientId) {
+  const res = await api.get(`/cluster/patient/${encodeURIComponent(patientId)}`);
+  return res.data;
+}
+
 export default api;
