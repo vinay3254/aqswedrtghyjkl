@@ -12,6 +12,7 @@ const cors = require("cors");
 const dataRoutes = require("./routes/dataRoutes");
 const clusterRoutes = require("./routes/clusterRoutes");
 const mediaRoutes = require("./routes/mediaRoutes");
+const reminderRoutes = require("./routes/reminderRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -25,6 +26,7 @@ app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use("/api/data", dataRoutes);
 app.use("/api/cluster", clusterRoutes);
 app.use("/api/media", mediaRoutes);
+app.use("/api/reminders", reminderRoutes);
 
 app.get("/api/health", (_req, res) =>
   res.json({ status: "ok", service: "medicluster-backend" })

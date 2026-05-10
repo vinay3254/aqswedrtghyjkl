@@ -149,4 +149,30 @@ export async function getPatientClusterHistory(patientId) {
   return res.data;
 }
 
+// ── Medication Reminders ──────────────────────────────────────────────────────
+
+/** List all medication reminders for a patient. */
+export async function listReminders(patientId) {
+  const res = await api.get(`/reminders/${encodeURIComponent(patientId)}`);
+  return res.data;
+}
+
+/** Create a new medication reminder. */
+export async function createReminder(data) {
+  const res = await api.post("/reminders", data);
+  return res.data;
+}
+
+/** Toggle active state or update fields on a reminder. */
+export async function updateReminder(id, patch) {
+  const res = await api.patch(`/reminders/${id}`, patch);
+  return res.data;
+}
+
+/** Delete a reminder permanently. */
+export async function deleteReminder(id) {
+  const res = await api.delete(`/reminders/${id}`);
+  return res.data;
+}
+
 export default api;
