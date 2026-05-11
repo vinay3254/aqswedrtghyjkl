@@ -110,7 +110,7 @@ export default function AskAIPage() {
             </svg>
           </div>
           <div>
-            <h1 className="text-sm font-bold text-slate-900">Ask AI</h1>
+            <h1 className="text-sm font-bold text-slate-900">CliniQ</h1>
             <p className="text-xs text-slate-400">Upload any medical image — get condition, prevention, treatment & medications</p>
           </div>
         </div>
