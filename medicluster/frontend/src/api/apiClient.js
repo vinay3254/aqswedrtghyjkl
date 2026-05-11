@@ -115,6 +115,21 @@ export async function explainFindings(fileId, findings, modelName = "densenet121
 }
 
 /**
+ * Claude vision AI assistant — chat with an image.
+ * @param {string} fileId  GridFS file ID of the image
+ * @param {Array}  chatHistory  [{role, content}] previous turns (without image)
+ * @param {string} question  New follow-up question (empty string for initial analysis)
+ */
+export async function aiAssistant(fileId, chatHistory = [], question = "") {
+  const res = await api.post(
+    `/media/ai-assistant/${fileId}`,
+    { chatHistory, question },
+    { timeout: 60_000 }
+  );
+  return res.data;
+}
+
+/**
  * List available AI models from the ML engine.
  */
 export async function listModels() {
