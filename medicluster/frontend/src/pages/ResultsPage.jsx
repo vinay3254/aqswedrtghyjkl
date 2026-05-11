@@ -6,6 +6,7 @@ import RiskDonutChart       from "../components/RiskDonutChart";
 import MetricsPanel         from "../components/MetricsPanel";
 import PatientTable         from "../components/PatientTable";
 import ChartErrorBoundary   from "../components/ChartErrorBoundary";
+import AIClusterInsights    from "../components/AIClusterInsights";
 
 export default function ResultsPage() {
   const { id } = useParams();
@@ -78,6 +79,8 @@ export default function ResultsPage() {
           <MetricsPanel   metrics={result.metrics ?? {}} />
         </div>
       </div>
+
+      <AIClusterInsights result={result} />
 
       <PatientTable patients={result.patients ?? []} />
     </div>

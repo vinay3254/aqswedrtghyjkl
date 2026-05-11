@@ -15,6 +15,7 @@ const mediaRoutes = require("./routes/mediaRoutes");
 const reminderRoutes  = require("./routes/reminderRoutes");
 const dispatchRoutes  = require("./routes/dispatchRoutes");
 const triageRoutes    = require("./routes/triageRoutes");
+const aiRoutes        = require("./routes/aiRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -31,6 +32,7 @@ app.use("/api/media", mediaRoutes);
 app.use("/api/reminders", reminderRoutes);
 app.use("/api/dispatch", dispatchRoutes);
 app.use("/api/triage",  triageRoutes);
+app.use("/api/ai",      aiRoutes);
 
 app.get("/api/health", (_req, res) =>
   res.json({ status: "ok", service: "medicluster-backend" })

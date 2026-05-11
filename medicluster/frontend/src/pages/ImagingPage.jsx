@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   analyzePatientMedia, deletePatientMedia, getMediaFileUrl,
   listModels, listPatientMedia, uploadPatientMedia, explainFindings,
-  aiAssistant,
 } from "../api/apiClient";
 import { exportToPdf } from "../utils/exportPdf";
 
@@ -141,151 +140,11 @@ function DiseaseCard({ finding, allFindings, fileId, modelName, isFirst }) {
   );
 }
 
-function renderMarkdown(text) {
-  return text.split("\n").map((line, i) => {
-    const parts = line.split(/(\*\*[^*]+\*\*)/);
-    return (
-      <span key={i}>
-        {parts.map((part, j) =>
-          part.startsWith("**") && part.endsWith("**")
-            ? <strong key={j} className="font-semibold text-slate-800">{part.slice(2, -2)}</strong>
-            : part
-        )}
-        <br />
-      </span>
-    );
-  });
-}
-
-function AIAssistantPanel({ img }) {
-  const [messages, setMessages]   = useState([]);
-  const [input, setInput]         = useState("");
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState(null);
-  const bottomRef                 = useRef();
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
-
-  const send = useCallback(async (question = "") => {
-    setLoading(true);
-    setError(null);
-    try {
-      const history = messages.map((m) => ({ role: m.role, content: m.content }));
-      const data = await aiAssistant(img.gridfs_id, history, question);
-      const next = [...messages];
-      if (question) next.push({ role: "user", content: question });
-      next.push({ role: "assistant", content: data.reply });
-      setMessages(next);
-      setInput("");
-    } catch {
-      setError("AI Assistant temporarily unavailable. Try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, [img.gridfs_id, messages]);
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey && input.trim() && !loading) {
-      e.preventDefault();
-      send(input.trim());
-    }
-  };
-
-  return (
-    <div className="mt-3 border-t border-slate-100 pt-3 space-y-2">
-      <div className="flex items-center gap-1.5 mb-1">
-        <svg className="w-3.5 h-3.5 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-        </svg>
-        <span className="text-xs font-bold text-violet-700 uppercase tracking-wide">AI Assistant</span>
-      </div>
-
-      {messages.length === 0 && !loading && (
-        <button
-          onClick={() => send()}
-          className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg transition-colors"
-        >
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          Analyze with AI Assistant
-        </button>
-      )}
-
-      {(messages.length > 0 || loading) && (
-        <div className="bg-slate-50 rounded-lg border border-slate-100 max-h-72 overflow-y-auto p-2 space-y-2">
-          {messages.map((msg, i) => (
-            msg.role === "assistant" ? (
-              <div key={i} className="flex gap-2">
-                <div className="w-5 h-5 rounded-full bg-violet-100 flex items-center justify-center shrink-0 mt-0.5">
-                  <svg className="w-3 h-3 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <div className="bg-white border border-slate-100 rounded-lg px-2.5 py-2 text-xs text-slate-700 leading-relaxed flex-1 shadow-sm">
-                  {renderMarkdown(msg.content)}
-                </div>
-              </div>
-            ) : (
-              <div key={i} className="flex justify-end">
-                <div className="bg-violet-600 text-white rounded-lg px-2.5 py-1.5 text-xs max-w-[80%]">
-                  {msg.content}
-                </div>
-              </div>
-            )
-          ))}
-          {loading && (
-            <div className="flex gap-2">
-              <div className="w-5 h-5 rounded-full bg-violet-100 flex items-center justify-center shrink-0">
-                <div className="spinner w-2.5 h-2.5" />
-              </div>
-              <div className="bg-white border border-slate-100 rounded-lg px-2.5 py-2 text-xs text-slate-400 italic">
-                Analyzing…
-              </div>
-            </div>
-          )}
-          <div ref={bottomRef} />
-        </div>
-      )}
-
-      {error && <p className="text-xs text-red-500">{error}</p>}
-
-      {messages.length > 0 && (
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask a follow-up question…"
-            disabled={loading}
-            className="input-field text-xs flex-1 disabled:opacity-50"
-          />
-          <button
-            onClick={() => input.trim() && send(input.trim())}
-            disabled={loading || !input.trim()}
-            className="btn-primary text-xs py-1.5 px-3 disabled:opacity-40"
-          >
-            Send
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function ImageCard({ img, onAnalyze, onDelete, onLightbox, analyzing, selectedModel }) {
   const isDicom = img.original_name?.toLowerCase().endsWith(".dcm");
-  const [showAssistant, setShowAssistant] = useState(false);
 
   return (
-    <div className="panel flex flex-col gap-4 fade-in">
-    <div className="flex flex-col sm:flex-row gap-4">
+    <div className="panel flex flex-col sm:flex-row gap-4 fade-in">
       {/* Thumbnail */}
       <div
         className="shrink-0 relative w-full sm:w-48 h-48 rounded-lg overflow-hidden bg-slate-900 cursor-zoom-in"
@@ -416,33 +275,6 @@ function ImageCard({ img, onAnalyze, onDelete, onLightbox, analyzing, selectedMo
         )}
       </div>
     </div>
-
-    {!isDicom && (
-      <div>
-        <button
-          onClick={() => setShowAssistant((v) => !v)}
-          className={`w-full flex items-center justify-center gap-2 py-1.5 px-3 text-xs font-semibold rounded-lg border transition-colors ${
-            showAssistant
-              ? "bg-violet-100 text-violet-700 border-violet-200"
-              : "bg-slate-50 text-slate-500 hover:text-violet-700 hover:bg-violet-50 hover:border-violet-200 border-slate-200"
-          }`}
-        >
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-          </svg>
-          {showAssistant ? "Hide AI Assistant" : "Ask AI Assistant"}
-          <svg
-            className={`w-3 h-3 transition-transform ${showAssistant ? "rotate-180" : ""}`}
-            fill="none" viewBox="0 0 24 24" stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        {showAssistant && <AIAssistantPanel img={img} />}
-      </div>
-    )}
-  </div>
   );
 }
 

@@ -8,6 +8,7 @@ import PatientTable       from "../components/PatientTable";
 import ComparisonPanel    from "../components/ComparisonPanel";
 import DendrogramView     from "../components/DendrogramView";
 import ChartErrorBoundary from "../components/ChartErrorBoundary";
+import AIClusterInsights  from "../components/AIClusterInsights";
 import { runClustering }  from "../api/apiClient";
 import { exportToPdf }    from "../utils/exportPdf";
 
@@ -277,6 +278,10 @@ export default function DashboardPage() {
             )}
 
             {activePatients.length > 0 && <PatientTable patients={activePatients} />}
+
+            {result && activePatients.length > 0 && (
+              <AIClusterInsights result={result} />
+            )}
           </div>
         </div>
 

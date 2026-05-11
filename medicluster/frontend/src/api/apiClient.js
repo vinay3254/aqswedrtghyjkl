@@ -115,15 +115,16 @@ export async function explainFindings(fileId, findings, modelName = "densenet121
 }
 
 /**
- * Claude vision AI assistant — chat with an image.
- * @param {string} fileId  GridFS file ID of the image
- * @param {Array}  chatHistory  [{role, content}] previous turns (without image)
- * @param {string} question  New follow-up question (empty string for initial analysis)
+ * Ask AI — direct Claude vision chat using base64 image (no GridFS).
+ * @param {string} imageBase64  Raw base64 string (no data: prefix)
+ * @param {string} mediaType    MIME type e.g. "image/jpeg"
+ * @param {Array}  chatHistory  [{role, content}] previous turns
+ * @param {string} question     New message (empty for initial analysis)
  */
-export async function aiAssistant(fileId, chatHistory = [], question = "") {
+export async function aiChat(imageBase64, mediaType, chatHistory = [], question = "") {
   const res = await api.post(
-    `/media/ai-assistant/${fileId}`,
-    { chatHistory, question },
+    "/media/ai-chat",
+    { imageBase64, mediaType, chatHistory, question },
     { timeout: 60_000 }
   );
   return res.data;
@@ -281,6 +282,24 @@ export async function voiceToTriage(text, incidentId) {
 /** Suggest best hospital for a patient given triage category + pathway flags. */
 export async function allocateHospital(triage_category, pathway_flags, exclude_hospital_ids) {
   const res = await api.post("/triage/allocate", { triage_category, pathway_flags, exclude_hospital_ids });
+  return res.data;
+}
+
+// ── AI Clinical Copilot ───────────────────────────────────────────────────────
+
+/** Generate AI cohort insights for a clustering result. */
+export async function generateClusterInsights(result) {
+  const res = await api.post("/ai/cluster-insights", { result }, { timeout: 60_000 });
+  return res.data;
+}
+
+/** Extract medication reminders from free-text prescription notes. */
+export async function generateMedicationPlan(patientId, text, currentReminders = []) {
+  const res = await api.post(
+    "/ai/medication-plan",
+    { patientId, text, currentReminders },
+    { timeout: 60_000 }
+  );
   return res.data;
 }
 

@@ -234,6 +234,67 @@ Be clear, concise, and avoid unnecessary medical jargon. Do not provide a specif
   }
 });
 
+// POST /api/media/ai-chat  — Claude vision chat (direct base64, no GridFS)
+router.post("/ai-chat", async (req, res, next) => {
+  try {
+    const { imageBase64, mediaType, chatHistory = [], question = "" } = req.body;
+    if (!imageBase64) return res.status(400).json({ error: "imageBase64 is required" });
+
+    const SUPPORTED = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
+    const type = SUPPORTED.has(mediaType) ? mediaType : "image/jpeg";
+
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: "ANTHROPIC_API_KEY not configured" });
+
+    const Anthropic = require("@anthropic-ai/sdk");
+    const client = new Anthropic({ apiKey });
+
+    const systemPrompt = `You are a medical AI assistant helping analyze medical images.
+When first analyzing an image, structure your response with these clear sections:
+**Condition Name**: The medical condition or finding visible
+**What It Is**: A brief plain-English explanation
+**Prevention**: Steps to prevent this condition
+**Treatment / Cure**: How this condition is typically treated
+**Medications**: Common medications used for this condition
+
+For follow-up questions, respond conversationally.
+Always end with: "⚠️ Educational purposes only — consult a qualified physician for diagnosis and treatment."`;
+
+    const messages = [];
+
+    const firstUserText = chatHistory.length === 0
+      ? (question.trim() || "Please analyze this medical image. Tell me what condition is visible, how to prevent it, how to treat it, and what medications are commonly used.")
+      : chatHistory[0].content;
+
+    messages.push({
+      role: "user",
+      content: [
+        { type: "image", source: { type: "base64", media_type: type, data: imageBase64 } },
+        { type: "text", text: firstUserText },
+      ],
+    });
+
+    for (let i = 1; i < chatHistory.length; i++) {
+      messages.push({ role: chatHistory[i].role, content: chatHistory[i].content });
+    }
+
+    if (question.trim() && chatHistory.length > 0) {
+      messages.push({ role: "user", content: question.trim() });
+    }
+
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1024,
+      system: systemPrompt,
+      messages,
+    });
+
+    res.json({ reply: response.content[0].text });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // POST /api/media/ai-assistant/:fileId  — Claude vision AI assistant (chat)
 router.post("/ai-assistant/:fileId", async (req, res, next) => {
   try {

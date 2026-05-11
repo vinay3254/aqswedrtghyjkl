@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { listReminders, createReminder, updateReminder, deleteReminder } from "../api/apiClient";
+import {
+  listReminders,
+  createReminder,
+  updateReminder,
+  deleteReminder,
+  generateMedicationPlan,
+} from "../api/apiClient";
 
 const PRESET_TIMES = [
   { label: "Morning",   value: "08:00" },
@@ -332,6 +338,190 @@ function AddReminderForm({ patientId, onAdded }) {
   );
 }
 
+function AIPrescriptionPlanner({ patientId, reminders, onAdded, onError }) {
+  const [text, setText] = useState("");
+  const [plan, setPlan] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [savedKeys, setSavedKeys] = useState(new Set());
+
+  async function handleGenerate() {
+    if (!text.trim()) {
+      onError("Paste prescription text first");
+      return;
+    }
+    setLoading(true);
+    setPlan(null);
+    setSavedKeys(new Set());
+    try {
+      const data = await generateMedicationPlan(patientId, text, reminders);
+      setPlan(data);
+      if (data.error) onError(data.error);
+    } catch (err) {
+      onError(err?.response?.data?.error || "AI prescription parser failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function saveReminder(reminder, key) {
+    setSaving(true);
+    try {
+      const created = await createReminder({
+        patientId,
+        medicationName: reminder.medicationName,
+        dosage: reminder.dosage,
+        times: reminder.times,
+        frequency: reminder.frequency,
+        days: reminder.frequency === "weekly" ? reminder.days : [],
+        notes: reminder.notes,
+      });
+      onAdded(created);
+      setSavedKeys((prev) => new Set(prev).add(key));
+    } catch (err) {
+      onError(err?.response?.data?.error || "Failed to save AI reminder");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveAll() {
+    const pending = (plan?.reminders ?? [])
+      .map((reminder, index) => ({ reminder, key: `${reminder.medicationName}-${index}` }))
+      .filter(({ key }) => !savedKeys.has(key));
+    for (const item of pending) {
+      await saveReminder(item.reminder, item.key);
+    }
+  }
+
+  const pendingCount = (plan?.reminders ?? []).filter((reminder, index) => (
+    !savedKeys.has(`${reminder.medicationName}-${index}`)
+  )).length;
+
+  return (
+    <div className="bg-white rounded-xl border border-violet-200 p-5 space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <svg className="w-4 h-4 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+          <p className="text-sm font-semibold text-slate-700">AI Prescription Parser</p>
+        </div>
+        {plan?.source && (
+          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
+            plan.source === "ai"
+              ? "bg-violet-50 text-violet-700 border-violet-200"
+              : "bg-slate-50 text-slate-500 border-slate-200"
+          }`}>
+            {plan.source === "ai" ? "AI" : "Local"}
+          </span>
+        )}
+      </div>
+
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        rows={5}
+        placeholder="Paste prescription text, e.g. Metformin 500mg twice daily; Atorvastatin 20mg at night"
+        className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
+      />
+
+      <button
+        type="button"
+        onClick={handleGenerate}
+        disabled={loading || !text.trim()}
+        className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg py-2 transition-colors disabled:opacity-50"
+      >
+        {loading ? <><div className="spinner w-3.5 h-3.5" />Extracting...</> : "Extract schedule"}
+      </button>
+
+      {plan?.warnings?.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 space-y-1">
+          {plan.warnings.map((warning) => (
+            <p key={warning} className="text-xs text-amber-700">{warning}</p>
+          ))}
+        </div>
+      )}
+
+      {plan?.reminders?.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+              Suggested reminders
+            </p>
+            {pendingCount > 1 && (
+              <button
+                type="button"
+                onClick={saveAll}
+                disabled={saving}
+                className="text-xs font-semibold text-violet-700 hover:text-violet-900 disabled:opacity-50"
+              >
+                Add all
+              </button>
+            )}
+          </div>
+
+          {plan.reminders.map((reminder, index) => {
+            const key = `${reminder.medicationName}-${index}`;
+            const saved = savedKeys.has(key);
+            return (
+              <div key={key} className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-800 truncate">{reminder.medicationName}</p>
+                    <p className="text-xs text-slate-400">
+                      {[reminder.dosage, FREQ_LABELS[reminder.frequency] ?? reminder.frequency]
+                        .filter(Boolean).join(" · ")}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => saveReminder(reminder, key)}
+                    disabled={saving || saved}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
+                      saved
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : "bg-white text-violet-700 border-violet-200 hover:bg-violet-50"
+                    }`}
+                  >
+                    {saved ? "Added" : "Add"}
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5">
+                  {(reminder.times ?? []).map((time) => (
+                    <span key={time} className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                      {timeLabel(time)}
+                    </span>
+                  ))}
+                  {reminder.days?.map((day) => (
+                    <span key={day} className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                      {day}
+                    </span>
+                  ))}
+                </div>
+
+                {reminder.notes && (
+                  <p className="text-xs text-slate-500 leading-relaxed">{reminder.notes}</p>
+                )}
+              </div>
+            );
+          })}
+
+          {plan.counseling?.length > 0 && (
+            <div className="border-t border-slate-100 pt-3 space-y-1">
+              {plan.counseling.map((item) => (
+                <p key={item} className="text-xs text-slate-400">{item}</p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TodaySchedule({ reminders }) {
   const active = reminders.filter((r) => r.active);
   if (active.length === 0) return null;
@@ -522,8 +712,14 @@ export default function RemindersPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             {/* Left column: add form */}
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-1 space-y-5">
               <AddReminderForm patientId={patientId} onAdded={handleAdded} />
+              <AIPrescriptionPlanner
+                patientId={patientId}
+                reminders={reminders}
+                onAdded={handleAdded}
+                onError={setError}
+              />
             </div>
 
             {/* Right column: today's schedule + reminder list */}
