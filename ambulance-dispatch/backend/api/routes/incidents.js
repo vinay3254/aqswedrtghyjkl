@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const controller = require('../../services/incidents/controller');
+const controller = require('../services/incidents/controller');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { authenticateToken } = require('../middleware/auth');
 const { checkRole } = require('../middleware/rbac');

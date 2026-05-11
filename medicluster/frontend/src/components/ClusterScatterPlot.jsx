@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   ScatterChart, Scatter, XAxis, YAxis, ZAxis,
   CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -41,7 +41,7 @@ function CustomTooltip({ active, payload }) {
   );
 }
 
-export default function ClusterScatterPlot({ patients = [], featureNames = [] }) {
+export default function ClusterScatterPlot({ patients = [], featureNames = [], onPatientClick }) {
   const [xAxis, setXAxis] = useState("pca_x");
   const [yAxis, setYAxis] = useState("pca_y");
 
@@ -110,6 +110,8 @@ export default function ClusterScatterPlot({ patients = [], featureNames = [] })
                 fill={RISK_COLORS[tier] ?? "#888"}
                 fillOpacity={tier === "Noise" ? 0.4 : 0.85}
                 shape={tier === "Noise" ? "cross" : "circle"}
+                onClick={(point) => onPatientClick?.(point)}
+                style={{ cursor: onPatientClick ? "pointer" : "default" }}
               />
             ))}
           </ScatterChart>

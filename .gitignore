@@ -32,3 +32,6 @@ logs/
 venv/
 .venv/
 env/
+
+# Claude Code local config
+.claude/

@@ -326,26 +326,34 @@ def cluster():
 # Image analysis route
 # ─────────────────────────────────────────────────────────────────────────────
 
+@app.route("/models", methods=["GET"])
+def list_models():
+    from imaging.analyzer import list_models as _list, DEFAULT_MODEL
+    return jsonify({"models": _list(), "default": DEFAULT_MODEL})
+
+
 @app.route("/analyze-image", methods=["POST"])
 def analyze_image():
     """
     Analyze a chest X-ray / CT scan image for pathology findings.
 
-    Body: { image_b64: "<base64-encoded image bytes>" }
-
-    Returns: { findings: [{label, confidence}], model }
+    Body: { image_b64: str, model_name?: str, filename?: str }
+    Returns: { findings: [{label, confidence}], model, model_label }
     """
     import base64
-    from imaging.analyzer import analyze_image as _analyze
+    from imaging.analyzer import analyze_image as _analyze, DEFAULT_MODEL
 
     body = request.get_json(force=True)
     image_b64 = body.get("image_b64")
+    model_name = body.get("model_name", DEFAULT_MODEL)
+    filename = body.get("filename", "")
+
     if not image_b64:
         return jsonify({"error": "image_b64 is required"}), 400
 
     try:
         image_bytes = base64.b64decode(image_b64)
-        result = _analyze(image_bytes)
+        result = _analyze(image_bytes, model_name=model_name, filename=filename)
         return jsonify(result)
     except Exception as e:
         traceback.print_exc()

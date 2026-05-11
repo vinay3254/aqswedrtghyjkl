@@ -35,6 +35,7 @@ export default function DashboardPage({ user, onLogout }) {
 
   const [selectedIncident, setSelectedIncident] = useState(null);
   const [activeAssignment, setActiveAssignment] = useState(null);
+  const [focusAmbulance, setFocusAmbulance] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(true);
   const [tabValue, setTabValue] = useState(0);
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -345,8 +346,9 @@ export default function DashboardPage({ user, onLogout }) {
               hospitals={hospitals}
               selectedIncident={selectedIncident}
               activeAssignment={activeAssignment}
+              focusAmbulance={focusAmbulance}
               onIncidentClick={handleIncidentSelect}
-              onAmbulanceClick={(amb) => console.log('Ambulance clicked:', amb)}
+              onAmbulanceClick={setFocusAmbulance}
               onHospitalClick={(hosp) => console.log('Hospital clicked:', hosp)}
             />
           </Paper>
@@ -363,7 +365,7 @@ export default function DashboardPage({ user, onLogout }) {
           }}>
             <LiveTrackingPanel
               ambulances={ambulances}
-              onAmbulanceSelect={(amb) => console.log('Tracking:', amb)}
+              onAmbulanceSelect={(amb) => setFocusAmbulance({ ...amb, _ts: Date.now() })}
             />
           </Paper>
         )}

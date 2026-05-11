@@ -3,7 +3,7 @@ const router = express.Router();
 const { asyncHandler } = require('../middleware/errorHandler');
 const { authenticateToken } = require('../middleware/auth');
 const { checkRole } = require('../middleware/rbac');
-const DispatchController = require('../../services/dispatch/controller');
+const DispatchController = require('../services/dispatch/controller');
 
 router.post(
   '/',

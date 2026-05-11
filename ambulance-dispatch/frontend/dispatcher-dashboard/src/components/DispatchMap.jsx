@@ -14,10 +14,16 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-const AMBULANCE_ICON = L.divIcon({
-  html: '<div style="font-size: 24px; text-shadow: 1px 1px 2px white;">🚑</div>',
-  iconSize: [30, 30],
-  iconAnchor: [15, 15],
+const makeAmbulanceIcon = (moving = false) => L.divIcon({
+  html: moving
+    ? `<div style="position:relative;width:36px;height:36px">
+        <div style="position:absolute;inset:0;border-radius:50%;background:rgba(59,130,246,0.25);animation:amb-ring 1.2s infinite"></div>
+        <div style="position:absolute;inset:4px;border-radius:50%;background:rgba(59,130,246,0.15);animation:amb-ring 1.2s 0.4s infinite"></div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:20px">🚑</div>
+       </div>`
+    : '<div style="font-size:22px;text-shadow:1px 1px 3px rgba(0,0,0,0.6)">🚑</div>',
+  iconSize: [36, 36],
+  iconAnchor: [18, 18],
   className: 'ambulance-marker'
 });
 
@@ -61,11 +67,12 @@ export default function DispatchMap({
   hospitals = [],
   selectedIncident,
   activeAssignment,
+  focusAmbulance,
   onIncidentClick,
   onAmbulanceClick,
   onHospitalClick,
-  center = [20.5937, 78.9629], // India center
-  zoom = 5
+  center = [19.0760, 72.8777], // Mumbai default
+  zoom = 12
 }) {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -74,9 +81,10 @@ export default function DispatchMap({
     ambulances: new Map(),
     hospitals: new Map()
   });
-  // routeLayerRef: active-assignment confirmed route lines
+  const trailsRef = useRef(new Map());       // ambulance trail polylines
+  const trailPointsRef = useRef(new Map());  // ambulance trail point history
+  const followIdRef = useRef(null);          // ambulance id being auto-followed
   const routeLayerRef = useRef(null);
-  // nearbyLayerRef: preview nearby-ambulance and hospital proximity lines (cleared when assignment arrives)
   const nearbyLayerRef = useRef(null);
 
   useEffect(() => {
@@ -136,37 +144,65 @@ export default function DispatchMap({
     });
   }, [incidents, onIncidentClick]);
 
-  // Update ambulance markers
+  // Update ambulance markers + trails
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
     const currentIds = new Set(ambulances.map(a => a.id));
-    
+    const TRAIL_MAX = 12;
+
+    // Remove stale markers and trails
     markersRef.current.ambulances.forEach((marker, id) => {
       if (!currentIds.has(id)) {
         mapInstanceRef.current.removeLayer(marker);
         markersRef.current.ambulances.delete(id);
+        const trail = trailsRef.current.get(id);
+        if (trail) { mapInstanceRef.current.removeLayer(trail); trailsRef.current.delete(id); }
+        trailPointsRef.current.delete(id);
       }
     });
 
     ambulances.forEach(ambulance => {
       if (!ambulance.latitude || !ambulance.longitude) return;
-      
+      const moving = ['EN_ROUTE', 'TRANSPORTING'].includes(ambulance.status);
+      const latlng = [ambulance.latitude, ambulance.longitude];
+
+      // --- Trail ---
+      if (moving) {
+        const pts = trailPointsRef.current.get(ambulance.id) || [];
+        pts.push(latlng);
+        if (pts.length > TRAIL_MAX) pts.shift();
+        trailPointsRef.current.set(ambulance.id, pts);
+
+        const existing = trailsRef.current.get(ambulance.id);
+        if (existing) {
+          existing.setLatLngs(pts);
+        } else if (pts.length >= 2) {
+          const trail = L.polyline(pts, {
+            color: '#3b82f6', weight: 3, opacity: 0.6, dashArray: '4,4'
+          }).addTo(mapInstanceRef.current);
+          trailsRef.current.set(ambulance.id, trail);
+        }
+      }
+
+      // --- Marker ---
       const existingMarker = markersRef.current.ambulances.get(ambulance.id);
-      
       if (existingMarker) {
-        existingMarker.setLatLng([ambulance.latitude, ambulance.longitude]);
+        existingMarker.setLatLng(latlng);
+        existingMarker.setIcon(makeAmbulanceIcon(moving));
       } else {
-        const marker = L.marker([ambulance.latitude, ambulance.longitude], { icon: AMBULANCE_ICON })
+        const marker = L.marker(latlng, { icon: makeAmbulanceIcon(moving) })
           .addTo(mapInstanceRef.current)
-          .bindPopup(`
-            <strong>${ambulance.call_sign || ambulance.vehicle_number}</strong><br/>
-            Type: ${ambulance.type}<br/>
-            Status: ${ambulance.status}
-          `)
-          .on('click', () => onAmbulanceClick?.(ambulance));
-        
+          .bindPopup(`<strong>${ambulance.call_sign || ambulance.vehicle_number}</strong><br/>
+            ${ambulance.driver || ''}<br/>
+            Status: <b>${ambulance.status}</b>`)
+          .on('click', () => { followIdRef.current = ambulance.id; onAmbulanceClick?.(ambulance); });
         markersRef.current.ambulances.set(ambulance.id, marker);
+      }
+
+      // Auto-follow selected ambulance
+      if (followIdRef.current === ambulance.id && moving) {
+        mapInstanceRef.current.panTo(latlng, { animate: true, duration: 1 });
       }
     });
   }, [ambulances, onAmbulanceClick]);
@@ -205,6 +241,16 @@ export default function DispatchMap({
       }
     });
   }, [hospitals, onHospitalClick]);
+
+  // Fly to ambulance and start auto-follow when selected from panel
+  useEffect(() => {
+    if (!mapInstanceRef.current || !focusAmbulance) return;
+    const { latitude, longitude, id } = focusAmbulance;
+    if (latitude && longitude) {
+      followIdRef.current = id;
+      mapInstanceRef.current.flyTo([latitude, longitude], 15, { duration: 1.2 });
+    }
+  }, [focusAmbulance]);
 
   /**
    * Effect 1 — Preview nearby ambulance + top-3 hospitals when an incident is selected.
@@ -362,6 +408,10 @@ export default function DispatchMap({
         '& .ambulance-marker, & .hospital-marker, & .incident-marker': {
           background: 'transparent',
           border: 'none'
+        },
+        '@keyframes amb-ring': {
+          '0%': { transform: 'scale(0.6)', opacity: 0.8 },
+          '100%': { transform: 'scale(1.8)', opacity: 0 },
         },
         '& .critical': {
           animation: 'pulse 1s infinite'

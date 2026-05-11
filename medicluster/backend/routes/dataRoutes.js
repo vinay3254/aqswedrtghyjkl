@@ -46,11 +46,21 @@ router.post("/upload", upload.single("file"), async (req, res, next) => {
 
     const csvText = req.file.buffer.toString("utf8");
 
+    // Auto-detect delimiter from first line (comma vs semicolon vs tab)
+    const firstLine = csvText.slice(0, csvText.indexOf("\n") || 1000);
+    const counts = {
+      ",": (firstLine.match(/,/g) || []).length,
+      ";": (firstLine.match(/;/g) || []).length,
+      "\t": (firstLine.match(/\t/g) || []).length,
+    };
+    const delimiter = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+
     // Parse CSV
     const records = parse(csvText, {
       columns: true,
       skip_empty_lines: true,
       trim: true,
+      delimiter,
       cast: (value, context) => {
         if (context.header) return value;
         const num = Number(value);

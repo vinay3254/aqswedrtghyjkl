@@ -5,51 +5,6 @@ const parseIntValue = (value, fallback) => {
   return Number.isNaN(parsed) ? fallback : parsed;
 };
 
-const buildDatabaseConfig = () => {
-  const baseConfig = {
-    max: parseIntValue(process.env.DB_MAX_POOL, 20),
-    idleTimeoutMillis: parseIntValue(process.env.DB_IDLE_TIMEOUT, 30000),
-    connectionTimeoutMillis: parseIntValue(process.env.DB_CONNECTION_TIMEOUT, 2000),
-  };
-
-  if (process.env.DATABASE_URL) {
-    return {
-      connectionString: process.env.DATABASE_URL,
-      ...baseConfig,
-    };
-  }
-
-  return {
-    host: process.env.DB_HOST || 'localhost',
-    port: parseIntValue(process.env.DB_PORT, 5432),
-    database: process.env.DB_NAME || 'ambulance_dispatch',
-    user: process.env.DB_USER || 'admin',
-    password: process.env.DB_PASSWORD || 'changeme',
-    ...baseConfig,
-  };
-};
-
-const buildRedisConfig = () => {
-  const baseConfig = {
-    ttl: parseIntValue(process.env.REDIS_TTL, 3600),
-  };
-
-  if (process.env.REDIS_URL) {
-    return {
-      url: process.env.REDIS_URL,
-      ...baseConfig,
-    };
-  }
-
-  return {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseIntValue(process.env.REDIS_PORT, 6379),
-    password: process.env.REDIS_PASSWORD || undefined,
-    db: parseIntValue(process.env.REDIS_DB, 0),
-    ...baseConfig,
-  };
-};
-
 const config = {
   env: process.env.NODE_ENV || 'development',
   port: parseIntValue(process.env.PORT, 3000),
@@ -65,7 +20,7 @@ const config = {
   cors: {
     origin: process.env.CORS_ORIGIN
       ? process.env.CORS_ORIGIN.split(',')
-      : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3001', 'http://localhost:3002'],
+      : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174'],
     credentials: true,
     optionsSuccessStatus: 200,
   },
@@ -78,9 +33,9 @@ const config = {
     legacyHeaders: false,
   },
 
-  database: buildDatabaseConfig(),
-
-  redis: buildRedisConfig(),
+  database: {
+    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/ambulance_dispatch',
+  },
 
   logging: {
     level: process.env.LOG_LEVEL || 'info',

@@ -34,7 +34,7 @@ export default function LoginPage({ onLogin }) {
 
     try {
       const response = await authApi.login(email, password);
-      const { token, user } = response.data;
+      const { token, user } = response.data.data;
       localStorage.setItem('authToken', token);
       localStorage.setItem('user', JSON.stringify(user));
       onLogin(user);

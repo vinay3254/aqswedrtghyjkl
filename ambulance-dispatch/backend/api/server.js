@@ -2,10 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
+const mongoose = require('mongoose');
 const config = require('./config/config');
 const logger = require('./utils/logger');
 const db = require('./config/database');
-const redis = require('./config/redis');
 
 const { requestLogger, requestId, metricsMiddleware, loggerMiddleware } = require('./middleware/logger');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
@@ -87,25 +87,16 @@ app.use(errorHandler);
 
 const PORT = config.port;
 
-const server = app.listen(PORT, () => {
-  logger.info(`🚑 API Gateway running on port ${PORT}`);
-  logger.info(`Environment: ${config.env}`);
-  logger.info(`API Version: ${config.apiVersion}`);
-});
-
 const gracefulShutdown = async (signal) => {
   logger.info(`${signal} received. Starting graceful shutdown...`);
-  
+
   server.close(async () => {
     logger.info('HTTP server closed');
-    
+
     try {
-      await db.pool.end();
-      logger.info('Database connections closed');
-      
-      redis.redis.disconnect();
-      logger.info('Redis connection closed');
-      
+      await mongoose.disconnect();
+      logger.info('MongoDB connection closed');
+
       logger.info('Graceful shutdown completed');
       process.exit(0);
     } catch (error) {
@@ -120,7 +111,22 @@ const gracefulShutdown = async (signal) => {
   }, 10000);
 };
 
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+let server;
+
+db.connect()
+  .then(() => {
+    server = app.listen(PORT, () => {
+      logger.info(`🚑 API Gateway running on port ${PORT}`);
+      logger.info(`Environment: ${config.env}`);
+      logger.info(`API Version: ${config.apiVersion}`);
+    });
+
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  })
+  .catch(err => {
+    logger.error('Failed to connect to MongoDB:', err);
+    process.exit(1);
+  });
 
 module.exports = app;

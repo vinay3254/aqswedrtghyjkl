@@ -1,10 +1,5 @@
-/**
- * dispatchBroadcast.js
- * Cross-tab messaging between dispatcher dashboard and driver interface
- * using the BroadcastChannel API (works on same origin, no server needed).
- */
-
 const CHANNEL_NAME = 'ambulance-dispatch';
+const STORAGE_KEY = 'dispatch_latest_event';
 
 class DispatchBroadcast {
   constructor() {
@@ -14,26 +9,55 @@ class DispatchBroadcast {
   }
 
   _init() {
-    if (typeof BroadcastChannel === 'undefined') return; // SSR safety
-    this.channel = new BroadcastChannel(CHANNEL_NAME);
-    this.channel.onmessage = (e) => {
-      const { type, payload } = e.data || {};
-      if (!type) return;
-      const handlers = this.listeners.get(type) || [];
-      handlers.forEach(fn => fn(payload));
-      // wildcard listeners
-      const all = this.listeners.get('*') || [];
-      all.forEach(fn => fn({ type, payload }));
-    };
+    if (typeof BroadcastChannel !== 'undefined') {
+      this.channel = new BroadcastChannel(CHANNEL_NAME);
+      // Receive events from OTHER tabs
+      this.channel.onmessage = (e) => {
+        const { type, payload } = e.data || {};
+        if (type) this._fire(type, payload);
+      };
+    }
+
+    // Storage event fires in OTHER tabs when localStorage changes
+    // — acts as a fallback and also lets late-opening tabs replay the last event
+    window.addEventListener('storage', (e) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        try {
+          const { type, payload } = JSON.parse(e.newValue);
+          if (type) this._fire(type, payload);
+        } catch {}
+      }
+    });
   }
 
-  /** Send a typed message to all other tabs */
+  _fire(type, payload) {
+    (this.listeners.get(type) || []).forEach(fn => fn(payload));
+    (this.listeners.get('*') || []).forEach(fn => fn({ type, payload }));
+  }
+
+  /** Send a typed message — reaches same tab, other tabs, and late-opening tabs */
   send(type, payload = {}) {
-    if (!this.channel) return;
-    this.channel.postMessage({ type, payload });
+    const msg = { type, payload, ts: Date.now() };
+    // 1. Other tabs via BroadcastChannel
+    this.channel?.postMessage(msg);
+    // 2. Other tabs via localStorage storage event
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(msg));
+    // 3. Same tab — fire listeners directly (BroadcastChannel skips same tab)
+    this._fire(type, payload);
   }
 
-  /** Listen for a specific message type (or '*' for all) */
+  /** Call on mount to replay last persisted event (catches late-opening driver tab) */
+  replayLast(maxAgeMs = 60000) {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const msg = JSON.parse(raw);
+      if (Date.now() - msg.ts < maxAgeMs) {
+        this._fire(msg.type, msg.payload);
+      }
+    } catch {}
+  }
+
   on(type, handler) {
     if (!this.listeners.has(type)) this.listeners.set(type, []);
     this.listeners.get(type).push(handler);
@@ -41,20 +65,16 @@ class DispatchBroadcast {
 
   off(type, handler) {
     if (!this.listeners.has(type)) return;
-    const updated = this.listeners.get(type).filter(fn => fn !== handler);
-    this.listeners.set(type, updated);
+    this.listeners.set(type, this.listeners.get(type).filter(fn => fn !== handler));
   }
 
-  destroy() {
-    this.channel?.close();
-  }
+  destroy() { this.channel?.close(); }
 }
 
 export const dispatchBroadcast = new DispatchBroadcast();
 
-/** Message types */
 export const DISPATCH_EVENTS = {
-  SOS_CREATED:        'SOS_CREATED',        // new SOS incident → notify driver
-  INCIDENT_ASSIGNED:  'INCIDENT_ASSIGNED',  // ambulance assigned to incident
-  INCIDENT_UPDATED:   'INCIDENT_UPDATED',   // status change
+  SOS_CREATED:       'SOS_CREATED',
+  INCIDENT_ASSIGNED: 'INCIDENT_ASSIGNED',
+  INCIDENT_UPDATED:  'INCIDENT_UPDATED',
 };

@@ -32,11 +32,15 @@ def preprocess(df: pd.DataFrame, return_report: bool = False):
     rows_before = len(df)
     original_columns = list(df.columns)
 
-    # ── 1. Separate patient_id ────────────────────────────────────────────
+    # ── 1. Separate patient_id / drop bare id columns ─────────────────────
     id_col = None
     if "patient_id" in df.columns:
         id_col = df["patient_id"].copy()
         df = df.drop(columns=["patient_id"])
+    # Drop any column that is just a sequential row identifier
+    id_like = [c for c in df.columns if c.lower() in ("id", "row_id", "row_num", "index")]
+    if id_like:
+        df = df.drop(columns=id_like)
 
     # ── 2. Keep only numeric columns ─────────────────────────────────────
     numeric_columns = list(df.select_dtypes(include=[np.number]).columns)

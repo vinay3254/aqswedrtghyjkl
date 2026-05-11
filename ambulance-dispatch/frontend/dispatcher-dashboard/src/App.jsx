@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import DashboardPage from './pages/DashboardPage';
-import LoginPage from './pages/LoginPage';
 import DriverInterface from './pages/DriverInterface';
 
 const theme = createTheme({
@@ -29,45 +28,16 @@ const theme = createTheme({
   }
 });
 
+const DEFAULT_USER = { id: 'dispatcher-1', name: 'Dispatcher', role: 'DISPATCHER', email: 'dispatcher@medicluster.com' };
+
 function App() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    const savedUser = localStorage.getItem('user');
-    if (token && savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setLoading(false);
-  }, []);
-
-  const handleLogin = (userData) => setUser(userData);
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
-    setUser(null);
-  };
-
-  if (loading) return null;
-
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <HashRouter>
         <Routes>
-          {/* Driver interface – always accessible */}
           <Route path="/driver" element={<DriverInterface />} />
-
-          {/* Main dispatcher dashboard */}
-          <Route
-            path="*"
-            element={
-              user
-                ? <DashboardPage user={user} onLogout={handleLogout} />
-                : <LoginPage onLogin={handleLogin} />
-            }
-          />
+          <Route path="*" element={<DashboardPage user={DEFAULT_USER} onLogout={() => {}} />} />
         </Routes>
       </HashRouter>
     </ThemeProvider>

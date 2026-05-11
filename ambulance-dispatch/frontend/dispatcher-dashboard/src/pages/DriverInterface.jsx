@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Box, Typography, Paper, Button, Chip, Avatar, Divider,
-  IconButton, Slide, Fade, LinearProgress, Snackbar, Alert
+  Box, Typography, Paper, Button, Chip,
+  IconButton, Slide, LinearProgress, Snackbar, Alert, Divider
 } from '@mui/material';
 import {
   Warning, CheckCircle, Cancel, Navigation, Phone,
-  FiberManualRecord, ArrowBack
+  FiberManualRecord, ArrowBack, Map as MapIcon, ViewList
 } from '@mui/icons-material';
 import { dispatchBroadcast, DISPATCH_EVENTS } from '../services/dispatchBroadcast';
+import DriverMap from '../components/DriverMap';
 
 /* ── Mock data ─────────────────────────────────────── */
 const MOCK_DRIVER = {
@@ -287,12 +288,33 @@ export default function DriverInterface({ onBack }) {
   const [time, setTime] = useState(new Date());
   const [incidentQueue, setIncidentQueue] = useState(PENDING_INCIDENTS);
   const [toast, setToast] = useState(null);
+  const [showMap, setShowMap] = useState(true);
+  const [driverPos, setDriverPos] = useState({ lat: MOCK_DRIVER.latitude, lng: MOCK_DRIVER.longitude });
+  const driverPosRef = useRef({ lat: MOCK_DRIVER.latitude, lng: MOCK_DRIVER.longitude });
 
   // Clock
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  // Simulate GPS movement toward incident when on mission
+  useEffect(() => {
+    if (!activeIncident || !['EN_ROUTE', 'TRANSPORTING'].includes(missionStatus)) return;
+    const target = missionStatus === 'EN_ROUTE'
+      ? { lat: activeIncident.location_lat || 19.0596, lng: activeIncident.location_lng || 72.8295 }
+      : { lat: activeIncident.hospital?.latitude || 19.0728, lng: activeIncident.hospital?.longitude || 72.8826 };
+
+    const interval = setInterval(() => {
+      const cur = driverPosRef.current;
+      const dlat = (target.lat - cur.lat) * 0.06 + (Math.random() - 0.5) * 0.0002;
+      const dlng = (target.lng - cur.lng) * 0.06 + (Math.random() - 0.5) * 0.0002;
+      const next = { lat: cur.lat + dlat, lng: cur.lng + dlng };
+      driverPosRef.current = next;
+      setDriverPos({ ...next });
+    }, 1500);
+    return () => clearInterval(interval);
+  }, [activeIncident, missionStatus]);
 
   // ── Listen for real dispatches from the dispatcher tab ──
   useEffect(() => {
@@ -340,25 +362,32 @@ export default function DriverInterface({ onBack }) {
 
     dispatchBroadcast.on(DISPATCH_EVENTS.SOS_CREATED, handleSOS);
     dispatchBroadcast.on(DISPATCH_EVENTS.INCIDENT_ASSIGNED, handleAssigned);
+
+    // Replay the last dispatch in case this tab opened after it was sent
+    dispatchBroadcast.replayLast(120000); // within last 2 minutes
+
     return () => {
       dispatchBroadcast.off(DISPATCH_EVENTS.SOS_CREATED, handleSOS);
       dispatchBroadcast.off(DISPATCH_EVENTS.INCIDENT_ASSIGNED, handleAssigned);
     };
   }, []);
 
-  // Simulate speed when on mission
+  // Simulate speed readout
   useEffect(() => {
     if (!activeIncident) { setSpeed(0); return; }
     const t = setInterval(() => {
       setSpeed(['EN_ROUTE', 'TRANSPORTING'].includes(missionStatus)
-        ? 40 + Math.floor(Math.random() * 40) : 0);
-    }, 2000);
+        ? 45 + Math.floor(Math.random() * 35) : 0);
+    }, 1500);
     return () => clearInterval(t);
   }, [activeIncident, missionStatus]);
 
   const handleAccept = () => {
     setActiveIncident(alertIncident);
     setMissionStatus('EN_ROUTE');
+    setShowMap(true);
+    setDriverPos({ lat: MOCK_DRIVER.latitude, lng: MOCK_DRIVER.longitude });
+    driverPosRef.current = { lat: MOCK_DRIVER.latitude, lng: MOCK_DRIVER.longitude };
     setIncidentQueue(q => q.filter(i => i.id !== alertIncident.id));
     setAlertIncident(null);
   };
@@ -369,7 +398,7 @@ export default function DriverInterface({ onBack }) {
   return (
     <Box sx={{
       minHeight: '100vh',
-      background: 'linear-gradient(160deg, #0d0d1a 0%, #0f1629 60%, #0d1117 100%)',
+      background: '#0d1117',
       display: 'flex', flexDirection: 'column',
       maxWidth: 480, mx: 'auto', position: 'relative',
     }}>
@@ -382,82 +411,66 @@ export default function DriverInterface({ onBack }) {
         />
       )}
 
-      {/* Top Bar */}
+      {/* ── Top Bar ── */}
       <Box sx={{
-        display: 'flex', alignItems: 'center', gap: 1.5, p: 2, pb: 1,
-        background: 'linear-gradient(180deg, rgba(0,0,0,0.6), transparent)',
-        pt: alertIncident ? 14 : 2,
-        transition: 'padding-top 0.3s',
+        display: 'flex', alignItems: 'center', gap: 1, px: 2, py: 1,
+        background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        position: 'sticky', top: 0, zIndex: 100,
+        pt: alertIncident ? 14 : 1, transition: 'padding-top 0.3s',
       }}>
-        {onBack && (
-          <IconButton onClick={onBack} sx={{ color: 'white' }}>
-            <ArrowBack />
-          </IconButton>
-        )}
+        {onBack && <IconButton onClick={onBack} size="small" sx={{ color: 'white' }}><ArrowBack /></IconButton>}
+        <Box sx={{ fontSize: 22 }}>🚑</Box>
         <Box sx={{ flex: 1 }}>
-          <Typography variant="h6" sx={{ color: 'white', fontWeight: 800, lineHeight: 1 }}>
-            Driver Console
+          <Typography variant="subtitle2" sx={{ color: 'white', fontWeight: 800, lineHeight: 1 }}>
+            {MOCK_DRIVER.callSign} · {MOCK_DRIVER.name}
           </Typography>
-          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
-            {MOCK_DRIVER.callSign} · {MOCK_DRIVER.vehicle}
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.6rem' }}>
+            {MOCK_DRIVER.vehicle} · {MOCK_DRIVER.type}
           </Typography>
         </Box>
-        <Box sx={{ textAlign: 'right' }}>
-          <Typography variant="body2" sx={{ color: 'white', fontWeight: 700, fontFamily: 'monospace' }}>
-            {time.toLocaleTimeString()}
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'flex-end' }}>
-            <FiberManualRecord sx={{
-              fontSize: 8, color: '#22c55e',
-              animation: 'blink 2s infinite',
-              '@keyframes blink': { '0%,100%': { opacity: 1 }, '50%': { opacity: 0.3 } }
-            }} />
-            <Typography variant="caption" sx={{ color: '#22c55e', fontSize: '0.65rem' }}>CONNECTED</Typography>
-          </Box>
+        <Typography variant="body2" sx={{ color: 'white', fontFamily: 'monospace', fontWeight: 700 }}>
+          {time.toLocaleTimeString()}
+        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 1 }}>
+          <FiberManualRecord sx={{ fontSize: 8, color: '#22c55e', animation: 'blink 2s infinite', '@keyframes blink': { '0%,100%': { opacity: 1 }, '50%': { opacity: 0.3 } } }} />
+          <Typography variant="caption" sx={{ color: '#22c55e', fontSize: '0.6rem' }}>LIVE</Typography>
         </Box>
+        {/* Map / List toggle */}
+        <IconButton size="small" onClick={() => setShowMap(m => !m)} sx={{ color: showMap ? '#3b82f6' : 'rgba(255,255,255,0.5)', ml: 0.5 }}>
+          {showMap ? <ViewList fontSize="small" /> : <MapIcon fontSize="small" />}
+        </IconButton>
       </Box>
 
-      {/* Driver status card */}
-      <Box sx={{ px: 2, pb: 1 }}>
-        <Paper sx={{
-          p: 1.5, borderRadius: 2,
-          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-        }}>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-            <Avatar sx={{ bgcolor: '#dc2626', width: 40, height: 40, fontSize: 20 }}>🚑</Avatar>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body2" sx={{ color: 'white', fontWeight: 700 }}>{MOCK_DRIVER.name}</Typography>
-              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
-                {MOCK_DRIVER.type} Unit · {MOCK_DRIVER.callSign}
-              </Typography>
-            </Box>
-            <Chip
-              label={activeIncident ? 'ON DUTY' : 'STANDBY'}
-              size="small"
-              sx={{
-                bgcolor: activeIncident ? '#dc262633' : '#22c55e33',
-                color: activeIncident ? '#ef4444' : '#22c55e',
-                border: `1px solid ${activeIncident ? '#ef4444' : '#22c55e'}`,
-                fontWeight: 700, fontSize: '0.65rem'
-              }}
-            />
-          </Box>
+      {/* ── Live Map ── */}
+      {showMap && (
+        <Box sx={{ height: activeIncident ? 300 : 220, flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <DriverMap
+            driverPos={driverPos}
+            incident={activeIncident}
+            missionStatus={activeIncident ? missionStatus : null}
+            hospital={activeIncident?.hospital}
+          />
+        </Box>
+      )}
 
-          <Box sx={{ display: 'flex', gap: 1.5, mt: 1.5, pt: 1.5, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-            {[
-              { label: 'Speed', value: `${speed} km/h`, icon: '⚡' },
-              { label: 'Status', value: activeIncident ? missionStatus.replace(/_/g, ' ') : 'Standby', icon: '📡' },
-              { label: 'Queue', value: incidentQueue.length, icon: '📋' },
-            ].map(item => (
-              <Box key={item.label} sx={{ flex: 1, textAlign: 'center' }}>
-                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.4)', display: 'block', fontSize: '0.6rem' }}>
-                  {item.icon} {item.label}
-                </Typography>
-                <Typography variant="caption" sx={{ color: 'white', fontWeight: 700 }}>{item.value}</Typography>
-              </Box>
-            ))}
-          </Box>
-        </Paper>
+      {/* Compact status strip */}
+      <Box sx={{ px: 2, py: 1, display: 'flex', gap: 1 }}>
+        {[
+          { icon: '⚡', label: 'Speed', value: `${speed} km/h` },
+          { icon: '📡', label: 'Status', value: activeIncident ? missionStatus.replace(/_/g, ' ') : 'Standby' },
+          { icon: '📋', label: 'Queue', value: incidentQueue.length },
+        ].map(item => (
+          <Paper key={item.label} sx={{
+            flex: 1, p: 1, textAlign: 'center',
+            bgcolor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 2,
+          }}>
+            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.4)', display: 'block', fontSize: '0.6rem' }}>
+              {item.icon} {item.label}
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'white', fontWeight: 700 }}>{item.value}</Typography>
+          </Paper>
+        ))}
       </Box>
 
       {/* Main content */}
