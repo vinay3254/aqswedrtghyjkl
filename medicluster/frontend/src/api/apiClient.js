@@ -121,11 +121,11 @@ export async function explainFindings(fileId, findings, modelName = "densenet121
  * @param {Array}  chatHistory  [{role, content}] previous turns
  * @param {string} question     New message (empty for initial analysis)
  */
-export async function aiChat(imageBase64, mediaType, chatHistory = [], question = "") {
+export async function aiChat(imageBase64, mediaType, chatHistory = [], question = "", language = "en") {
   const res = await api.post(
     "/media/ai-chat",
-    { imageBase64, mediaType, chatHistory, question },
-    { timeout: 60_000 }
+    { imageBase64, mediaType, chatHistory, question, language },
+    { timeout: 120_000 }
   );
   return res.data;
 }
@@ -287,6 +287,36 @@ export async function allocateHospital(triage_category, pathway_flags, exclude_h
 
 // ── AI Clinical Copilot ───────────────────────────────────────────────────────
 
+/** Auto-select optimal K via Elbow + Silhouette sweep. */
+export async function getOptimalK(data) {
+  const res = await api.post("/cluster/optimal-k", { data }, { timeout: 60_000 });
+  return res.data;
+}
+
+/** Run Isolation Forest anomaly detection on patient rows. */
+export async function detectAnomalies(data, contamination = 0.05) {
+  const res = await api.post("/cluster/detect-anomalies", { data, contamination }, { timeout: 60_000 });
+  return res.data;
+}
+
+/** SHAP feature importance for a clustered result. */
+export async function explainClusters(data, labels) {
+  const res = await api.post("/cluster/explain", { data, labels }, { timeout: 90_000 });
+  return res.data;
+}
+
+/** Grad-CAM heatmap for a stored image file. */
+export async function getGradCam(fileId, model_name, target_label) {
+  const res = await api.post(`/media/gradcam/${fileId}`, { model_name, target_label }, { timeout: 60_000 });
+  return res.data;
+}
+
+/** Check drug interactions for a list of medication names. */
+export async function checkDrugInteractions(medications) {
+  const res = await api.post("/ai/drug-interactions", { medications }, { timeout: 15_000 });
+  return res.data;
+}
+
 /** Generate AI cohort insights for a clustering result. */
 export async function generateClusterInsights(result) {
   const res = await api.post("/ai/cluster-insights", { result }, { timeout: 60_000 });
@@ -300,6 +330,46 @@ export async function generateMedicationPlan(patientId, text, currentReminders =
     { patientId, text, currentReminders },
     { timeout: 60_000 }
   );
+  return res.data;
+}
+
+// ── New ML / NLP Endpoints ────────────────────────────────────────────────────
+
+/** Analyze free-text clinical notes: NER, ICD-10, trajectory, AI summary. */
+export async function analyzeNotes(notes) {
+  const res = await api.post("/ml/analyze-notes", { notes }, { timeout: 60_000 });
+  return res.data;
+}
+
+/** Calculate MEWS score from patient vitals. */
+export async function calcMews(vitals) {
+  const res = await api.post("/ml/mews", vitals, { timeout: 10_000 });
+  return res.data;
+}
+
+/** Forecast vital signs (LSTM / Prophet / linear). */
+export async function forecastVitals(vitals_history, steps = 3, method = "auto") {
+  const res = await api.post("/ml/forecast-vitals", { vitals_history, steps, method }, { timeout: 60_000 });
+  return res.data;
+}
+
+/** UMAP or t-SNE dimensionality reduction for patient scatter plots. */
+export async function reduceDimensions(data, method = "umap", params = {}) {
+  const res = await api.post("/ml/reduce-dimensions", { data, method, params }, { timeout: 60_000 });
+  return res.data;
+}
+
+/** Rank features by discriminative power across clusters. */
+export async function getFeatureImportance(data, algorithm = "kmeans", params = {}) {
+  const res = await api.post("/ml/feature-importance", { data, algorithm, params }, { timeout: 60_000 });
+  return res.data;
+}
+
+/** RAG-based patient Q&A chatbot. */
+export async function askPatients(query, patients = null) {
+  const body = { query };
+  if (patients) body.patients = patients;
+  const res = await api.post("/ml/ask", body, { timeout: 30_000 });
   return res.data;
 }
 

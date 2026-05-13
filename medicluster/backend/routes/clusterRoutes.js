@@ -272,6 +272,36 @@ router.get("/patient/:patientId", async (req, res, next) => {
   }
 });
 
+// ── POST /api/cluster/optimal-k ───────────────────────────────────────────
+router.post("/optimal-k", async (req, res, next) => {
+  try {
+    const r = await axios.post(`${ML_ENGINE_URL}/optimal-k`, req.body, { timeout: 60_000 });
+    res.json(r.data);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ── POST /api/cluster/detect-anomalies ────────────────────────────────────
+router.post("/detect-anomalies", async (req, res, next) => {
+  try {
+    const r = await axios.post(`${ML_ENGINE_URL}/detect-anomalies`, req.body, { timeout: 60_000 });
+    res.json(r.data);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ── POST /api/cluster/explain ─────────────────────────────────────────────
+router.post("/explain", async (req, res, next) => {
+  try {
+    const r = await axios.post(`${ML_ENGINE_URL}/explain`, req.body, { timeout: 60_000 });
+    res.json(r.data);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ── GET /api/cluster/:id ───────────────────────────────────────────────────
 router.get("/:id", async (req, res, next) => {
   try {

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MediCluster API Tester</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
+  header { background: linear-gradient(135deg, #1e3a5f, #0ea5e9); padding: 24px 32px; }
+  header h1 { font-size: 1.6rem; font-weight: 700; }
+  header p { color: #bae6fd; font-size: 0.9rem; margin-top: 4px; }
+  .badge { display: inline-block; background: #22c55e; color: #fff; border-radius: 20px; padding: 2px 10px; font-size: 0.75rem; margin-left: 10px; vertical-align: middle; }
+  .container { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 80px); }
+  nav { background: #161b27; border-right: 1px solid #1e293b; padding: 16px 0; }
+  nav button { display: block; width: 100%; text-align: left; padding: 10px 20px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+  nav button:hover, nav button.active { background: #1e293b; color: #38bdf8; border-left: 3px solid #38bdf8; }
+  nav .cat { padding: 12px 20px 4px; font-size: 0.7rem; text-transform: uppercase; color: #475569; letter-spacing: 1px; }
+  main { padding: 24px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .panel h2 { font-size: 1.2rem; font-weight: 600; margin-bottom: 6px; color: #f1f5f9; }
+  .panel p.desc { color: #64748b; font-size: 0.85rem; margin-bottom: 16px; }
+  label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 4px; margin-top: 12px; }
+  textarea, input { width: 100%; background: #1e293b; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0; padding: 10px 12px; font-size: 0.85rem; font-family: inherit; resize: vertical; }
+  textarea { min-height: 100px; }
+  input { height: 38px; }
+  .btn { margin-top: 14px; padding: 10px 24px; background: #0ea5e9; border: none; border-radius: 8px; color: #fff; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+  .btn:hover { background: #0284c7; }
+  .btn:disabled { background: #334155; cursor: not-allowed; }
+  .result { margin-top: 16px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 14px; }
+  .result pre { font-size: 0.8rem; overflow: auto; max-height: 420px; color: #86efac; white-space: pre-wrap; }
+  .result .error { color: #f87171; }
+  .result .loading { color: #94a3b8; font-style: italic; }
+  .tag { display: inline-block; background: #1e3a5f; border: 1px solid #0ea5e9; color: #7dd3fc; border-radius: 4px; padding: 2px 8px; font-size: 0.7rem; margin-right: 4px; }
+  .tag.post { border-color: #f59e0b; color: #fcd34d; background: #1c1a0d; }
+  .tag.get { border-color: #22c55e; color: #86efac; background: #0d1c10; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🧠 MediCluster — New API Tester <span class="badge">● Live on :8000</span></h1>
+  <p>Interactive dashboard to test all new ML & NLP endpoints</p>
+</header>
+<div class="container">
+<nav>
+  <div class="cat">NLP</div>
+  <button class="active" onclick="show('notes')">📝 Analyze Notes</button>
+  <button onclick="show('drugs')">💊 Drug Interactions</button>
+  <div class="cat">Forecasting</div>
+  <button onclick="show('mews')">🚨 MEWS Score</button>
+  <button onclick="show('forecast')">📈 Vital Forecasting</button>
+  <div class="cat">AutoML</div>
+  <button onclick="show('optimalk')">🔢 Optimal-K</button>
+  <button onclick="show('dims')">🗺 UMAP / t-SNE</button>
+  <div class="cat">Anomaly & XAI</div>
+  <button onclick="show('anomaly')">⚠️ Anomaly Detection</button>
+  <button onclick="show('shap')">🔬 SHAP Explain</button>
+  <div class="cat">Chatbot</div>
+  <button onclick="show('ask')">🤖 Patient Q&A</button>
+</nav>
+<main>
+
+<!-- NOTES -->
+<div id="panel-notes" class="panel active">
+  <h2>📝 Clinical Notes Analyzer <span class="tag post">POST</span><span class="tag">/analyze-notes</span></h2>
+  <p class="desc">Extracts drugs, lab values, ICD-10 codes, risk tier and trajectory from free-text doctor notes.</p>
+  <label>Clinical Notes</label>
+  <textarea id="notes-input">Patient admitted with acute pneumonia and severe dyspnea. Heart rate 115 bpm. On amoxicillin and furosemide. HbA1c was 8.2%. Temperature 38.9. Condition deteriorating rapidly.</textarea>
+  <button class="btn" onclick="callNotes()">Analyze →</button>
+  <div class="result" id="notes-result"><pre class="loading">Results will appear here...</pre></div>
+</div>
+
+<!-- DRUG INTERACTIONS -->
+<div id="panel-drugs" class="panel">
+  <h2>💊 Drug Interaction Checker <span class="tag post">POST</span><span class="tag">/drug-interactions</span></h2>
+  <p class="desc">Checks a list of medications for known dangerous drug-drug interactions.</p>
+  <label>Medications (comma-separated)</label>
+  <input id="drugs-input" value="warfarin, aspirin, furosemide, digoxin">
+  <button class="btn" onclick="callDrugs()">Check Interactions →</button>
+  <div class="result" id="drugs-result"><pre class="loading">Results will appear here...</pre></div>
+</div>
+
+<!-- MEWS -->
+<div id="panel-mews" class="panel">
+  <h2>🚨 MEWS Score Calculator <span class="tag post">POST</span><span class="tag">/mews</span></h2>
+  <p class="desc">Modified Early Warning Score — scores patient vitals and returns alert level + clinical recommendation.</p>
+  <div class="row">
+    <div><label>Systolic BP (mmHg)</label><input id="mews-bp" value="82" type="number"></div>
+    <div><label>Heart Rate (bpm)</label><input id="mews-hr" value="118" type="number"></div>
+    <div><label>Respiratory Rate</label><input id="mews-rr" value="26" type="number"></div>
+    <div><label>Temperature (°C)</label><input id="mews-temp" value="38.9" type="number" step="0.1"></div>
+    <div><label>Consciousness (0=Alert, 1=Voice, 2=Pain, 3=Unresponsive)</label><input id="mews-avpu" value="1" type="number" min="0" max="3"></div>
+  </div>
+  <button class="btn" onclick="callMews()">Calculate MEWS →</button>
+  <div class="result" id="mews-result"><pre class="loading">Results will appear here...</pre></div>
+</div>
+
+<!-- FORECAST -->
+<div id="panel-forecast" class="panel">
+  <h2>📈 Vital Signs Forecasting <span class="tag post">POST</span><span class="tag">/forecast-vitals</span></h2>
+  <p class="desc">Predicts next vital sign readings from historical sequences using LSTM or linear regression.</p>
+  <label>Heart Rate History (comma-separated readings)</label>
+  <input id="fc-hr" value="70, 72, 75, 78, 82, 86, 91">
+  <label>Systolic BP History</label>
+  <input id="fc-bp" value="120, 118, 115, 112, 108">
+  <label>Steps to Forecast</label>
+  <input id="fc-steps" value="3" type="number">
+  <button class="btn" onclick="callForecast()">Forecast →</button>
+  <div class="result" id="forecast-result"><pre class="loading">Results will appear here...</pre></div>
+</div>
+
+<!-- OPTIMAL K -->
+<div id="panel-optimalk" class="panel">
+  <h2>🔢 Optimal-K Selector <span class="tag post">POST</span><span class="tag">/optimal-k</span></h2>
+  <p class="desc">Automatically recommends the best number of clusters using Elbow + Silhouette sweep.</p>
+  <label>Patient Data (JSON array — paste your CSV rows here)</label>
+  <textarea id="ok-data">[
+  {"age": 55, "blood_pressure": 140, "heart_rate": 90, "cholesterol": 220},
+  {"age": 30, "blood_pressure": 110, "heart_rate": 68, "cholesterol": 170},
+  {"age": 70, "blood_pressure": 175, "heart_rate": 105, "cholesterol": 280},
+  {"age": 45, "blood_pressure": 125, "heart_rate": 78, "cholesterol": 195},
+  {"age": 65, "blood_pressure": 160, "heart_rate": 98, "cholesterol": 260},
+  {"age": 28, "blood_pressure": 108, "heart_rate": 65, "cholesterol": 160},
+  {"age": 72, "blood_pressure": 180, "heart_rate": 110, "cholesterol": 295},
+  {"age": 38, "blood_pressure": 118, "heart_rate": 72, "cholesterol": 185},
+  {"age": 60, "blood_pressure": 155, "heart_rate": 95, "cholesterol": 250},
+  {"age": 50, "blood_pressure": 138, "heart_rate": 84, "cholesterol": 210}
+]</textarea>
+  <div class="row">
+    <div><label>Min K</label><input id="ok-min" value="2" type="number"></div>
+    <div><label>Max K</label><input id="ok-max" value="8" type="number"></div>
+  </div>
+  <button class="btn" onclick="callOptimalK()">Find Best K →</button>
+  <div class="result" id="optimalk-result"><pre class="loading">Results will appear here...</pre></div>
+</div>
+
+<!-- DIMS -->
+<div id="panel-dims" class="panel">
+  <h2>🗺 UMAP / t-SNE Reduction <span class="tag post">POST</span><span class="tag">/reduce-dimensions</span></h2>
+  <p class="desc">Computes better 2D coordinates than PCA for patient scatter plots.</p>
+  <label>Method</label>
+  <select id="dim-method" style="width:100%;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;padding:10px;font-size:0.85rem;">
+    <option value="umap">UMAP</option>
+    <option value="tsne">t-SNE</option>
+    <option value="pca">PCA (baseline)</option>
+  </select>
+  <label>Patient Data (JSON array)</label>
+  <textarea id="dim-data">[
+  {"age": 55, "blood_pressure": 140, "heart_rate": 90, "cholesterol": 220},
+  {"age": 30, "blood_pressure": 110, "heart_rate": 68, "cholesterol": 170},
+  {"age": 70, "blood_pressure": 175, "heart_rate": 105, "cholesterol": 280},
+  {"age": 45, "blood_pressure": 125, "heart_rate": 78, "cholesterol": 195},
+  {"age": 65, "blood_pressure": 160, "heart_rate": 98, "cholesterol": 260},
+  {"age": 28, "blood_pressure": 108, "heart_rate": 65, "cholesterol": 160},
+  {"age": 72, "blood_pressure": 180, "heart_rate": 110, "cholesterol": 295},
+  {"age": 38, "blood_pressure": 118, "heart_rate": 72, "cholesterol": 185}
+]</textarea>
+  <button class="btn" onclick="callDims()">Reduce →</button>
+  <div class="result" id="dims-result"><pre class="loading">Results will appear here...</pre></div>
+</div>
+
+<!-- ANOMALY -->
+<div id="panel-anomaly" class="panel">
+  <h2>⚠️ Anomaly Detection <span class="tag post">POST</span><span class="tag">/detect-anomalies</span></h2>
+  <p class="desc">Flags statistically unusual patients using Isolation Forest. Try adding an extreme outlier row.</p>
+  <label>Patient Data (JSON array)</label>
+  <textarea id="anom-data">[
+  {"age": 55, "blood_pressure": 140, "heart_rate": 90, "cholesterol": 220},
+  {"age": 30, "blood_pressure": 110, "heart_rate": 68, "cholesterol": 170},
+  {"age": 70, "blood_pressure": 175, "heart_rate": 105, "cholesterol": 280},
+  {"age": 45, "blood_pressure": 125, "heart_rate": 78, "cholesterol": 195},
+  {"age": 200, "blood_pressure": 999, "heart_rate": 300, "cholesterol": 900},
+  {"age": 65, "blood_pressure": 160, "heart_rate": 98, "cholesterol": 260},
+  {"age": 28, "blood_pressure": 108, "heart_rate": 65, "cholesterol": 160},
+  {"age": 72, "blood_pressure": 180, "heart_rate": 110, "cholesterol": 295},
+  {"age": 38, "blood_pressure": 118, "heart_rate": 72, "cholesterol": 185},
+  {"age": 60, "blood_pressure": 155, "heart_rate": 95, "cholesterol": 250}
+]</textarea>
+  <label>Contamination (expected % of anomalies)</label>
+  <input id="anom-cont" value="0.1" type="number" step="0.05" min="0.01" max="0.5">
+  <button class="btn" onclick="callAnomaly()">Detect →</button>
+  <div class="result" id="anomaly-result"><pre class="loading">Results will appear here...</pre></div>
+</div>
+
+<!-- SHAP -->
+<div id="panel-shap" class="panel">
+  <h2>🔬 SHAP Explainability <span class="tag post">POST</span><span class="tag">/explain</span></h2>
+  <p class="desc">Returns global feature importance + per-patient top-3 risk drivers using SHAP values.</p>
+  <label>Patient Data (JSON array)</label>
+  <textarea id="shap-data">[
+  {"age": 55, "blood_pressure": 140, "heart_rate": 90, "cholesterol": 220},
+  {"age": 30, "blood_pressure": 110, "heart_rate": 68, "cholesterol": 170},
+  {"age": 70, "blood_pressure": 175, "heart_rate": 105, "cholesterol": 280},
+  {"age": 45, "blood_pressure": 125, "heart_rate": 78, "cholesterol": 195},
+  {"age": 65, "blood_pressure": 160, "heart_rate": 98, "cholesterol": 260},
+  {"age": 28, "blood_pressure": 108, "heart_rate": 65, "cholesterol": 160},
+  {"age": 72, "blood_pressure": 180, "heart_rate": 110, "cholesterol": 295},
+  {"age": 38, "blood_pressure": 118, "heart_rate": 72, "cholesterol": 185},
+  {"age": 60, "blood_pressure": 155, "heart_rate": 95, "cholesterol": 250},
+  {"age": 50, "blood_pressure": 138, "heart_rate": 84, "cholesterol": 210}
+]</textarea>
+  <button class="btn" onclick="callShap()">Explain →</button>
+  <div class="result" id="shap-result"><pre class="loading">Results will appear here...</pre></div>
+</div>
+
+<!-- ASK -->
+<div id="panel-ask" class="panel">
+  <h2>🤖 Patient Q&A Chatbot <span class="tag post">POST</span><span class="tag">/ask</span></h2>
+  <p class="desc">Ask natural-language questions about your clustered patients. Run /cluster first to index them, or provide patients below.</p>
+  <label>Your Question</label>
+  <input id="ask-query" value="Which High Risk patients have age over 60?">
+  <label>Patients to index (JSON array — optional, leave blank to use last cluster run)</label>
+  <textarea id="ask-patients">[
+  {"patient_id": "P001", "cluster_id": 0, "risk_tier": "High",     "age": 65, "heart_rate": 110},
+  {"patient_id": "P002", "cluster_id": 1, "risk_tier": "Low",      "age": 35, "heart_rate": 72},
+  {"patient_id": "P003", "cluster_id": 0, "risk_tier": "High",     "age": 72, "heart_rate": 105},
+  {"patient_id": "P004", "cluster_id": 2, "risk_tier": "Critical", "age": 80, "heart_rate": 120},
+  {"patient_id": "P005", "cluster_id": 1, "risk_tier": "Low",      "age": 28, "heart_rate": 68},
+  {"patient_id": "P006", "cluster_id": 0, "risk_tier": "High",     "age": 67, "heart_rate": 98}
+]</textarea>
+  <button class="btn" onclick="callAsk()">Ask →</button>
+  <div class="result" id="ask-result"><pre class="loading">Results will appear here...</pre></div>
+</div>
+
+</main>
+</div>
+
+<script>
+const BASE = 'http://127.0.0.1:8000';
+
+function show(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function setResult(id, data, isError) {
+  const el = document.getElementById(id + '-result');
+  const text = JSON.stringify(data, null, 2);
+  el.innerHTML = `<pre class="${isError ? 'error' : ''}">${text}</pre>`;
+}
+
+function setLoading(id) {
+  document.getElementById(id + '-result').innerHTML = '<pre class="loading">⏳ Calling API...</pre>';
+}
+
+async function post(endpoint, body) {
+  const r = await fetch(BASE + endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return r.json();
+}
+
+async function callNotes() {
+  setLoading('notes');
+  try {
+    const data = await post('/analyze-notes', { notes: document.getElementById('notes-input').value });
+    setResult('notes', data, !!data.error);
+  } catch(e) { setResult('notes', {error: e.message}, true); }
+}
+
+async function callDrugs() {
+  setLoading('drugs');
+  try {
+    const meds = document.getElementById('drugs-input').value.split(',').map(s => s.trim()).filter(Boolean);
+    const data = await post('/drug-interactions', { medications: meds });
+    setResult('drugs', data, !!data.error);
+  } catch(e) { setResult('drugs', {error: e.message}, true); }
+}
+
+async function callMews() {
+  setLoading('mews');
+  try {
+    const data = await post('/mews', {
+      systolic_bp: +document.getElementById('mews-bp').value,
+      heart_rate: +document.getElementById('mews-hr').value,
+      respiratory_rate: +document.getElementById('mews-rr').value,
+      temperature: +document.getElementById('mews-temp').value,
+      consciousness: +document.getElementById('mews-avpu').value,
+    });
+    setResult('mews', data, !!data.error);
+  } catch(e) { setResult('mews', {error: e.message}, true); }
+}
+
+async function callForecast() {
+  setLoading('forecast');
+  try {
+    const hr = document.getElementById('fc-hr').value.split(',').map(Number);
+    const bp = document.getElementById('fc-bp').value.split(',').map(Number);
+    const steps = +document.getElementById('fc-steps').value;
+    const data = await post('/forecast-vitals', { vitals_history: { heart_rate: hr, systolic_bp: bp }, steps, method: 'auto' });
+    setResult('forecast', data, !!data.error);
+  } catch(e) { setResult('forecast', {error: e.message}, true); }
+}
+
+async function callOptimalK() {
+  setLoading('optimalk');
+  try {
+    const patients = JSON.parse(document.getElementById('ok-data').value);
+    const data = await post('/optimal-k', { data: patients, k_min: +document.getElementById('ok-min').value, k_max: +document.getElementById('ok-max').value });
+    setResult('optimalk', data, !!data.error);
+  } catch(e) { setResult('optimalk', {error: e.message}, true); }
+}
+
+async function callDims() {
+  setLoading('dims');
+  try {
+    const patients = JSON.parse(document.getElementById('dim-data').value);
+    const method = document.getElementById('dim-method').value;
+    const data = await post('/reduce-dimensions', { data: patients, method });
+    setResult('dims', data, !!data.error);
+  } catch(e) { setResult('dims', {error: e.message}, true); }
+}
+
+async function callAnomaly() {
+  setLoading('anomaly');
+  try {
+    const patients = JSON.parse(document.getElementById('anom-data').value);
+    const cont = +document.getElementById('anom-cont').value;
+    const data = await post('/detect-anomalies', { data: patients, contamination: cont });
+    setResult('anomaly', data, !!data.error);
+  } catch(e) { setResult('anomaly', {error: e.message}, true); }
+}
+
+async function callShap() {
+  setLoading('shap');
+  try {
+    const patients = JSON.parse(document.getElementById('shap-data').value);
+    const data = await post('/explain', { data: patients, algorithm: 'kmeans', params: { k: 3 } });
+    setResult('shap', data, !!data.error);
+  } catch(e) { setResult('shap', {error: e.message}, true); }
+}
+
+async function callAsk() {
+  setLoading('ask');
+  try {
+    const query = document.getElementById('ask-query').value;
+    const raw = document.getElementById('ask-patients').value.trim();
+    const body = { query };
+    if (raw) body.patients = JSON.parse(raw);
+    const data = await post('/ask', body);
+    setResult('ask', data, !!data.error);
+  } catch(e) { setResult('ask', {error: e.message}, true); }
+}
+</script>
+</body>
+</html>

@@ -58,8 +58,8 @@ const HOSPITAL_ICON = L.divIcon({
 /* ── Fetch OSRM road route ───────────────────────── */
 async function fetchRoute(from, to) {
   try {
-    const url = `https://router.project-osrm.org/route/v1/driving/${from[1]},${from[0]};${to[1]},${to[0]}?overview=full&geometries=geojson`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    const url = `https://router.project-osrm.org/route/v1/driving/${from[1]},${from[0]};${to[1]},${to[0]}?overview=simplified&geometries=geojson`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
     const data = await res.json();
     if (data.routes?.[0]) {
       return data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);

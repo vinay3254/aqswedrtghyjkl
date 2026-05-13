@@ -61,6 +61,20 @@ const INCIDENT_ICONS = {
   })
 };
 
+async function fetchRoute(from, to) {
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${from[1]},${from[0]};${to[1]},${to[0]}?overview=simplified&geometries=geojson`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    const data = await res.json();
+    if (data.routes?.[0]) {
+      return data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+    }
+  } catch (e) {
+    console.error('OSRM fetch failed', e);
+  }
+  return [from, to];
+}
+
 export default function DispatchMap({
   incidents = [],
   ambulances = [],
@@ -258,6 +272,7 @@ export default function DispatchMap({
    * Deps include activeAssignment so this effect re-runs and clears layers when assignment arrives.
    */
   useEffect(() => {
+    let active = true;
     if (!mapInstanceRef.current) return;
 
     // Clear both layers whenever this effect runs
@@ -279,60 +294,71 @@ export default function DispatchMap({
       dashArray: '6,4',
     }).addTo(nearbyLayerRef.current);
 
-    // Find nearest ambulance (only those that carry lat/lng)
-    const ambs = ambulances.filter(a => a.latitude && a.longitude);
-    if (ambs.length > 0) {
-      const nearest = ambs.reduce((best, a) => {
-        const d = haversine(a.latitude, a.longitude, iLat, iLng);
-        return d < best.dist ? { amb: a, dist: d } : best;
-      }, { amb: null, dist: Infinity });
-
-      if (nearest.amb) {
-        L.polyline(
-          [[nearest.amb.latitude, nearest.amb.longitude], [iLat, iLng]],
-          { color: '#f97316', weight: 3, dashArray: '8,6', opacity: 0.8 }
-        ).addTo(nearbyLayerRef.current);
-      }
-    }
-
-    // Sort hospitals by distance to incident, take top 3
-    const RANK_COLORS = ['#22c55e', '#3b82f6', '#a78bfa'];
-    const hosps = hospitals
-      .filter(h => h.latitude && h.longitude)
-      .map(h => ({ h, dist: haversine(iLat, iLng, h.latitude, h.longitude) }))
-      .sort((a, b) => a.dist - b.dist)
-      .slice(0, 3);
-
-    hosps.forEach(({ h, dist }, rank) => {
-      const color = RANK_COLORS[rank];
-
-      // Dashed colored polyline from incident to hospital
-      L.polyline(
-        [[iLat, iLng], [h.latitude, h.longitude]],
-        { color, weight: 2, dashArray: '4,8', opacity: 0.6 }
-      ).addTo(nearbyLayerRef.current);
-
-      // Proximity circle around hospital
-      L.circle([h.latitude, h.longitude], {
-        radius: 200,
-        color,
-        fillColor: color,
-        fillOpacity: 0.15,
-      }).addTo(nearbyLayerRef.current);
-
-      // Distance label pill badge
-      L.marker([h.latitude, h.longitude], {
-        icon: L.divIcon({
-          html: `<div style="background:${color};color:white;padding:2px 6px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 4px rgba(0,0,0,0.5)">${dist.toFixed(1)}km</div>`,
-          className: '',
-          iconAnchor: [0, -16],
-        }),
-        interactive: false,
-      }).addTo(nearbyLayerRef.current);
-    });
-
     // Pan map to the incident
     mapInstanceRef.current.setView([iLat, iLng], 13);
+
+    const drawPreviewRoutes = async () => {
+      // Find nearest ambulance (only those that carry lat/lng)
+      const ambs = ambulances.filter(a => a.latitude && a.longitude);
+      if (ambs.length > 0) {
+        const nearest = ambs.reduce((best, a) => {
+          const d = haversine(a.latitude, a.longitude, iLat, iLng);
+          return d < best.dist ? { amb: a, dist: d } : best;
+        }, { amb: null, dist: Infinity });
+
+        if (nearest.amb) {
+          const routePts = await fetchRoute([nearest.amb.latitude, nearest.amb.longitude], [iLat, iLng]);
+          if (!active) return;
+          L.polyline(
+            routePts,
+            { color: '#f97316', weight: 3, dashArray: '8,6', opacity: 0.8 }
+          ).addTo(nearbyLayerRef.current);
+        }
+      }
+
+      // Sort hospitals by distance to incident, take top 3
+      const RANK_COLORS = ['#22c55e', '#3b82f6', '#a78bfa'];
+      const hosps = hospitals
+        .filter(h => h.latitude && h.longitude)
+        .map(h => ({ h, dist: haversine(iLat, iLng, h.latitude, h.longitude) }))
+        .sort((a, b) => a.dist - b.dist)
+        .slice(0, 3);
+
+      hosps.forEach(async ({ h, dist }, rank) => {
+        const color = RANK_COLORS[rank];
+
+        const routePts = await fetchRoute([iLat, iLng], [h.latitude, h.longitude]);
+        if (!active) return;
+
+        // Dashed colored polyline from incident to hospital
+        L.polyline(
+          routePts,
+          { color, weight: 2, dashArray: '4,8', opacity: 0.6 }
+        ).addTo(nearbyLayerRef.current);
+
+        // Proximity circle around hospital
+        L.circle([h.latitude, h.longitude], {
+          radius: 200,
+          color,
+          fillColor: color,
+          fillOpacity: 0.15,
+        }).addTo(nearbyLayerRef.current);
+
+        // Distance label pill badge
+        L.marker([h.latitude, h.longitude], {
+          icon: L.divIcon({
+            html: `<div style="background:${color};color:white;padding:2px 6px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 4px rgba(0,0,0,0.5)">${dist.toFixed(1)}km</div>`,
+            className: '',
+            iconAnchor: [0, -16],
+          }),
+          interactive: false,
+        }).addTo(nearbyLayerRef.current);
+      });
+    };
+    
+    drawPreviewRoutes();
+
+    return () => { active = false; };
   }, [selectedIncident, ambulances, hospitals, activeAssignment]);
 
   /**
@@ -340,6 +366,7 @@ export default function DispatchMap({
    * Clears both layer groups and draws solid lines for the dispatched assignment.
    */
   useEffect(() => {
+    let active = true;
     if (!mapInstanceRef.current) return;
     if (!activeAssignment) return;
 
@@ -355,16 +382,6 @@ export default function DispatchMap({
 
     const boundsPoints = [[iLat, iLng]];
 
-    // Ambulance → incident (solid red)
-    if (ambulance?.latitude && ambulance?.longitude) {
-      const line = L.polyline(
-        [[ambulance.latitude, ambulance.longitude], [iLat, iLng]],
-        { color: '#ef4444', weight: 5, opacity: 0.9 }
-      ).addTo(routeLayerRef.current);
-      line.bindTooltip('🚑 Ambulance en route to scene', { sticky: true });
-      boundsPoints.push([ambulance.latitude, ambulance.longitude]);
-    }
-
     // Pulsing red circle at incident
     L.circle([iLat, iLng], {
       radius: 250,
@@ -373,29 +390,48 @@ export default function DispatchMap({
       fillOpacity: 0.2,
     }).addTo(routeLayerRef.current);
 
-    // Incident → hospital (solid blue)
-    if (hospital?.latitude && hospital?.longitude) {
-      const line = L.polyline(
-        [[iLat, iLng], [hospital.latitude, hospital.longitude]],
-        { color: '#3b82f6', weight: 5, opacity: 0.9 }
-      ).addTo(routeLayerRef.current);
-      line.bindTooltip('🏥 Transport route to hospital', { sticky: true });
+    const drawActiveRoutes = async () => {
+      // Ambulance → incident (solid red)
+      if (ambulance?.latitude && ambulance?.longitude) {
+        boundsPoints.push([ambulance.latitude, ambulance.longitude]);
+        const routePts = await fetchRoute([ambulance.latitude, ambulance.longitude], [iLat, iLng]);
+        if (!active) return;
+        const line = L.polyline(
+          routePts,
+          { color: '#ef4444', weight: 5, opacity: 0.9 }
+        ).addTo(routeLayerRef.current);
+        line.bindTooltip('🚑 Ambulance en route to scene', { sticky: true });
+      }
 
-      // Green proximity circle at hospital
-      L.circle([hospital.latitude, hospital.longitude], {
-        radius: 200,
-        color: '#22c55e',
-        fillColor: '#22c55e',
-        fillOpacity: 0.2,
-      }).addTo(routeLayerRef.current);
+      // Incident → hospital (solid blue)
+      if (hospital?.latitude && hospital?.longitude) {
+        boundsPoints.push([hospital.latitude, hospital.longitude]);
+        const routePts = await fetchRoute([iLat, iLng], [hospital.latitude, hospital.longitude]);
+        if (!active) return;
+        const line = L.polyline(
+          routePts,
+          { color: '#3b82f6', weight: 5, opacity: 0.9 }
+        ).addTo(routeLayerRef.current);
+        line.bindTooltip('🏥 Transport route to hospital', { sticky: true });
 
-      boundsPoints.push([hospital.latitude, hospital.longitude]);
-    }
+        // Green proximity circle at hospital
+        L.circle([hospital.latitude, hospital.longitude], {
+          radius: 200,
+          color: '#22c55e',
+          fillColor: '#22c55e',
+          fillOpacity: 0.2,
+        }).addTo(routeLayerRef.current);
+      }
 
-    // Fit map to show all three points
-    if (boundsPoints.length > 1) {
-      mapInstanceRef.current.fitBounds(L.latLngBounds(boundsPoints), { padding: [60, 60] });
-    }
+      // Fit map to show all three points
+      if (boundsPoints.length > 1 && mapInstanceRef.current && active) {
+        mapInstanceRef.current.fitBounds(L.latLngBounds(boundsPoints), { padding: [60, 60] });
+      }
+    };
+
+    drawActiveRoutes();
+
+    return () => { active = false; };
   }, [activeAssignment]);
 
   return (

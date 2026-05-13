@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import UploadPanel        from "../components/UploadPanel";
 import AlgorithmSelector  from "../components/AlgorithmSelector";
 import ClusterScatterPlot from "../components/ClusterScatterPlot";
@@ -9,10 +9,10 @@ import ComparisonPanel    from "../components/ComparisonPanel";
 import DendrogramView     from "../components/DendrogramView";
 import ChartErrorBoundary from "../components/ChartErrorBoundary";
 import AIClusterInsights  from "../components/AIClusterInsights";
-import { runClustering }  from "../api/apiClient";
+import { runClustering, detectAnomalies, explainClusters } from "../api/apiClient";
 import { exportToPdf }    from "../utils/exportPdf";
 
-const TABS = ["Scatter Plot", "Comparison", "Dendrogram"];
+const TABS = ["Scatter Plot", "Comparison", "Dendrogram", "Anomalies"];
 
 const TIER_CLASS = {
   Low:      "badge-low",
@@ -77,6 +77,72 @@ function PatientDetailModal({ patient, clusterProfiles, featureNames, onClose })
   );
 }
 
+function AnomalyWatchlist({ patients, anomalies, featureNames, onPatientClick }) {
+  if (!anomalies) {
+    return (
+      <div className="panel flex items-center justify-center h-40">
+        <p className="text-xs text-slate-400">Anomaly detection runs automatically after clustering…</p>
+      </div>
+    );
+  }
+  const flags  = anomalies.anomaly_flags  ?? [];
+  const scores = anomalies.anomaly_scores ?? [];
+  const flagged = patients.filter((_, i) => flags[i] === -1 || flags[i] === 1);
+  if (!flagged.length) {
+    return (
+      <div className="panel flex flex-col items-center justify-center h-40 gap-2">
+        <svg className="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+        <p className="text-xs text-slate-500">No anomalous patients detected.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-bold text-red-600 uppercase tracking-wide">
+          {flagged.length} Anomalous Patient{flagged.length !== 1 ? "s" : ""} Detected
+        </span>
+        <span className="text-xs text-slate-400">— statistical outliers from Isolation Forest</span>
+      </div>
+      <div className="space-y-2">
+        {flagged.map((p, i) => {
+          const origIdx = patients.indexOf(p);
+          const score   = scores[origIdx] ?? null;
+          return (
+            <div
+              key={p.patient_id ?? i}
+              onClick={() => onPatientClick(p)}
+              className="panel border-red-200 bg-red-50/30 cursor-pointer hover:border-red-400 transition-colors"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+                  <span className="font-mono text-sm font-bold text-slate-700">{p.patient_id ?? `Row ${origIdx}`}</span>
+                  <span className={TIER_CLASS[p.risk_tier] ?? "badge-noise"}>{p.risk_tier}</span>
+                </div>
+                {score !== null && (
+                  <span className="text-xs font-mono text-red-500 bg-red-100 px-2 py-0.5 rounded-full">
+                    score: {score.toFixed(3)}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                {featureNames.slice(0, 6).map((f) => p[f] !== undefined && (
+                  <span key={f} className="text-xs text-slate-500 font-mono">
+                    {f}: <span className="text-slate-800 font-semibold">{typeof p[f] === "number" ? p[f].toFixed(1) : p[f]}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-8">
@@ -103,6 +169,9 @@ export default function DashboardPage() {
   const [activeTab,       setActiveTab]       = useState(0);
   const [runKey,          setRunKey]          = useState(0);
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [anomalies,       setAnomalies]       = useState(null);   // { anomaly_flags, anomaly_scores }
+  const [shapData,        setShapData]        = useState(null);   // { feature_importances, shap_values }
+  const [shapLoading,     setShapLoading]     = useState(false);
 
   const handleDatasetLoaded = (ds) => {
     setDataset(ds);
@@ -116,6 +185,8 @@ export default function DashboardPage() {
     if (!dataset) { setError("Upload a dataset first."); return; }
     setError(null);
     setWarnings([]);
+    setAnomalies(null);
+    setShapData(null);
     try {
       const inlineRows = dataset.datasetId === "__sample__" ? dataset.rawData : undefined;
       const res = await runClustering(dataset.datasetId, algorithm, params, inlineRows);
@@ -129,9 +200,29 @@ export default function DashboardPage() {
         setResult(res);
         setAllResults(null);
         setActiveTab(0);
+        // auto-run anomaly detection in background
+        if (res.patients?.length) {
+          detectAnomalies(res.patients)
+            .then((d) => setAnomalies(d))
+            .catch(() => {});
+        }
       }
     } catch (err) {
       setError(err?.response?.data?.error || err.message || "Clustering failed");
+    }
+  };
+
+  const loadShap = async () => {
+    if (!result?.patients?.length || shapLoading) return;
+    setShapLoading(true);
+    try {
+      const labels = result.patients.map((p) => p.cluster_id ?? 0);
+      const data = await explainClusters(result.patients, labels);
+      setShapData(data);
+    } catch {
+      // silently degrade
+    } finally {
+      setShapLoading(false);
     }
   };
 
@@ -196,7 +287,7 @@ export default function DashboardPage() {
         {/* ── Left sidebar ─────────────────────────────────────────────── */}
         <aside className="w-64 min-w-[15rem] flex flex-col gap-3 p-3 border-r border-slate-200 overflow-y-auto bg-white">
           <UploadPanel onDatasetLoaded={handleDatasetLoaded} />
-          <AlgorithmSelector onRun={handleRun} disabled={!dataset} />
+          <AlgorithmSelector onRun={handleRun} disabled={!dataset} dataset={dataset} />
         </aside>
 
         {/* ── Main area ────────────────────────────────────────────────── */}
@@ -274,6 +365,14 @@ export default function DashboardPage() {
                     <DendrogramView linkageMatrix={linkageMatrix} patients={activePatients} />
                   </ChartErrorBoundary>
                 )}
+                {activeTab === 3 && (
+                  <AnomalyWatchlist
+                    patients={activePatients}
+                    anomalies={anomalies}
+                    featureNames={featureNames}
+                    onPatientClick={setSelectedPatient}
+                  />
+                )}
               </>
             )}
 
@@ -326,6 +425,53 @@ export default function DashboardPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* SHAP Explainability Panel */}
+          {result && activePatients.length > 0 && (
+            <div className="panel space-y-2 fade-in">
+              <div className="flex items-center justify-between">
+                <p className="section-label mb-0">SHAP Explainability</p>
+                {!shapData && (
+                  <button
+                    onClick={loadShap}
+                    disabled={shapLoading}
+                    className="text-xs text-violet-600 hover:text-violet-800 font-semibold disabled:opacity-50 flex items-center gap-1"
+                  >
+                    {shapLoading ? <><div className="spinner w-3 h-3" />Loading…</> : "Load"}
+                  </button>
+                )}
+              </div>
+              {!shapData && !shapLoading && (
+                <p className="text-xs text-slate-400">Click Load to compute SHAP feature drivers.</p>
+              )}
+              {shapLoading && (
+                <p className="text-xs text-slate-400 flex items-center gap-1.5"><div className="spinner w-3 h-3" />Computing SHAP values…</p>
+              )}
+              {shapData?.feature_importances && (
+                <div className="space-y-1.5">
+                  {Object.entries(shapData.feature_importances)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 8)
+                    .map(([feat, val]) => {
+                      const max = Math.max(...Object.values(shapData.feature_importances));
+                      const pct = max > 0 ? (val / max) * 100 : 0;
+                      return (
+                        <div key={feat} className="space-y-0.5">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-slate-600 font-mono truncate max-w-[110px]">{feat}</span>
+                            <span className="text-violet-500 font-mono">{val.toFixed(3)}</span>
+                          </div>
+                          <div className="w-full bg-slate-100 rounded-full h-1.5">
+                            <div className="h-1.5 rounded-full bg-violet-500" style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  <p className="text-xs text-slate-300 pt-1">Mean |SHAP| per feature</p>
+                </div>
+              )}
             </div>
           )}
 

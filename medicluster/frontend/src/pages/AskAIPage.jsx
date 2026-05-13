@@ -3,6 +3,14 @@ import { aiChat } from "../api/apiClient";
 
 const ACCEPT = "image/jpeg,image/png,image/gif,image/webp";
 
+const LANGUAGES = [
+  { code: "en",  label: "English" },
+  { code: "hi",  label: "हिंदी" },
+  { code: "kn",  label: "ಕನ್ನಡ" },
+  { code: "te",  label: "తెలుగు" },
+  { code: "ta",  label: "தமிழ்" },
+];
+
 function renderMarkdown(text) {
   return text.split("\n").map((line, i) => {
     const parts = line.split(/(\*\*[^*]+\*\*)/);
@@ -26,6 +34,7 @@ export default function AskAIPage() {
   const [loading, setLoading]       = useState(false);
   const [dragOver, setDragOver]     = useState(false);
   const [error, setError]           = useState(null);
+  const [language, setLanguage]     = useState("en");
   const inputRef                    = useRef();
   const fileInputRef                = useRef();
   const bottomRef                   = useRef();
@@ -68,7 +77,7 @@ export default function AskAIPage() {
     scrollBottom();
 
     try {
-      const data = await aiChat(image.base64, image.mediaType, history, question);
+      const data = await aiChat(image.base64, image.mediaType, history, question, language);
       setMessages([...next, { role: "assistant", content: data.reply }]);
       setInput("");
       scrollBottom();
@@ -96,6 +105,7 @@ export default function AskAIPage() {
     setMessages([]);
     setInput("");
     setError(null);
+    setLanguage("en");
   };
 
   return (
@@ -114,14 +124,25 @@ export default function AskAIPage() {
             <p className="text-xs text-slate-400">Upload any medical image — get condition, prevention, treatment & medications</p>
           </div>
         </div>
-        {image && (
-          <button onClick={reset} className="text-xs text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            New chat
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="text-xs text-slate-600 border border-slate-200 rounded-lg px-2 py-1 bg-white hover:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-400 transition-colors"
+          >
+            {LANGUAGES.map((l) => (
+              <option key={l.code} value={l.code}>{l.label}</option>
+            ))}
+          </select>
+          {image && (
+            <button onClick={reset} className="text-xs text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              New chat
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Body */}

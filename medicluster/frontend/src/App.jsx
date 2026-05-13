@@ -10,6 +10,7 @@ import PatientPage from "./pages/PatientPage";
 import RemindersPage from "./pages/RemindersPage";
 import MCIBoardPage from "./pages/MCIBoardPage";
 import AskAIPage from "./pages/AskAIPage";
+import MLToolsPage from "./pages/MLToolsPage";
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="/mci" element={<MCIBoardPage />} />
           <Route path="/mci/:incidentId" element={<MCIBoardPage />} />
           <Route path="/ask-ai" element={<AskAIPage />} />
+          <Route path="/ml-tools" element={<MLToolsPage />} />
         </Routes>
       </main>
     </div>

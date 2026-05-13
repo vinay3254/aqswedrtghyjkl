@@ -427,4 +427,16 @@ ${text.trim()}`;
   }
 });
 
+// ── POST /api/ai/drug-interactions ────────────────────────────────────────
+router.post("/drug-interactions", async (req, res, next) => {
+  try {
+    const axios = require("axios");
+    const ML_ENGINE_URL = process.env.ML_ENGINE_URL || "http://localhost:8000";
+    const r = await axios.post(`${ML_ENGINE_URL}/drug-interactions`, req.body, { timeout: 15_000 });
+    res.json(r.data);
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

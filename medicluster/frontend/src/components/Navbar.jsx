@@ -38,6 +38,7 @@ export default function Navbar() {
             { to: "/reminders", label: "Reminders" },
             { to: "/mci",      label: "MCI Board" },
             { to: "/ask-ai",   label: "CliniQ" },
+            { to: "/ml-tools", label: "ML Tools" },
           ].map(({ to, label }) => (
             <Link
               key={to}

@@ -6,6 +6,7 @@ import {
   updateReminder,
   deleteReminder,
   generateMedicationPlan,
+  checkDrugInteractions,
 } from "../api/apiClient";
 
 const PRESET_TIMES = [
@@ -522,6 +523,140 @@ function AIPrescriptionPlanner({ patientId, reminders, onAdded, onError }) {
   );
 }
 
+function DrugInteractionChecker({ reminders }) {
+  const [result,  setResult]  = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [err,     setErr]     = useState(null);
+
+  const activeNames = reminders.filter((r) => r.active).map((r) => r.medicationName);
+  if (activeNames.length < 2) return null;
+
+  async function handleCheck() {
+    setLoading(true);
+    setErr(null);
+    setResult(null);
+    try {
+      const data = await checkDrugInteractions(activeNames);
+      setResult(data);
+    } catch {
+      setErr("Interaction check failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const interactions = result?.interactions ?? [];
+  const major    = interactions.filter((i) => i.severity === "major");
+  const moderate = interactions.filter((i) => i.severity === "moderate");
+  const minor    = interactions.filter((i) => i.severity === "minor" || (!i.severity && i.description));
+
+  return (
+    <div className="bg-white rounded-xl border border-orange-200 p-5 space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <svg className="w-4 h-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
+          <p className="text-sm font-semibold text-slate-700">Drug Interaction Checker</p>
+        </div>
+        <span className="text-xs text-slate-400">{activeNames.length} active meds</span>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5">
+        {activeNames.map((name) => (
+          <span key={name} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
+            {name}
+          </span>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        onClick={handleCheck}
+        disabled={loading}
+        className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-lg py-2 transition-colors disabled:opacity-50"
+      >
+        {loading ? (
+          <><div className="spinner w-3.5 h-3.5" />Checking…</>
+        ) : (
+          <>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Check Interactions
+          </>
+        )}
+      </button>
+
+      {err && (
+        <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{err}</p>
+      )}
+
+      {result && interactions.length === 0 && (
+        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5">
+          <svg className="w-4 h-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-xs text-emerald-700 font-semibold">No significant interactions found between current medications.</p>
+        </div>
+      )}
+
+      {major.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-bold text-red-700 uppercase tracking-wide flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
+            Major — {major.length}
+          </p>
+          {major.map((item, i) => (
+            <div key={i} className="bg-red-50 border border-red-200 rounded-lg p-3 space-y-1">
+              <p className="text-xs font-bold text-red-800">{item.drug1} + {item.drug2}</p>
+              {item.description && <p className="text-xs text-red-600 leading-relaxed">{item.description}</p>}
+              {item.recommendation && <p className="text-xs text-red-700 italic">{item.recommendation}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {moderate.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-bold text-amber-700 uppercase tracking-wide flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
+            Moderate — {moderate.length}
+          </p>
+          {moderate.map((item, i) => (
+            <div key={i} className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1">
+              <p className="text-xs font-bold text-amber-800">{item.drug1} + {item.drug2}</p>
+              {item.description && <p className="text-xs text-amber-700 leading-relaxed">{item.description}</p>}
+              {item.recommendation && <p className="text-xs text-amber-600 italic">{item.recommendation}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {minor.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-bold text-blue-600 uppercase tracking-wide flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />
+            Minor — {minor.length}
+          </p>
+          {minor.map((item, i) => (
+            <div key={i} className="bg-blue-50 border border-blue-100 rounded-lg p-3 space-y-1">
+              <p className="text-xs font-bold text-blue-800">{item.drug1} + {item.drug2}</p>
+              {item.description && <p className="text-xs text-blue-600 leading-relaxed">{item.description}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {result?.summary && (
+        <p className="text-xs text-slate-500 border-t border-slate-100 pt-3 leading-relaxed">{result.summary}</p>
+      )}
+    </div>
+  );
+}
+
 function TodaySchedule({ reminders }) {
   const active = reminders.filter((r) => r.active);
   if (active.length === 0) return null;
@@ -720,6 +855,7 @@ export default function RemindersPage() {
                 onAdded={handleAdded}
                 onError={setError}
               />
+              <DrugInteractionChecker reminders={reminders} />
             </div>
 
             {/* Right column: today's schedule + reminder list */}

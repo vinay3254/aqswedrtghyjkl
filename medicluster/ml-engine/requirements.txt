@@ -23,3 +23,33 @@ albumentations
 
 # Fast CPU inference
 onnxruntime
+
+# ── ML Explainability ──────────────────────────────────────────────────────────
+shap>=0.45.0
+xgboost>=2.0.0
+
+# ── Dimensionality Reduction (UMAP / t-SNE) ───────────────────────────────────
+umap-learn>=0.5.6
+# t-SNE is bundled in scikit-learn (no extra install needed)
+
+# ── NLP / Clinical NER ────────────────────────────────────────────────────────
+# Transformers (for BioBERT, ClinicalBERT, summarization, sentiment)
+transformers>=4.40.0
+# spaCy base (required by scispacy)
+spacy>=3.7.0
+# scispaCy for biomedical NER (optional but recommended)
+# pip install scispacy && python -m spacy download en_core_sci_md
+scispacy>=0.5.5
+
+# ── Time-Series Forecasting ───────────────────────────────────────────────────
+# Prophet for trend decomposition and anomaly detection
+prophet>=1.1.5
+
+# ── Vector Store / RAG Chatbot ────────────────────────────────────────────────
+faiss-cpu>=1.8.0
+langchain>=0.2.0
+
+# ── Grad-CAM Visualization ────────────────────────────────────────────────────
+# pytorch-grad-cam is used as reference; we implement natively using hooks
+# Uncomment if you prefer the library version:
+# pytorch-grad-cam>=1.5.0

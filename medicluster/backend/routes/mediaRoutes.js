@@ -10,6 +10,19 @@ const ML_ENGINE_URL = process.env.ML_ENGINE_URL || "http://localhost:8000";
 
 const router = express.Router();
 
+// Single shared Anthropic client — avoids re-initializing on every request
+let _anthropic = null;
+function getAnthropicClient() {
+  if (!_anthropic) {
+    const Anthropic = require("@anthropic-ai/sdk");
+    _anthropic = new Anthropic({
+      apiKey:  process.env.ANTHROPIC_API_KEY,
+      timeout: 120_000, // 2 minutes — image payloads are large
+    });
+  }
+  return _anthropic;
+}
+
 const ALLOWED_MIMETYPES = new Set([
   "image/jpeg",
   "image/png",
@@ -50,13 +63,27 @@ function getFileType(mimetype, originalname = "") {
   return "document";
 }
 
-// GET /api/media/models — proxy model list from ML engine
+const CLAUDE_VISION_MODEL = {
+  id: "claude-vision",
+  label: "LungLens",
+  desc: "Anthropic Claude — analyzes any medical image, returns structured findings with confidence, severity, cause, medications and prevention",
+  size: null,
+};
+
+// GET /api/media/models — proxy model list from ML engine, append Claude Vision
 router.get("/models", async (_req, res, next) => {
   try {
     const r = await axios.get(`${ML_ENGINE_URL}/models`, { timeout: 5000 });
-    res.json(r.data);
+    const models = [...(r.data.models || []), CLAUDE_VISION_MODEL];
+    res.json({ ...r.data, models });
   } catch {
-    res.json({ models: [{ id: "densenet121-res224-all", label: "DenseNet121 · All datasets", size: 224 }], default: "densenet121-res224-all" });
+    res.json({
+      models: [
+        { id: "densenet121-res224-all", label: "DenseNet121 · All datasets", size: 224 },
+        CLAUDE_VISION_MODEL,
+      ],
+      default: "densenet121-res224-all",
+    });
   }
 });
 
@@ -165,20 +192,84 @@ router.post("/analyze/:fileId", async (req, res, next) => {
 
     const model_name = req.body.model_name || "densenet121-res224-all";
 
-    // Send to ML engine
-    const mlRes = await axios.post(
-      `${ML_ENGINE_URL}/analyze-image`,
-      { image_b64: imageB64, model_name, filename: media.original_name },
-      { timeout: 120_000 }
-    );
+    let analysis;
 
-    const analysis = {
-      findings:     mlRes.data.findings,
-      model:        mlRes.data.model,
-      model_label:  mlRes.data.model_label,
-      scan_warning: mlRes.data.scan_warning || null,
-      analyzedAt:   new Date(),
-    };
+    if (model_name === "claude-vision") {
+      // ── Claude Vision analysis ──────────────────────────────────────────────
+      if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: "ANTHROPIC_API_KEY not configured" });
+      const client = getAnthropicClient();
+
+      const SUPPORTED = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
+      const mediaType = SUPPORTED.has(media.mimetype) ? media.mimetype : "image/jpeg";
+
+      const prompt = `You are a medical imaging AI. Analyze this medical image and return a JSON object with this exact structure — no extra text, no markdown fences, only the raw JSON:
+
+{
+  "findings": [
+    {
+      "label": "<condition name>",
+      "confidence": <0.0–1.0 float>,
+      "severity": "<high|moderate|low>",
+      "cause": "<one sentence cause>",
+      "medications": ["<med1>", "<med2>"],
+      "prevention": ["<step1>", "<step2>"]
+    }
+  ],
+  "scan_warning": "<string if image does not look like a medical scan, else null>"
+}
+
+Rules:
+- List every visible pathology or finding with confidence >= 0.15.
+- confidence must be a float between 0 and 1 (e.g. 0.87 means 87%).
+- severity must be exactly one of: high, moderate, low.
+- Include at least 2 medications and 2 prevention steps per finding.
+- If no abnormality is found, return an empty findings array.
+- Return ONLY the raw JSON object. No explanation text outside the JSON.`;
+
+      const message = await client.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1500,
+        messages: [{
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type: mediaType, data: imageB64 } },
+            { type: "text", text: prompt },
+          ],
+        }],
+      });
+
+      let parsed;
+      try {
+        const raw = message.content[0].text.trim();
+        const jsonText = raw.replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim();
+        parsed = JSON.parse(jsonText);
+      } catch {
+        return res.status(502).json({ error: "Claude returned malformed JSON — please retry" });
+      }
+
+      analysis = {
+        findings:     Array.isArray(parsed.findings) ? parsed.findings : [],
+        model:        "claude-vision",
+        model_label:  "LungLens",
+        scan_warning: parsed.scan_warning || null,
+        analyzedAt:   new Date(),
+      };
+    } else {
+      // ── ML engine (DenseNet / ResNet) analysis ─────────────────────────────
+      const mlRes = await axios.post(
+        `${ML_ENGINE_URL}/analyze-image`,
+        { image_b64: imageB64, model_name, filename: media.original_name },
+        { timeout: 120_000 }
+      );
+
+      analysis = {
+        findings:     mlRes.data.findings,
+        model:        mlRes.data.model,
+        model_label:  mlRes.data.model_label,
+        scan_warning: mlRes.data.scan_warning || null,
+        analyzedAt:   new Date(),
+      };
+    }
 
     media.analysis = analysis;
     await media.save();
@@ -202,8 +293,7 @@ router.post("/explain/:fileId", async (req, res) => {
     return res.json({ explanation: null, error: "AI explanation unavailable — ANTHROPIC_API_KEY not configured" });
   }
 
-  const Anthropic = require("@anthropic-ai/sdk");
-  const client = new Anthropic({ apiKey });
+  const client = getAnthropicClient();
 
   const top = findings.slice(0, 5);
   const findingsList = top
@@ -234,10 +324,18 @@ Be clear, concise, and avoid unnecessary medical jargon. Do not provide a specif
   }
 });
 
+const LANGUAGE_NAMES = {
+  en: "English",
+  hi: "Hindi",
+  kn: "Kannada",
+  te: "Telugu",
+  ta: "Tamil",
+};
+
 // POST /api/media/ai-chat  — Claude vision chat (direct base64, no GridFS)
 router.post("/ai-chat", async (req, res, next) => {
   try {
-    const { imageBase64, mediaType, chatHistory = [], question = "" } = req.body;
+    const { imageBase64, mediaType, chatHistory = [], question = "", language = "en" } = req.body;
     if (!imageBase64) return res.status(400).json({ error: "imageBase64 is required" });
 
     const SUPPORTED = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
@@ -246,8 +344,12 @@ router.post("/ai-chat", async (req, res, next) => {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return res.status(500).json({ error: "ANTHROPIC_API_KEY not configured" });
 
-    const Anthropic = require("@anthropic-ai/sdk");
-    const client = new Anthropic({ apiKey });
+    const client = getAnthropicClient();
+
+    const langName = LANGUAGE_NAMES[language] || "English";
+    const langInstruction = language === "en"
+      ? ""
+      : `\nIMPORTANT: You MUST respond entirely in ${langName}. All section headings, explanations, and the disclaimer must be written in ${langName} script.`;
 
     const systemPrompt = `You are a medical AI assistant helping analyze medical images.
 When first analyzing an image, structure your response with these clear sections:
@@ -258,7 +360,7 @@ When first analyzing an image, structure your response with these clear sections
 **Medications**: Common medications used for this condition
 
 For follow-up questions, respond conversationally.
-Always end with: "⚠️ Educational purposes only — consult a qualified physician for diagnosis and treatment."`;
+Always end with: "⚠️ Educational purposes only — consult a qualified physician for diagnosis and treatment."${langInstruction}`;
 
     const messages = [];
 
@@ -324,8 +426,7 @@ router.post("/ai-assistant/:fileId", async (req, res, next) => {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return res.status(500).json({ error: "ANTHROPIC_API_KEY not configured" });
 
-    const Anthropic = require("@anthropic-ai/sdk");
-    const client = new Anthropic({ apiKey });
+    const client = getAnthropicClient();
 
     const { chatHistory = [], question = "" } = req.body;
 
@@ -370,6 +471,38 @@ Always end with: "⚠️ Educational purposes only — consult a qualified physi
     });
 
     res.json({ reply: response.content[0].text });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/media/gradcam/:fileId  — Grad-CAM heatmap for a stored image
+router.post("/gradcam/:fileId", async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.fileId))
+      return res.status(400).json({ error: "Invalid file ID" });
+
+    const media = await PatientMedia.findOne({ gridfs_id: new mongoose.Types.ObjectId(req.params.fileId) });
+    if (!media) return res.status(404).json({ error: "File not found" });
+
+    const bucket = getBucket();
+    const chunks = [];
+    const dl = bucket.openDownloadStream(media.gridfs_id);
+    await new Promise((resolve, reject) => {
+      dl.on("data", (c) => chunks.push(c));
+      dl.on("end", resolve);
+      dl.on("error", reject);
+    });
+
+    const imageB64 = Buffer.concat(chunks).toString("base64");
+    const { model_name = "densenet121-res224-chex", target_label } = req.body;
+
+    const r = await axios.post(
+      `${ML_ENGINE_URL}/gradcam`,
+      { image_b64: imageB64, model_name, target_label, filename: media.original_name },
+      { timeout: 60_000 }
+    );
+    res.json(r.data);
   } catch (err) {
     next(err);
   }
