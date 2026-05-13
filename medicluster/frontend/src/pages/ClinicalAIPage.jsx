@@ -276,6 +276,10 @@ export default function ClinicalAIPage() {
   }, [selectedResultId, vitals, committedPatientId, notes]);
 
   // ── render ──────────────────────────────────────────────────────────────────
+  const criticalEntities = (nlpResult?.entities ?? []).filter(
+    (e) => e.severity === "critical"
+  );
+
   return (
     <div className="max-w-screen-xl mx-auto px-6 py-8 space-y-6">
 
@@ -397,6 +401,26 @@ export default function ClinicalAIPage() {
               </div>
             ))}
           </div>
+          {criticalEntities.length > 0 && (
+            <div className="space-y-2 mt-2">
+              {criticalEntities.map((e, i) => (
+                <div
+                  key={i}
+                  className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-300 rounded-xl"
+                >
+                  <span className="text-amber-500 shrink-0 mt-0.5">⚠️</span>
+                  <div>
+                    <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">
+                      {e.label ?? e.text}
+                    </p>
+                    <p className="text-xs text-amber-600 mt-0.5">
+                      Critical severity entity — clinical review required
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </Card>
       </div>
 
