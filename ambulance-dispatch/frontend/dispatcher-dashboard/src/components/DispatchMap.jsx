@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Box } from '@mui/material';
@@ -160,16 +160,12 @@ export default function DispatchMap({
       attributionControl: false,
     }).setView(center, zoom);
 
-    /* Dark CartoDB tile layer — clean, minimal, no clutter */
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_matter/{z}/{x}/{y}{r}.png', {
+    /* OSM tiles with CSS dark filter — works on any connection */
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      subdomains: 'abcd',
+      attribution: '© OpenStreetMap',
+      className: 'map-dark-tiles',
     }).addTo(mapInstanceRef.current);
-
-    /* Subtle attribution */
-    L.control.attribution({ prefix: false, position: 'bottomright' })
-      .addAttribution('<span style="opacity:0.3;font-size:10px">© CartoDB © OSM</span>')
-      .addTo(mapInstanceRef.current);
 
     /* Custom zoom controls — bottom right */
     L.control.zoom({ position: 'bottomright' }).addTo(mapInstanceRef.current);
@@ -479,6 +475,10 @@ export default function DispatchMap({
           color: 'white !important',
           borderColor: 'rgba(255,255,255,0.1) !important',
           '&:hover': { background: '#334155 !important' },
+        },
+        /* Dark tile filter — inverts OSM to night mode */
+        '& .map-dark-tiles': {
+          filter: 'invert(100%) hue-rotate(180deg) brightness(0.72) saturate(0.75)',
         },
         /* Marker pulse animations */
         '@keyframes amb-pulse': {
