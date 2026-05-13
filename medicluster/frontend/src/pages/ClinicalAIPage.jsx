@@ -92,6 +92,7 @@ const CRITICAL_KEYWORDS = [
 export default function ClinicalAIPage() {
   // header
   const [patientId, setPatientId]             = useState("P-001");
+  const [committedPatientId, setCommittedPatientId] = useState("P-001");
   const [clusterResults, setClusterResults]   = useState([]);
   const [selectedResultId, setSelectedResultId] = useState("");
   const [resultsLoading, setResultsLoading]   = useState(false);
@@ -101,6 +102,7 @@ export default function ClinicalAIPage() {
   const [uploadStatus, setUploadStatus] = useState("idle"); // idle|uploading|done|error
   const [uploadError, setUploadError]   = useState("");
   const fileInputRef                    = useRef(null);
+  const notesRef                        = useRef(notes);
 
   // alerts (client-side)
   const [alerts, setAlerts] = useState([]);
@@ -140,20 +142,27 @@ export default function ClinicalAIPage() {
         setClusterResults(arr);
         if (arr.length > 0) setSelectedResultId(arr[0]._id ?? arr[0].id ?? "");
       })
-      .catch(() => {})
+      .catch((e) => console.error("Failed to load cluster results:", e))
       .finally(() => setResultsLoading(false));
   }, []);
 
   // ── load patient history when patientId changes ─────────────────────────────
   useEffect(() => {
-    if (!patientId.trim()) return;
+    if (!committedPatientId.trim()) return;
     setHistoryLoading(true);
     setHistoryError("");
-    getPatientClusterHistory(patientId.trim())
+    getPatientClusterHistory(committedPatientId.trim())
       .then((data) => setHistory(Array.isArray(data) ? data : []))
       .catch((e) => setHistoryError(e?.response?.data?.error ?? e.message))
       .finally(() => setHistoryLoading(false));
-  }, [patientId]);
+  }, [committedPatientId]);
+
+  // cleanup NLP debounce timer on unmount
+  useEffect(() => {
+    return () => clearTimeout(nlpTimerRef.current);
+  }, []);
+
+  useEffect(() => { notesRef.current = notes; }, [notes]);
 
   // ── critical keyword scan (instant, client-side) ────────────────────────────
   const scanKeywords = useCallback((text) => {
@@ -215,7 +224,7 @@ export default function ClinicalAIPage() {
           "Extract all clinical observations, diagnoses, medications, and vitals from this document as plain text."
         );
         const extracted = res?.reply ?? res?.content ?? res?.message ?? "";
-        handleNotesChange(notes ? `${notes}\n\n${extracted}` : extracted);
+        handleNotesChange(notesRef.current ? `${notesRef.current}\n\n${extracted}` : extracted);
         setUploadStatus("done");
       } catch (err) {
         setUploadError(err?.response?.data?.error ?? err.message);
@@ -223,7 +232,7 @@ export default function ClinicalAIPage() {
       }
     };
     reader.readAsDataURL(file);
-  }, [notes, handleNotesChange]);
+  }, [handleNotesChange]);
 
   // ── run prediction ──────────────────────────────────────────────────────────
   const runPrediction = useCallback(async () => {
@@ -255,7 +264,7 @@ export default function ClinicalAIPage() {
       }
 
       setCarePlanLoading(true);
-      generateMedicationPlan(patientId.trim(), notes)
+      generateMedicationPlan(committedPatientId.trim(), notes)
         .then(setCarePlan)
         .catch((e) => setCarePlanError(e?.response?.data?.error ?? e.message))
         .finally(() => setCarePlanLoading(false));
@@ -264,7 +273,7 @@ export default function ClinicalAIPage() {
     } finally {
       setPredLoading(false);
     }
-  }, [selectedResultId, vitals, patientId, notes]);
+  }, [selectedResultId, vitals, committedPatientId, notes]);
 
   // ── render ──────────────────────────────────────────────────────────────────
   return (
@@ -285,6 +294,8 @@ export default function ClinicalAIPage() {
               type="text"
               value={patientId}
               onChange={(e) => setPatientId(e.target.value)}
+              onBlur={() => setCommittedPatientId(patientId)}
+              onKeyDown={(e) => e.key === "Enter" && setCommittedPatientId(patientId)}
               placeholder="e.g. P-001"
               className="text-sm border border-slate-200 rounded-lg px-3 py-1.5 w-28 focus:outline-none focus:ring-2 focus:ring-blue-300"
             />
@@ -699,10 +710,10 @@ export default function ClinicalAIPage() {
         <ErrBanner msg={historyError} onDismiss={() => setHistoryError("")} />
 
         {!historyLoading && !historyError && history.length === 0 && (
-          <p className="text-xs text-slate-400 italic">No history found for patient {patientId}.</p>
+          <p className="text-xs text-slate-400 italic">No history found for patient {committedPatientId}.</p>
         )}
 
-        {!historyLoading && history.length > 0 && (
+        {!historyLoading && !historyError && history.length > 0 && (
           <div className="relative pl-6 space-y-4">
             {/* vertical connector line */}
             <div className="absolute left-2.5 top-2 bottom-2 w-0.5 bg-slate-200" />
