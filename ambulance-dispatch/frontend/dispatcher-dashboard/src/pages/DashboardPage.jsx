@@ -7,7 +7,7 @@ import {
 import {
   Menu as MenuIcon, Notifications, Refresh, Add,
   FilterList, FullscreenExit, Fullscreen, Warning,
-  DirectionsCar, Close, LocalTaxi
+  DirectionsCar, Close, LocalTaxi, AutoAwesome, CheckCircle
 } from '@mui/icons-material';
 
 import DispatchMap from '../components/DispatchMap';
@@ -41,8 +41,10 @@ export default function DashboardPage({ user, onLogout }) {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [sosModalOpen, setSosModalOpen] = useState(false);
-  const [rightPanel, setRightPanel] = useState('tracking'); // 'tracking' | null
+  const [rightPanel, setRightPanel] = useState('tracking');
   const [snackbar, setSnackbar] = useState(null);
+  const [autoDispatchLoading, setAutoDispatchLoading] = useState(false);
+  const [autoDispatchResult, setAutoDispatchResult] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -76,6 +78,101 @@ export default function DashboardPage({ user, onLogout }) {
   };
 
   const handleAssign = () => setWizardOpen(true);
+
+  /* ── AI Auto-Dispatch ─────────────────────────────────────────────── */
+  const handleAutoDispatch = async () => {
+    if (!selectedIncident) return;
+    setAutoDispatchLoading(true);
+    setAutoDispatchResult(null);
+
+    // Simulate brief AI "thinking" delay (0.8s) for UX feedback
+    await new Promise(r => setTimeout(r, 800));
+
+    const iLat = selectedIncident.location_lat;
+    const iLng = selectedIncident.location_lng;
+
+    // 1. Pick nearest available ambulance
+    const availAmbs = ambulances.filter(a => a.latitude && a.longitude && a.status === 'AVAILABLE');
+    if (availAmbs.length === 0) {
+      setSnackbar({ message: 'No available ambulances nearby', severity: 'error' });
+      setAutoDispatchLoading(false);
+      return;
+    }
+
+    function haversine(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    const bestAmb = availAmbs.reduce((best, a) => {
+      const d = haversine(a.latitude, a.longitude, iLat, iLng);
+      return d < best.dist ? { amb: a, dist: d } : best;
+    }, { amb: availAmbs[0], dist: Infinity }).amb;
+
+    // 2. Pick best hospital: score = beds weight + proximity weight
+    const availHosps = hospitals.filter(h => h.latitude && h.longitude && (h.available_beds || 0) > 0);
+    const bestHosp = availHosps.length > 0
+      ? availHosps.reduce((best, h) => {
+          const distKm = haversine(iLat, iLng, h.latitude, h.longitude);
+          // Score: 60% proximity (lower = better), 40% beds (higher = better)
+          const score = (1 / (distKm + 0.1)) * 0.6 + ((h.available_beds || 0) / 50) * 0.4;
+          return score > best.score ? { hosp: h, score, distKm } : best;
+        }, { hosp: availHosps[0], score: -Infinity, distKm: 0 })
+      : null;
+
+    const ambDist = haversine(bestAmb.latitude, bestAmb.longitude, iLat, iLng);
+    const eta = Math.ceil(ambDist / 40 * 60); // ~40 km/h city speed
+
+    const result = {
+      ambulance: bestAmb,
+      hospital: bestHosp?.hosp || null,
+      ambDistKm: ambDist.toFixed(1),
+      hospDistKm: bestHosp?.distKm?.toFixed(1) || '?',
+      eta,
+      reasoning: [
+        `Nearest available unit: ${bestAmb.call_sign || bestAmb.vehicle_number} · ${ambDist.toFixed(1)} km away`,
+        bestHosp ? `Best hospital: ${bestHosp.hosp.name} · ${bestHosp.hosp.available_beds} beds · ${bestHosp.distKm.toFixed(1)} km` : 'No hospitals available',
+        `Estimated scene arrival: ~${eta} min`,
+        selectedIncident.severity === 'CRITICAL' ? 'Green corridor recommended — critical case' : null,
+      ].filter(Boolean),
+    };
+
+    setAutoDispatchResult(result);
+    setAutoDispatchLoading(false);
+
+    // Auto-confirm after showing result
+    setTimeout(() => {
+      const currentIncident = selectedIncident;
+      const fullAmbulance = ambulances.find(a => a.id === result.ambulance?.id) || result.ambulance;
+      const fullHospital = hospitals.find(h => h.id === result.hospital?.id) || result.hospital;
+      const enriched = {
+        ambulance: fullAmbulance,
+        hospital: fullHospital,
+        incident: currentIncident,
+        id: currentIncident.id,
+        incident_type: currentIncident.incident_type,
+        severity: currentIncident.severity,
+        location_address: currentIncident.location_address,
+        location_lat: currentIncident.location_lat,
+        location_lng: currentIncident.location_lng,
+        distance: `${result.ambDistKm} km`,
+        eta: `${result.eta} min`,
+        hospital_name: fullHospital?.name,
+        _isAssignment: true,
+        _autoDispatched: true,
+      };
+      setActiveAssignment(enriched);
+      dispatchBroadcast.send(DISPATCH_EVENTS.INCIDENT_ASSIGNED, enriched);
+      setAutoDispatchResult(null);
+      setSelectedIncident(null);
+      setSnackbar({ message: `⚡ Auto-dispatched ${bestAmb.call_sign || bestAmb.vehicle_number} → ${currentIncident.incident_type}`, severity: 'success' });
+      refetchIncidents();
+      refetchAmbulances();
+    }, 2200);
+  };
 
   const handleAssignmentCreated = (assignment) => {
     const currentIncident = selectedIncident; // capture before clearing
@@ -301,21 +398,72 @@ export default function DashboardPage({ user, onLogout }) {
             {selectedIncident.is_sos && (
               <Chip label="🚨 SOS" size="small" sx={{ mb: 1, bgcolor: '#dc2626', color: 'white', fontWeight: 700 }} />
             )}
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              {selectedIncident.status === 'PENDING' && (
-                <Button variant="outlined" size="small" onClick={handleAcknowledge}
-                  sx={{ borderColor: '#f59e0b', color: '#f59e0b', flex: 1,
-                    '&:hover': { bgcolor: 'rgba(245,158,11,0.1)' } }}>
-                  Acknowledge
-                </Button>
-              )}
+            {/* Auto-Dispatch result card */}
+            {autoDispatchResult && (
+              <Box sx={{
+                mb: 1.5, p: 1.5, borderRadius: 1.5,
+                background: 'linear-gradient(135deg, rgba(59,130,246,0.12), rgba(139,92,246,0.08))',
+                border: '1px solid rgba(59,130,246,0.25)',
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mb: 1 }}>
+                  <AutoAwesome sx={{ fontSize: 14, color: '#818cf8' }} />
+                  <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#818cf8' }}>AI DECISION</Typography>
+                </Box>
+                {autoDispatchResult.reasoning.map((line, i) => (
+                  <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.7, mb: 0.4 }}>
+                    <CheckCircle sx={{ fontSize: 11, color: '#22c55e', mt: 0.3, flexShrink: 0 }} />
+                    <Typography sx={{ fontSize: 10.5, color: 'rgba(255,255,255,0.7)', lineHeight: 1.4 }}>{line}</Typography>
+                  </Box>
+                ))}
+                <Typography sx={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', mt: 0.8 }}>
+                  Dispatching in 2 seconds…
+                </Typography>
+              </Box>
+            )}
+
+            <Box sx={{ display: 'flex', gap: 1, flexDirection: 'column' }}>
+              {/* AI Auto-Dispatch — primary action */}
               {['PENDING', 'ACKNOWLEDGED'].includes(selectedIncident.status) && (
-                <Button variant="contained" size="small" onClick={handleAssign}
-                  startIcon={<Add />}
-                  sx={{ background: 'linear-gradient(90deg, #16a34a, #15803d)', color: 'white', flex: 1 }}>
-                  Assign
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={handleAutoDispatch}
+                  disabled={autoDispatchLoading}
+                  startIcon={autoDispatchLoading
+                    ? <Box sx={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.7s linear infinite', '@keyframes spin': { to: { transform: 'rotate(360deg)' } } }} />
+                    : <AutoAwesome sx={{ fontSize: '16px !important' }} />
+                  }
+                  sx={{
+                    background: autoDispatchLoading
+                      ? 'rgba(99,102,241,0.4)'
+                      : 'linear-gradient(90deg, #4f46e5, #7c3aed)',
+                    color: 'white', fontWeight: 700, fontSize: 12,
+                    boxShadow: autoDispatchLoading ? 'none' : '0 0 16px rgba(99,102,241,0.4)',
+                    '&:hover': { background: 'linear-gradient(90deg, #4338ca, #6d28d9)' },
+                    '&:disabled': { opacity: 0.6 },
+                  }}
+                >
+                  {autoDispatchLoading ? 'Analysing…' : '⚡ AI Auto-Dispatch'}
                 </Button>
               )}
+
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                {selectedIncident.status === 'PENDING' && (
+                  <Button variant="outlined" size="small" onClick={handleAcknowledge}
+                    sx={{ borderColor: '#f59e0b', color: '#f59e0b', flex: 1,
+                      '&:hover': { bgcolor: 'rgba(245,158,11,0.1)' } }}>
+                    Acknowledge
+                  </Button>
+                )}
+                {['PENDING', 'ACKNOWLEDGED'].includes(selectedIncident.status) && (
+                  <Button variant="outlined" size="small" onClick={handleAssign}
+                    startIcon={<Add />}
+                    sx={{ borderColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.6)', flex: 1,
+                      '&:hover': { borderColor: '#22c55e', color: '#22c55e', bgcolor: 'rgba(34,197,94,0.08)' } }}>
+                    Manual
+                  </Button>
+                )}
+              </Box>
             </Box>
           </Box>
         )}
