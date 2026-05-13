@@ -37,8 +37,10 @@ export default function Navbar() {
             { to: "/patient",   label: "Patients" },
             { to: "/reminders", label: "Reminders" },
             { to: "/mci",      label: "MCI Board" },
-            { to: "/ask-ai",   label: "CliniQ" },
-            { to: "/ml-tools", label: "ML Tools" },
+            { to: "/ask-ai",      label: "CliniQ" },
+            { to: "/clinical-ai", label: "Clinical AI" },
+            { to: "/hospitals",   label: "Hospitals" },
+            { to: "/ml-tools",    label: "ML Tools" },
           ].map(({ to, label }) => (
             <Link
               key={to}
