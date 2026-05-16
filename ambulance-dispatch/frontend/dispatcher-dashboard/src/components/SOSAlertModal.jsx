@@ -24,14 +24,14 @@ const SEVERITY_OPTIONS = [
 ];
 
 const INDIA_CITIES = [
-  { name: 'Mumbai, Maharashtra', lat: 19.0760, lng: 72.8777 },
-  { name: 'Delhi, NCT', lat: 28.6139, lng: 77.2090 },
-  { name: 'Bangalore, Karnataka', lat: 12.9716, lng: 77.5946 },
-  { name: 'Hyderabad, Telangana', lat: 17.3850, lng: 78.4867 },
-  { name: 'Chennai, Tamil Nadu', lat: 13.0827, lng: 80.2707 },
-  { name: 'Kolkata, West Bengal', lat: 22.5726, lng: 88.3639 },
-  { name: 'Pune, Maharashtra', lat: 18.5204, lng: 73.8567 },
-  { name: 'Ahmedabad, Gujarat', lat: 23.0225, lng: 72.5714 },
+  { name: 'Bangalore, Karnataka',  lat: 12.9716, lng: 77.5946 },
+  { name: 'Indiranagar, Bangalore',lat: 12.9784, lng: 77.6408 },
+  { name: 'Koramangala, Bangalore',lat: 12.9352, lng: 77.6245 },
+  { name: 'Whitefield, Bangalore', lat: 12.9698, lng: 77.7500 },
+  { name: 'Hebbal, Bangalore',     lat: 13.0459, lng: 77.5967 },
+  { name: 'Electronic City',       lat: 12.8399, lng: 77.6770 },
+  { name: 'Delhi, NCT',            lat: 28.6139, lng: 77.2090 },
+  { name: 'Mumbai, Maharashtra',   lat: 19.0760, lng: 72.8777 },
 ];
 
 function SirenIcon(props) {

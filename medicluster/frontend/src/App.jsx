@@ -8,7 +8,6 @@ import ImagingPage from "./pages/ImagingPage";
 import PredictPage from "./pages/PredictPage";
 import PatientPage from "./pages/PatientPage";
 import RemindersPage from "./pages/RemindersPage";
-import MCIBoardPage from "./pages/MCIBoardPage";
 import AskAIPage from "./pages/AskAIPage";
 import MLToolsPage from "./pages/MLToolsPage";
 import NearbyHospitalsPage from "./pages/NearbyHospitalsPage";
@@ -29,8 +28,6 @@ export default function App() {
           <Route path="/patient/:patientId" element={<PatientPage />} />
           <Route path="/reminders" element={<RemindersPage />} />
           <Route path="/reminders/:patientId" element={<RemindersPage />} />
-          <Route path="/mci" element={<MCIBoardPage />} />
-          <Route path="/mci/:incidentId" element={<MCIBoardPage />} />
           <Route path="/ask-ai" element={<AskAIPage />} />
           <Route path="/ml-tools" element={<MLToolsPage />} />
           <Route path="/hospitals" element={<NearbyHospitalsPage />} />

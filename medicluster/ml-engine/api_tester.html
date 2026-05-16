@@ -46,11 +46,17 @@
 <nav>
   <div class="cat">NLP</div>
   <button class="active" onclick="show('notes')">📝 Analyze Notes</button>
+  <button onclick="show('symptoms')">🩺 Extract Symptoms</button>
   <button onclick="show('drugs')">💊 Drug Interactions</button>
+  <div class="cat">Risk Intelligence</div>
+  <button onclick="show('risk')">🚑 Risk Profile</button>
+  <button onclick="show('population')">🏥 Population Risk</button>
+  <button onclick="show('visits')">📊 Compare Visits</button>
   <div class="cat">Forecasting</div>
   <button onclick="show('mews')">🚨 MEWS Score</button>
   <button onclick="show('forecast')">📈 Vital Forecasting</button>
   <div class="cat">AutoML</div>
+  <button onclick="show('supervised')">🎯 Train Model</button>
   <button onclick="show('optimalk')">🔢 Optimal-K</button>
   <button onclick="show('dims')">🗺 UMAP / t-SNE</button>
   <div class="cat">Anomaly & XAI</div>
@@ -71,6 +77,16 @@
   <div class="result" id="notes-result"><pre class="loading">Results will appear here...</pre></div>
 </div>
 
+<!-- SYMPTOMS -->
+<div id="panel-symptoms" class="panel">
+  <h2>🩺 Symptom Extractor <span class="tag post">POST</span><span class="tag">/extract-symptoms</span></h2>
+  <p class="desc">Extracts symptoms, negation, severity, duration, emergency flags, follow-up questions and routing.</p>
+  <label>Patient Text</label>
+  <textarea id="symptoms-input">Patient has severe SOB for 2 days and fever. Denies chest pain. SpO2 88%. Known DM and HTN.</textarea>
+  <button class="btn" onclick="callSymptoms()">Extract →</button>
+  <div class="result" id="symptoms-result"><pre class="loading">Results will appear here...</pre></div>
+</div>
+
 <!-- DRUG INTERACTIONS -->
 <div id="panel-drugs" class="panel">
   <h2>💊 Drug Interaction Checker <span class="tag post">POST</span><span class="tag">/drug-interactions</span></h2>
@@ -79,6 +95,57 @@
   <input id="drugs-input" value="warfarin, aspirin, furosemide, digoxin">
   <button class="btn" onclick="callDrugs()">Check Interactions →</button>
   <div class="result" id="drugs-result"><pre class="loading">Results will appear here...</pre></div>
+</div>
+
+<!-- RISK PROFILE -->
+<div id="panel-risk" class="panel">
+  <h2>🚑 Advanced Risk Profile <span class="tag post">POST</span><span class="tag">/risk-profile</span></h2>
+  <p class="desc">Computes triage priority, disease-specific risks, ICU/readmission/mortality estimates, alerts, tests and care plan.</p>
+  <label>Patient JSON</label>
+  <textarea id="risk-data">{
+  "patient_id": "P001",
+  "age": 72,
+  "systolic_bp": 86,
+  "heart_rate": 132,
+  "respiratory_rate": 30,
+  "spo2": 88,
+  "glucose": 260,
+  "notes": "Severe breathlessness and fever with suspected pneumonia."
+}</textarea>
+  <button class="btn" onclick="callRisk()">Score Risk →</button>
+  <div class="result" id="risk-result"><pre class="loading">Results will appear here...</pre></div>
+</div>
+
+<!-- POPULATION RISK -->
+<div id="panel-population" class="panel">
+  <h2>🏥 Population Risk Dashboard <span class="tag post">POST</span><span class="tag">/population-risk</span></h2>
+  <p class="desc">Returns cohort risk distribution, critical alerts, doctor review queue, workload forecast and fairness checks.</p>
+  <label>Patient Data JSON Array</label>
+  <textarea id="population-data">[
+  {"patient_id": "P001", "age": 72, "systolic_bp": 86, "heart_rate": 132, "respiratory_rate": 30, "spo2": 88, "notes": "Severe breathlessness and fever"},
+  {"patient_id": "P002", "age": 30, "systolic_bp": 118, "heart_rate": 72, "respiratory_rate": 16, "spo2": 98, "notes": "Routine visit, stable"},
+  {"patient_id": "P003", "age": 66, "systolic_bp": 184, "heart_rate": 108, "glucose": 320, "hba1c": 9.4, "notes": "Diabetes and hypertension follow-up"}
+]</textarea>
+  <button class="btn" onclick="callPopulation()">Analyze Cohort →</button>
+  <div class="result" id="population-result"><pre class="loading">Results will appear here...</pre></div>
+</div>
+
+<!-- VISIT COMPARISON -->
+<div id="panel-visits" class="panel">
+  <h2>📊 Visit Comparison <span class="tag post">POST</span><span class="tag">/compare-visits</span></h2>
+  <p class="desc">Compares previous and current patient state to detect improving, stable or worsening risk trend.</p>
+  <div class="row">
+    <div>
+      <label>Previous Visit JSON</label>
+      <textarea id="previous-visit">{"patient_id": "P001", "age": 70, "heart_rate": 82, "systolic_bp": 122, "spo2": 97}</textarea>
+    </div>
+    <div>
+      <label>Current Visit JSON</label>
+      <textarea id="current-visit">{"patient_id": "P001", "age": 70, "heart_rate": 128, "systolic_bp": 92, "spo2": 89}</textarea>
+    </div>
+  </div>
+  <button class="btn" onclick="callVisits()">Compare →</button>
+  <div class="result" id="visits-result"><pre class="loading">Results will appear here...</pre></div>
 </div>
 
 <!-- MEWS -->
@@ -108,6 +175,29 @@
   <input id="fc-steps" value="3" type="number">
   <button class="btn" onclick="callForecast()">Forecast →</button>
   <div class="result" id="forecast-result"><pre class="loading">Results will appear here...</pre></div>
+</div>
+
+<!-- SUPERVISED MODEL -->
+<div id="panel-supervised" class="panel">
+  <h2>🎯 Supervised Predictive Model <span class="tag post">POST</span><span class="tag">/train-predictive-model</span></h2>
+  <p class="desc">Trains quick baseline classifiers/regressors for labelled outcomes like risk label, readmission, ICU need or length of stay.</p>
+  <label>Training Data JSON Array</label>
+  <textarea id="supervised-data">[
+  {"patient_id": "P001", "age": 72, "heart_rate": 128, "spo2": 89, "risk_label": "High"},
+  {"patient_id": "P002", "age": 31, "heart_rate": 72, "spo2": 98, "risk_label": "Low"},
+  {"patient_id": "P003", "age": 68, "heart_rate": 112, "spo2": 91, "risk_label": "High"},
+  {"patient_id": "P004", "age": 29, "heart_rate": 70, "spo2": 99, "risk_label": "Low"},
+  {"patient_id": "P005", "age": 76, "heart_rate": 118, "spo2": 90, "risk_label": "High"},
+  {"patient_id": "P006", "age": 36, "heart_rate": 78, "spo2": 97, "risk_label": "Low"},
+  {"patient_id": "P007", "age": 80, "heart_rate": 132, "spo2": 88, "risk_label": "High"},
+  {"patient_id": "P008", "age": 41, "heart_rate": 74, "spo2": 98, "risk_label": "Low"},
+  {"patient_id": "P009", "age": 69, "heart_rate": 109, "spo2": 92, "risk_label": "High"},
+  {"patient_id": "P010", "age": 26, "heart_rate": 69, "spo2": 99, "risk_label": "Low"}
+]</textarea>
+  <label>Target Column</label>
+  <input id="supervised-target" value="risk_label">
+  <button class="btn" onclick="callSupervised()">Train Baselines →</button>
+  <div class="result" id="supervised-result"><pre class="loading">Results will appear here...</pre></div>
 </div>
 
 <!-- OPTIMAL K -->
@@ -263,6 +353,14 @@ async function callNotes() {
   } catch(e) { setResult('notes', {error: e.message}, true); }
 }
 
+async function callSymptoms() {
+  setLoading('symptoms');
+  try {
+    const data = await post('/extract-symptoms', { text: document.getElementById('symptoms-input').value });
+    setResult('symptoms', data, !!data.error);
+  } catch(e) { setResult('symptoms', {error: e.message}, true); }
+}
+
 async function callDrugs() {
   setLoading('drugs');
   try {
@@ -270,6 +368,34 @@ async function callDrugs() {
     const data = await post('/drug-interactions', { medications: meds });
     setResult('drugs', data, !!data.error);
   } catch(e) { setResult('drugs', {error: e.message}, true); }
+}
+
+async function callRisk() {
+  setLoading('risk');
+  try {
+    const patient = JSON.parse(document.getElementById('risk-data').value);
+    const data = await post('/risk-profile', { patient });
+    setResult('risk', data, !!data.error);
+  } catch(e) { setResult('risk', {error: e.message}, true); }
+}
+
+async function callPopulation() {
+  setLoading('population');
+  try {
+    const patients = JSON.parse(document.getElementById('population-data').value);
+    const data = await post('/population-risk', { data: patients });
+    setResult('population', data, !!data.error);
+  } catch(e) { setResult('population', {error: e.message}, true); }
+}
+
+async function callVisits() {
+  setLoading('visits');
+  try {
+    const previous = JSON.parse(document.getElementById('previous-visit').value);
+    const current = JSON.parse(document.getElementById('current-visit').value);
+    const data = await post('/compare-visits', { previous, current });
+    setResult('visits', data, !!data.error);
+  } catch(e) { setResult('visits', {error: e.message}, true); }
 }
 
 async function callMews() {
@@ -295,6 +421,16 @@ async function callForecast() {
     const data = await post('/forecast-vitals', { vitals_history: { heart_rate: hr, systolic_bp: bp }, steps, method: 'auto' });
     setResult('forecast', data, !!data.error);
   } catch(e) { setResult('forecast', {error: e.message}, true); }
+}
+
+async function callSupervised() {
+  setLoading('supervised');
+  try {
+    const rows = JSON.parse(document.getElementById('supervised-data').value);
+    const target = document.getElementById('supervised-target').value;
+    const data = await post('/train-predictive-model', { data: rows, target, task: 'auto' });
+    setResult('supervised', data, !!data.error);
+  } catch(e) { setResult('supervised', {error: e.message}, true); }
 }
 
 async function callOptimalK() {

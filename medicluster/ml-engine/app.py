@@ -14,9 +14,16 @@ ML / AutoML Endpoints:
   POST /reduce-dimensions   — UMAP / t-SNE dimensionality reduction alternatives
   POST /detect-anomalies    — Isolation Forest anomaly detection
   POST /explain             — SHAP feature importance and per-patient explanations
+  POST /train-predictive-model — Supervised baseline model training for labelled data
+  POST /risk-profile        — Advanced patient risk, triage, disease risks, care plan
+  POST /population-risk     — Cohort risk dashboard, alerts, fairness, workload forecast
+  POST /compare-visits      — Risk trend comparison between two visits
+  POST /patient-timeline    — Longitudinal risk timeline
+  POST /similar-patients    — Similar patient search
 
 NLP Endpoints:
   POST /analyze-notes       — Clinical notes NLP: NER, ICD-10, trajectory, summary
+  POST /extract-symptoms    — Symptom extraction convenience endpoint
   POST /drug-interactions   — Check drug interaction safety
 
 Forecasting Endpoints:
@@ -50,9 +57,17 @@ from utils.risk_labeler import label_risk_tiers
 from explainability.shap_explainer import compute_shap_values
 from anomaly.isolation_forest import detect_anomalies
 from automl.feature_selector import find_optimal_k, rank_features, compute_umap, compute_tsne
+from automl.supervised import train_predictive_model
 from nlp.notes_analyzer import analyze_clinical_notes
 from forecasting.vitals_forecaster import forecast_vitals, calculate_mews
 from chatbot.rag_assistant import answer_query, check_drug_interactions, update_patient_index
+from risk.advanced_risk import (
+    build_patient_timeline,
+    compare_patient_visits,
+    compute_patient_risk_profile,
+    find_similar_patients,
+    population_risk_intelligence,
+)
 
 app = Flask(__name__)
 CORS(app)  # Allow requests from Node backend and frontend
@@ -552,6 +567,151 @@ def explain():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Advanced Risk / Supervised ML Routes
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.route("/train-predictive-model", methods=["POST"])
+def train_predictive_model_endpoint():
+    """
+    Train supervised baseline models for labelled patient data.
+
+    Body: {
+        data: [...],
+        target: "risk_label" | "readmitted" | "length_of_stay" | ...,
+        task: "auto" | "classification" | "regression",
+        test_size: float
+    }
+    Returns: leaderboard, best_model, metrics, feature_importance
+    """
+    body = request.get_json(force=True)
+    data = body.get("data", [])
+    target = body.get("target")
+    task = str(body.get("task", "auto"))
+    test_size = float(body.get("test_size", 0.25))
+
+    if not data:
+        return jsonify({"error": "No training data provided"}), 400
+    if not target:
+        return jsonify({"error": "target is required"}), 400
+
+    try:
+        result = train_predictive_model(data, target=target, task=task, test_size=test_size)
+        status = 400 if "error" in result else 200
+        return jsonify(result), status
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/risk-profile", methods=["POST"])
+def risk_profile_endpoint():
+    """
+    Advanced risk profile for one patient or a list of patients.
+
+    Body: { patient: {...} } or { data: [{...}, ...] }
+    Returns: risk score, disease risks, triage priority, ICU/readmission/mortality
+             estimates, care plan, alerts, next tests, and data quality.
+    """
+    body = request.get_json(force=True)
+    patient = body.get("patient")
+    data = body.get("data")
+
+    try:
+        if patient:
+            return jsonify(compute_patient_risk_profile(patient))
+        if isinstance(data, list) and data:
+            return jsonify(population_risk_intelligence(data))
+        return jsonify({"error": "Provide patient or data"}), 400
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/population-risk", methods=["POST"])
+def population_risk_endpoint():
+    """
+    Cohort-level clinical intelligence.
+
+    Body: { data: [...] }
+    Returns: per-patient profiles, risk distribution, critical alerts,
+             doctor review queue, fairness checks, and workload forecast.
+    """
+    body = request.get_json(force=True)
+    data = body.get("data", [])
+    if not data:
+        return jsonify({"error": "No patient data provided"}), 400
+
+    try:
+        return jsonify(population_risk_intelligence(data))
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/compare-visits", methods=["POST"])
+def compare_visits_endpoint():
+    """
+    Compare previous and current patient state.
+
+    Body: { previous: {...}, current: {...} }
+    Returns: previous/current profiles, risk delta, and trend.
+    """
+    body = request.get_json(force=True)
+    previous = body.get("previous")
+    current = body.get("current")
+    if not previous or not current:
+        return jsonify({"error": "previous and current are required"}), 400
+
+    try:
+        return jsonify(compare_patient_visits(previous, current))
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/patient-timeline", methods=["POST"])
+def patient_timeline_endpoint():
+    """
+    Build a longitudinal risk timeline from dated visits/notes/vitals.
+
+    Body: { events: [{date/timestamp, ...}, ...] }
+    Returns: timeline and overall trend.
+    """
+    body = request.get_json(force=True)
+    events = body.get("events", [])
+    if not events:
+        return jsonify({"error": "events are required"}), 400
+
+    try:
+        return jsonify(build_patient_timeline(events))
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/similar-patients", methods=["POST"])
+def similar_patients_endpoint():
+    """
+    Find clinically similar patients using shared numeric fields.
+
+    Body: { patient: {...}, candidates: [...], top_k: int }
+    Returns: ranked similar patient matches.
+    """
+    body = request.get_json(force=True)
+    patient = body.get("patient")
+    candidates = body.get("candidates", [])
+    top_k = int(body.get("top_k", 5))
+    if not patient or not candidates:
+        return jsonify({"error": "patient and candidates are required"}), 400
+
+    try:
+        return jsonify(find_similar_patients(patient, candidates, top_k=top_k))
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # NLP Routes
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -581,6 +741,37 @@ def analyze_notes():
     try:
         result = analyze_clinical_notes(notes)
         return jsonify(result)
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/extract-symptoms", methods=["POST"])
+def extract_symptoms_endpoint():
+    """
+    Convenience route for NLP symptom extraction and triage fields.
+
+    Body: { text: str } or { notes: str }
+    Returns: symptoms, emergency_flags, follow_up_questions, departments,
+             structured_record, patient-friendly explanation.
+    """
+    body = request.get_json(force=True)
+    text = str(body.get("text", body.get("notes", ""))).strip()
+    if not text:
+        return jsonify({"error": "text or notes is required"}), 400
+
+    try:
+        full = analyze_clinical_notes(text)
+        return jsonify({
+            "symptoms": full.get("symptoms", []),
+            "emergency_flags": full.get("emergency_flags", []),
+            "follow_up_questions": full.get("follow_up_questions", []),
+            "recommended_departments": full.get("recommended_departments", []),
+            "structured_record": full.get("structured_record", {}),
+            "patient_friendly_explanation": full.get("patient_friendly_explanation"),
+            "spell_corrections": full.get("spell_corrections", []),
+            "abbreviations": full.get("abbreviations", []),
+        })
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500

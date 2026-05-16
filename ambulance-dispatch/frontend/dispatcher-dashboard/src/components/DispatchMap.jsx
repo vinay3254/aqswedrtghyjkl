@@ -148,6 +148,7 @@ export default function DispatchMap({
   const trailsRef        = useRef(new Map());
   const trailPointsRef   = useRef(new Map());
   const followIdRef      = useRef(null);
+  const initialFitDoneRef = useRef(false);
   const routeLayerRef    = useRef(null);
   const previewLayerRef  = useRef(null);
 
@@ -270,6 +271,15 @@ export default function DispatchMap({
         mapInstanceRef.current.panTo(latlng, { animate: true, duration: 0.8 });
       }
     });
+
+    // On first ambulance load, fit map to show all of them
+    if (!initialFitDoneRef.current && ambulances.length > 0) {
+      const pts = ambulances.filter(a => a.latitude && a.longitude).map(a => [a.latitude, a.longitude]);
+      if (pts.length > 0) {
+        mapInstanceRef.current.fitBounds(L.latLngBounds(pts), { padding: [60, 60], maxZoom: 14, animate: true });
+        initialFitDoneRef.current = true;
+      }
+    }
   }, [ambulances, onAmbulanceClick]);
 
   /* ── Hospital markers ── */

@@ -7,6 +7,8 @@ import {
   generateMedicationPlan,
   getPatientClusterHistory,
   checkDrugInteractions,
+  getAdvancedRiskProfile,
+  calcMews,
   aiChat,
 } from "../api/apiClient";
 import { exportToPdf } from "../utils/exportPdf";
@@ -72,6 +74,99 @@ function Skeleton({ rows = 3 }) {
   );
 }
 
+function EmptyState({ children }) {
+  return <p className="text-xs text-slate-400 italic">{children}</p>;
+}
+
+function Pill({ children, tone = "slate" }) {
+  const tones = {
+    slate: "bg-slate-50 text-slate-700 border-slate-200",
+    blue: "bg-blue-50 text-blue-700 border-blue-200",
+    green: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    amber: "bg-amber-50 text-amber-700 border-amber-200",
+    red: "bg-red-50 text-red-700 border-red-200",
+    purple: "bg-purple-50 text-purple-700 border-purple-200",
+  };
+  return (
+    <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${tones[tone]}`}>
+      {children}
+    </span>
+  );
+}
+
+function ProgressLine({ label, value, tone = "blue" }) {
+  const color = {
+    blue: "bg-blue-500",
+    green: "bg-emerald-500",
+    amber: "bg-amber-500",
+    red: "bg-red-500",
+    purple: "bg-purple-500",
+  }[tone];
+  const pct = Math.max(0, Math.min(100, Number(value) || 0));
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-3 mb-1">
+        <span className="text-xs font-medium text-slate-600">{label}</span>
+        <span className="text-xs font-semibold text-slate-700">{Math.round(pct)}%</span>
+      </div>
+      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+        <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+const tierTone = (tier = "") => {
+  const normalized = String(tier).toLowerCase();
+  if (normalized.includes("critical")) return "red";
+  if (normalized.includes("high")) return "red";
+  if (normalized.includes("moderate") || normalized.includes("medium")) return "amber";
+  if (normalized.includes("low")) return "green";
+  return "slate";
+};
+
+const riskBadgeClasses = (tier = "") => {
+  const normalized = String(tier).toLowerCase();
+  if (normalized.includes("critical")) return "bg-red-600 text-white";
+  if (normalized.includes("high")) return "bg-red-50 text-red-700 border border-red-200";
+  if (normalized.includes("moderate") || normalized.includes("medium")) return "bg-amber-50 text-amber-700 border border-amber-200";
+  if (normalized.includes("low")) return "bg-emerald-50 text-emerald-700 border border-emerald-200";
+  return "bg-slate-100 text-slate-700 border border-slate-200";
+};
+
+const asArray = (value) => (Array.isArray(value) ? value : []);
+
+const normalizeEntities = (entities = []) =>
+  entities.map((entity) =>
+    typeof entity === "string"
+      ? { label: entity, type: "entity", confidence: null }
+      : {
+          label: entity.label ?? entity.text ?? entity.name ?? "Unknown",
+          type: entity.type ?? entity.label_ ?? "entity",
+          confidence: entity.confidence ?? null,
+        }
+  );
+
+const getIcdCodes = (nlpResult) =>
+  asArray(nlpResult?.icd10_suggestions ?? nlpResult?.icdCodes).map((code) =>
+    typeof code === "string"
+      ? { code, description: "" }
+      : { code: code.code, description: code.description ?? code.label ?? "", keyword: code.keyword }
+  );
+
+const getMedicationNames = (nlpResult) => {
+  const fromDrugs = asArray(nlpResult?.drugs);
+  const fromPrescription = asArray(nlpResult?.prescription).map((m) => m.name).filter(Boolean);
+  const fromEntities = normalizeEntities(nlpResult?.entities).filter((e) => /drug|med/i.test(e.type)).map((e) => e.label);
+  return Array.from(new Set([...fromDrugs, ...fromPrescription, ...fromEntities].filter(Boolean)));
+};
+
+const toNumberOrEmpty = (value) => {
+  if (value === "" || value == null) return "";
+  const n = Number(value);
+  return Number.isFinite(n) ? n : "";
+};
+
 // ── CRITICAL_KEYWORDS ─────────────────────────────────────────────────────────
 const CRITICAL_KEYWORDS = [
   { kw: "chest pain",           note: "Requires immediate cardiac assessment" },
@@ -116,12 +211,27 @@ export default function ClinicalAIPage() {
 
   // risk prediction
   const [vitals, setVitals] = useState({
-    age: "", blood_pressure: "", heart_rate: "", cholesterol: "", bmi: "", glucose: "",
+    age: "",
+    blood_pressure: "",
+    heart_rate: "",
+    respiratory_rate: "",
+    temperature: "",
+    spo2: "",
+    cholesterol: "",
+    bmi: "",
+    glucose: "",
+    creatinine: "",
   });
   const [predResult, setPredResult]     = useState(null);
   const [predInsights, setPredInsights] = useState("");
   const [predLoading, setPredLoading]   = useState(false);
   const [predError, setPredError]       = useState("");
+
+  // advanced risk intelligence
+  const [advancedRisk, setAdvancedRisk] = useState(null);
+  const [advancedRiskLoading, setAdvancedRiskLoading] = useState(false);
+  const [advancedRiskError, setAdvancedRiskError] = useState("");
+  const [mewsResult, setMewsResult] = useState(null);
 
   // care plan
   const [carePlan, setCarePlan]           = useState(null);
@@ -170,6 +280,73 @@ export default function ClinicalAIPage() {
     setAlerts(CRITICAL_KEYWORDS.filter(({ kw }) => lower.includes(kw)));
   }, []);
 
+  const getVitalValues = useCallback(() => (
+    Object.fromEntries(
+      Object.entries(vitals)
+        .map(([key, value]) => [key, toNumberOrEmpty(value)])
+        .filter(([, value]) => value !== "")
+    )
+  ), [vitals]);
+
+  const buildPatientPayload = useCallback((text = notes) => {
+    const values = getVitalValues();
+    return {
+      patient_id: committedPatientId.trim() || patientId.trim(),
+      notes: text,
+      age: values.age,
+      systolic_bp: values.blood_pressure,
+      heart_rate: values.heart_rate,
+      respiratory_rate: values.respiratory_rate,
+      temperature: values.temperature,
+      spo2: values.spo2,
+      cholesterol: values.cholesterol,
+      bmi: values.bmi,
+      glucose: values.glucose,
+      creatinine: values.creatinine,
+    };
+  }, [committedPatientId, patientId, notes, getVitalValues]);
+
+  const runAdvancedRisk = useCallback(async (text = notes) => {
+    const vitalValues = getVitalValues();
+    if (!text.trim() && Object.keys(vitalValues).length === 0) {
+      setAdvancedRisk(null);
+      setMewsResult(null);
+      return;
+    }
+
+    setAdvancedRiskLoading(true);
+    setAdvancedRiskError("");
+
+    try {
+      const patientPayload = buildPatientPayload(text);
+      const mewsVitals = {
+        systolic_bp: vitalValues.blood_pressure,
+        heart_rate: vitalValues.heart_rate,
+        respiratory_rate: vitalValues.respiratory_rate,
+        temperature: vitalValues.temperature,
+      };
+      const hasMewsVitals = Object.values(mewsVitals).some((value) => value !== undefined && value !== "");
+      const [riskSettled, mewsSettled] = await Promise.allSettled([
+        getAdvancedRiskProfile(patientPayload),
+        hasMewsVitals ? calcMews(mewsVitals) : Promise.resolve(null),
+      ]);
+
+      if (riskSettled.status === "fulfilled") {
+        setAdvancedRisk(riskSettled.value);
+      } else {
+        throw riskSettled.reason;
+      }
+
+      if (mewsSettled.status === "fulfilled") {
+        setMewsResult(mewsSettled.value);
+      }
+    } catch (e) {
+      setAdvancedRiskError(e?.response?.data?.error ?? e.message);
+    } finally {
+      setAdvancedRiskLoading(false);
+    }
+  }, [notes, getVitalValues, buildPatientPayload]);
+
   // ── debounced NLP call ──────────────────────────────────────────────────────
   const runNlp = useCallback((text) => {
     setNlpLoading(true);
@@ -177,18 +354,17 @@ export default function ClinicalAIPage() {
     analyzeNotes(text)
       .then((data) => {
         setNlpResult(data);
-        const meds = (data?.entities ?? [])
-          .filter((e) => e.type === "medication")
-          .map((e) => e.label);
+        const meds = getMedicationNames(data);
         if (meds.length >= 2) {
           checkDrugInteractions(meds)
             .then(setDrugInteractions)
             .catch(() => {});
         }
+        runAdvancedRisk(text);
       })
       .catch((e) => setNlpError(e?.response?.data?.error ?? e.message))
       .finally(() => setNlpLoading(false));
-  }, []);
+  }, [runAdvancedRisk]);
 
   const handleNotesChange = useCallback((text) => {
     setNotes(text);
@@ -199,6 +375,8 @@ export default function ClinicalAIPage() {
     } else {
       setNlpResult(null);
       setDrugInteractions(null);
+      setAdvancedRisk(null);
+      setMewsResult(null);
     }
   }, [scanKeywords, runNlp]);
 
@@ -243,13 +421,10 @@ export default function ClinicalAIPage() {
     setPredInsights("");
     setCarePlan(null);
     try {
-      const vitalValues = Object.fromEntries(
-        Object.entries(vitals)
-          .filter(([, v]) => v !== "")
-          .map(([k, v]) => [k, parseFloat(v)])
-      );
+      const vitalValues = getVitalValues();
       const pred = await predictRisk(selectedResultId, vitalValues);
       setPredResult(pred);
+      runAdvancedRisk(notes);
 
       const [insights] = await Promise.allSettled([
         generateClusterInsights({
@@ -273,11 +448,21 @@ export default function ClinicalAIPage() {
     } finally {
       setPredLoading(false);
     }
-  }, [selectedResultId, vitals, committedPatientId, notes]);
+  }, [selectedResultId, getVitalValues, committedPatientId, notes, runAdvancedRisk]);
 
   // ── render ──────────────────────────────────────────────────────────────────
-  const criticalEntities = (nlpResult?.entities ?? []).filter(
-    (e) => e.severity === "critical"
+  const normalizedEntities = normalizeEntities(nlpResult?.entities);
+  const icdCodes = getIcdCodes(nlpResult);
+  const symptoms = asArray(nlpResult?.symptoms);
+  const prescription = asArray(nlpResult?.prescription);
+  const labInterpretation = asArray(nlpResult?.lab_interpretation);
+  const emergencyFlags = asArray(nlpResult?.emergency_flags);
+  const departments = asArray(nlpResult?.recommended_departments);
+  const followUpQuestions = asArray(nlpResult?.follow_up_questions);
+  const careRecommendations = asArray(nlpResult?.care_recommendations);
+  const hasVitals = Object.values(vitals).some((value) => value !== "");
+  const criticalEntities = asArray(nlpResult?.entities).filter(
+    (e) => typeof e === "object" && e?.severity === "critical"
   );
 
   return (
@@ -381,7 +566,7 @@ export default function ClinicalAIPage() {
           {notes.length === 0 && (
             <p className="text-xs text-slate-400 italic">Start typing notes to scan for critical keywords…</p>
           )}
-          {notes.length > 0 && alerts.length === 0 && (
+          {notes.length > 0 && alerts.length === 0 && emergencyFlags.length === 0 && (
             <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl">
               <span>✅</span>
               <p className="text-xs text-green-700 font-medium">No critical keywords detected</p>
@@ -397,6 +582,20 @@ export default function ClinicalAIPage() {
                 <div>
                   <p className="text-xs font-bold text-red-700 uppercase tracking-wide">{kw}</p>
                   <p className="text-xs text-red-600 mt-0.5">{note}</p>
+                </div>
+              </div>
+            ))}
+            {emergencyFlags.map((flag, i) => (
+              <div
+                key={`${flag.flag ?? "flag"}-${i}`}
+                className="flex items-start gap-2 p-3 bg-red-50 border border-red-300 rounded-xl"
+              >
+                <span className="text-red-500 shrink-0 mt-0.5">🚨</span>
+                <div>
+                  <p className="text-xs font-bold text-red-700 uppercase tracking-wide">
+                    {flag.flag ?? "Emergency signal"}
+                  </p>
+                  <p className="text-xs text-red-600 mt-0.5">{flag.action ?? "Urgent review required"}</p>
                 </div>
               </div>
             ))}
@@ -437,7 +636,7 @@ export default function ClinicalAIPage() {
         {nlpResult && !nlpLoading && (
           <div className="space-y-5">
             {/* Entities table */}
-            {nlpResult.entities?.length > 0 && (
+            {normalizedEntities.length > 0 && (
               <div>
                 <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
                   Extracted Entities
@@ -452,7 +651,7 @@ export default function ClinicalAIPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {nlpResult.entities.map((e, i) => (
+                      {normalizedEntities.map((e, i) => (
                         <tr
                           key={i}
                           className={`border-b border-slate-100 ${i % 2 === 0 ? "bg-white" : "bg-slate-50"}`}
@@ -475,19 +674,19 @@ export default function ClinicalAIPage() {
             )}
 
             {/* ICD-10 codes */}
-            {nlpResult.icdCodes?.length > 0 && (
+            {icdCodes.length > 0 && (
               <div>
                 <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
                   ICD-10 Codes
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {nlpResult.icdCodes.map((c, i) => (
+                  {icdCodes.map((c, i) => (
                     <span
                       key={i}
                       className="px-2 py-1 rounded-lg bg-purple-50 border border-purple-200 text-purple-700 text-xs font-mono"
-                      title={c.label ?? ""}
+                      title={c.description ?? ""}
                     >
-                      {c.code ?? c} {c.label ? `— ${c.label}` : ""}
+                      {c.code ?? c} {c.description ? `— ${c.description}` : ""}
                     </span>
                   ))}
                 </div>
@@ -514,6 +713,108 @@ export default function ClinicalAIPage() {
               </div>
             )}
 
+            {(symptoms.length > 0 || labInterpretation.length > 0 || prescription.length > 0) && (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div>
+                  <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                    Symptoms
+                  </h3>
+                  {symptoms.length === 0 ? (
+                    <EmptyState>No symptoms extracted.</EmptyState>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {symptoms.map((s, i) => (
+                        <Pill key={`${s.symptom}-${i}`} tone={s.negated ? "slate" : s.severity === "severe" ? "red" : "blue"}>
+                          {s.negated ? "No " : ""}
+                          {s.symptom}
+                          {s.severity ? ` · ${s.severity}` : ""}
+                          {s.duration ? ` · ${s.duration}` : ""}
+                        </Pill>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                    Labs
+                  </h3>
+                  {labInterpretation.length === 0 ? (
+                    <EmptyState>No lab values extracted.</EmptyState>
+                  ) : (
+                    <div className="space-y-2">
+                      {labInterpretation.slice(0, 5).map((lab, i) => (
+                        <div key={`${lab.marker}-${i}`} className="flex items-center justify-between gap-3 text-xs">
+                          <span className="font-medium text-slate-700">{lab.marker}</span>
+                          <span className="text-slate-500">{lab.value} {lab.unit}</span>
+                          <Pill tone={lab.status === "normal" ? "green" : lab.status === "not_interpreted" ? "slate" : "amber"}>
+                            {lab.status}
+                          </Pill>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                    Prescription
+                  </h3>
+                  {prescription.length === 0 ? (
+                    <EmptyState>No medication dose extracted.</EmptyState>
+                  ) : (
+                    <div className="space-y-2">
+                      {prescription.slice(0, 5).map((med, i) => (
+                        <div key={`${med.name}-${i}`} className="text-xs border-b border-slate-100 pb-2 last:border-0">
+                          <p className="font-semibold text-slate-800">{med.name}</p>
+                          <p className="text-slate-500">{med.dose ?? "Dose not detected"}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {(departments.length > 0 || followUpQuestions.length > 0 || careRecommendations.length > 0) && (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div>
+                  <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                    Routing
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {departments.map((d, i) => (
+                      <Pill key={`${d.department}-${i}`} tone={i === 0 ? "blue" : "slate"}>
+                        {d.department}
+                      </Pill>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                    Follow-up Questions
+                  </h3>
+                  <ul className="space-y-1 text-xs text-slate-600">
+                    {followUpQuestions.slice(0, 4).map((q, i) => (
+                      <li key={i}>• {q}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                    Recommendations
+                  </h3>
+                  <ul className="space-y-1 text-xs text-slate-600">
+                    {careRecommendations.slice(0, 4).map((item, i) => (
+                      <li key={i}>• {item}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
             {/* AI Summary */}
             {nlpResult.summary && (
               <div>
@@ -523,6 +824,31 @@ export default function ClinicalAIPage() {
                 <blockquote className="border-l-4 border-blue-300 pl-4 italic text-sm text-slate-700 bg-blue-50 py-3 pr-3 rounded-r-xl">
                   {nlpResult.summary}
                 </blockquote>
+              </div>
+            )}
+
+            {(nlpResult.patient_friendly_explanation || nlpResult.referral_note) && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {nlpResult.patient_friendly_explanation && (
+                  <div>
+                    <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                      Patient Explanation
+                    </h3>
+                    <p className="text-sm text-slate-700 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3">
+                      {nlpResult.patient_friendly_explanation}
+                    </p>
+                  </div>
+                )}
+                {nlpResult.referral_note && (
+                  <div>
+                    <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                      Referral Note
+                    </h3>
+                    <p className="text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+                      {nlpResult.referral_note}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -544,7 +870,7 @@ export default function ClinicalAIPage() {
                         className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800"
                       >
                         <p className="font-semibold">{d.drugs?.join(" + ") ?? d.pair}</p>
-                        <p className="mt-0.5">{d.description ?? d.detail}</p>
+                        <p className="mt-0.5">{d.effect ?? d.description ?? d.detail}</p>
                       </div>
                     ))}
                   </div>
@@ -557,14 +883,18 @@ export default function ClinicalAIPage() {
 
       {/* ── Risk Prediction ──────────────────────────────────────────── */}
       <Card icon="🎯" title="Risk Prediction">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
           {[
             { key: "age",            label: "Age",          unit: "yrs"  },
             { key: "blood_pressure", label: "Sys. BP",      unit: "mmHg" },
             { key: "heart_rate",     label: "Heart Rate",   unit: "bpm"  },
+            { key: "respiratory_rate", label: "Resp. Rate", unit: "/min" },
+            { key: "spo2",           label: "SpO2",         unit: "%"    },
+            { key: "temperature",    label: "Temp",         unit: "C"    },
             { key: "cholesterol",    label: "Cholesterol",  unit: "mg/dL"},
             { key: "bmi",            label: "BMI",          unit: ""     },
             { key: "glucose",        label: "Glucose",      unit: "mg/dL"},
+            { key: "creatinine",     label: "Creatinine",   unit: "mg/dL"},
           ].map(({ key, label, unit }) => (
             <div key={key}>
               <label className="block text-xs text-slate-500 mb-1">
@@ -583,16 +913,26 @@ export default function ClinicalAIPage() {
           ))}
         </div>
 
-        <Btn
-          onClick={runPrediction}
-          loading={predLoading}
-          disabled={!selectedResultId || notes.length < 30}
-        >
-          🔮 Run Prediction
-        </Btn>
+        <div className="flex flex-wrap gap-3">
+          <Btn
+            onClick={runPrediction}
+            loading={predLoading}
+            disabled={!selectedResultId || !hasVitals}
+          >
+            🔮 Run Cluster Prediction
+          </Btn>
+          <Btn
+            variant="ghost"
+            onClick={() => runAdvancedRisk(notes)}
+            loading={advancedRiskLoading}
+            disabled={!hasVitals && notes.length < 10}
+          >
+            🩺 Run Advanced Risk
+          </Btn>
+        </div>
         {!selectedResultId && (
           <p className="text-xs text-amber-600 mt-2">
-            Select a cluster model above to enable prediction.
+            Select a cluster model above to enable cluster-based prediction. Advanced risk works without a saved cluster model.
           </p>
         )}
 
@@ -605,15 +945,7 @@ export default function ClinicalAIPage() {
               <div>
                 <p className="text-xs text-slate-500 mb-1">Risk Tier</p>
                 <span
-                  className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wide ${
-                    predResult.risk_tier === "CRITICAL"
-                      ? "bg-red-600 text-white animate-pulse"
-                      : predResult.risk_tier === "HIGH"
-                      ? "bg-red-100 text-red-700 border border-red-300"
-                      : predResult.risk_tier === "MEDIUM"
-                      ? "bg-amber-100 text-amber-700 border border-amber-300"
-                      : "bg-green-100 text-green-700 border border-green-300"
-                  }`}
+                  className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wide ${riskBadgeClasses(predResult.risk_tier)}`}
                 >
                   {predResult.risk_tier ?? "Unknown"}
                 </span>
@@ -652,6 +984,141 @@ export default function ClinicalAIPage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+      </Card>
+
+      {/* ── Advanced Clinical Intelligence ───────────────────────────── */}
+      <Card icon="🧬" title="Advanced Clinical Intelligence">
+        {advancedRiskLoading && <Skeleton rows={6} />}
+        <ErrBanner msg={advancedRiskError} onDismiss={() => setAdvancedRiskError("")} />
+
+        {!advancedRiskLoading && !advancedRisk && !advancedRiskError && (
+          <EmptyState>Enter notes or vitals to generate advanced risk intelligence.</EmptyState>
+        )}
+
+        {advancedRisk && !advancedRiskLoading && (
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Overall Risk</p>
+                <div className="flex items-center gap-2">
+                  <span className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase ${riskBadgeClasses(advancedRisk.risk_tier)}`}>
+                    {advancedRisk.risk_tier}
+                  </span>
+                  <span className="text-lg font-bold text-slate-900">
+                    {advancedRisk.overall_risk_score}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Triage Priority</p>
+                <p className="text-sm font-semibold text-slate-800">{advancedRisk.triage_priority}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Confidence</p>
+                <p className="text-sm font-semibold text-slate-800">
+                  {Math.round((advancedRisk.confidence ?? 0) * 100)}%
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 mb-1">MEWS</p>
+                {mewsResult ? (
+                  <p className="text-sm font-semibold text-slate-800">
+                    {mewsResult.mews_score} · {mewsResult.alert_level}
+                  </p>
+                ) : (
+                  <p className="text-sm text-slate-400">Vitals incomplete</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              <div>
+                <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-3">
+                  Disease Risks
+                </h3>
+                <div className="space-y-3">
+                  {Object.entries(advancedRisk.disease_specific_risks ?? {}).map(([name, info]) => (
+                    <ProgressLine
+                      key={name}
+                      label={`${name} · ${info.tier}`}
+                      value={info.score}
+                      tone={tierTone(info.tier)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-3">
+                  Outcome Estimates
+                </h3>
+                <div className="space-y-3">
+                  <ProgressLine label="ICU admission" value={(advancedRisk.probabilities?.icu_admission ?? 0) * 100} tone="red" />
+                  <ProgressLine label="Readmission" value={(advancedRisk.probabilities?.readmission ?? 0) * 100} tone="amber" />
+                  <ProgressLine label="Mortality" value={(advancedRisk.probabilities?.mortality ?? 0) * 100} tone="purple" />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div>
+                <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                  Top Drivers
+                </h3>
+                <div className="space-y-2">
+                  {asArray(advancedRisk.top_risk_drivers).slice(0, 5).map((driver, i) => (
+                    <div key={`${driver.name}-${i}`} className="text-xs border-b border-slate-100 pb-2 last:border-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-slate-800">{driver.name}</span>
+                        <Pill tone={tierTone(driver.severity)}>{driver.score}</Pill>
+                      </div>
+                      <p className="text-slate-500 mt-1">{driver.message}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                  Next Tests
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {asArray(advancedRisk.recommended_next_tests).slice(0, 8).map((test, i) => (
+                    <Pill key={`${test}-${i}`} tone="blue">{test}</Pill>
+                  ))}
+                  {asArray(advancedRisk.recommended_next_tests).length === 0 && (
+                    <EmptyState>No test suggestions returned.</EmptyState>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                  Care Plan
+                </h3>
+                <ul className="space-y-1 text-xs text-slate-600">
+                  {asArray(advancedRisk.care_plan).slice(0, 5).map((item, i) => (
+                    <li key={i}>• {item}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {asArray(advancedRisk.recommended_departments).map((dept, i) => (
+                <Pill key={`${dept.department}-${i}`} tone={i === 0 ? "blue" : "slate"}>
+                  {dept.department}
+                </Pill>
+              ))}
+              {advancedRisk.doctor_review?.required && (
+                <Pill tone="amber">Doctor review required</Pill>
+              )}
+              <Pill tone="green">
+                Data completeness {Math.round((advancedRisk.data_quality?.completeness ?? 0) * 100)}%
+              </Pill>
+            </div>
           </div>
         )}
       </Card>

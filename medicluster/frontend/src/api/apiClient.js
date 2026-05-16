@@ -341,6 +341,48 @@ export async function analyzeNotes(notes) {
   return res.data;
 }
 
+/** Extract symptoms, emergency flags, follow-up questions, and routing. */
+export async function extractSymptoms(text) {
+  const res = await api.post("/ml/extract-symptoms", { text }, { timeout: 30_000 });
+  return res.data;
+}
+
+/** Advanced patient risk profile: triage, disease risks, probabilities, care plan. */
+export async function getAdvancedRiskProfile(patient) {
+  const res = await api.post("/ml/risk-profile", { patient }, { timeout: 30_000 });
+  return res.data;
+}
+
+/** Cohort-level advanced risk dashboard. */
+export async function getPopulationRisk(data) {
+  const res = await api.post("/ml/population-risk", { data }, { timeout: 60_000 });
+  return res.data;
+}
+
+/** Compare previous/current patient state for trend. */
+export async function compareVisits(previous, current) {
+  const res = await api.post("/ml/compare-visits", { previous, current }, { timeout: 30_000 });
+  return res.data;
+}
+
+/** Build a longitudinal patient risk timeline from dated events. */
+export async function buildPatientTimeline(events) {
+  const res = await api.post("/ml/patient-timeline", { events }, { timeout: 30_000 });
+  return res.data;
+}
+
+/** Find similar patients from candidate records. */
+export async function findSimilarPatients(patient, candidates, top_k = 5) {
+  const res = await api.post("/ml/similar-patients", { patient, candidates, top_k }, { timeout: 30_000 });
+  return res.data;
+}
+
+/** Train quick supervised predictive baselines from labelled patient rows. */
+export async function trainPredictiveModel(data, target, task = "auto") {
+  const res = await api.post("/ml/train-predictive-model", { data, target, task }, { timeout: 90_000 });
+  return res.data;
+}
+
 /** Calculate MEWS score from patient vitals. */
 export async function calcMews(vitals) {
   const res = await api.post("/ml/mews", vitals, { timeout: 10_000 });

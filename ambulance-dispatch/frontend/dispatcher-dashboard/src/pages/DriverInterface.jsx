@@ -15,10 +15,10 @@ const MOCK_DRIVER = {
   id: 'DRV-001',
   name: 'Rajesh Kumar',
   callSign: 'Alpha-1',
-  vehicle: 'MH-01-A-0001',
+  vehicle: 'KA-01-A-0001',
   type: 'ALS',
-  latitude: 19.082,
-  longitude: 72.8777,
+  latitude: 12.9716,
+  longitude: 77.5946,
 };
 
 const SEV_COLOR = { CRITICAL: '#ef4444', HIGH: '#f97316', MEDIUM: '#eab308', LOW: '#22c55e' };
@@ -26,14 +26,14 @@ const SEV_COLOR = { CRITICAL: '#ef4444', HIGH: '#f97316', MEDIUM: '#eab308', LOW
 const PENDING_INCIDENTS = [
   {
     id: 'SOS-101', incident_type: 'Cardiac Arrest', severity: 'CRITICAL',
-    location_address: 'Bandra West, Mumbai', location_lat: 19.0596, location_lng: 72.8295,
-    caller_name: 'Rahul Shah', caller_phone: '+91 98765 43210',
+    location_address: 'Indiranagar, Bangalore', location_lat: 12.9784, location_lng: 77.6408,
+    caller_name: 'Rahul Sharma', caller_phone: '+91 98765 43210',
     description: 'Patient unconscious, not breathing', distance: '3.2 km', eta: '6 min',
     patients_count: 1, created_at: new Date(Date.now() - 120000).toISOString(), is_sos: true,
   },
   {
     id: 'SOS-102', incident_type: 'Road Accident', severity: 'HIGH',
-    location_address: 'Western Express Hwy, Andheri', location_lat: 19.1136, location_lng: 72.8697,
+    location_address: 'Outer Ring Road, Bellandur, Bangalore', location_lat: 12.9263, location_lng: 77.6761,
     caller_name: 'Police Control', caller_phone: '+91 100',
     description: 'Multi-vehicle accident, 3 injured', distance: '5.8 km', eta: '11 min',
     patients_count: 3, created_at: new Date(Date.now() - 60000).toISOString(), is_sos: false,
@@ -68,8 +68,10 @@ function IncomingAlert({ incident, onAccept, onReject }) {
         <LinearProgress
           variant="determinate"
           value={(countdown / 30) * 100}
-          sx={{ mb: 1.5, height: 3, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.1)',
-            '& .MuiLinearProgress-bar': { bgcolor: color } }}
+          sx={{
+            mb: 1.5, height: 3, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.1)',
+            '& .MuiLinearProgress-bar': { bgcolor: color }
+          }}
         />
         <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
           <Box sx={{
@@ -102,16 +104,20 @@ function IncomingAlert({ incident, onAccept, onReject }) {
           <Button
             fullWidth variant="contained" startIcon={<Cancel />}
             onClick={onReject}
-            sx={{ bgcolor: 'rgba(239,68,68,0.2)', color: '#ef4444', border: '1px solid #ef4444',
-              '&:hover': { bgcolor: 'rgba(239,68,68,0.35)' } }}
+            sx={{
+              bgcolor: 'rgba(239,68,68,0.2)', color: '#ef4444', border: '1px solid #ef4444',
+              '&:hover': { bgcolor: 'rgba(239,68,68,0.35)' }
+            }}
           >
             Decline
           </Button>
           <Button
             fullWidth variant="contained" startIcon={<CheckCircle />}
             onClick={onAccept}
-            sx={{ background: 'linear-gradient(90deg, #16a34a, #15803d)', color: 'white', fontWeight: 700,
-              '&:hover': { background: 'linear-gradient(90deg, #15803d, #166534)' } }}
+            sx={{
+              background: 'linear-gradient(90deg, #16a34a, #15803d)', color: 'white', fontWeight: 700,
+              '&:hover': { background: 'linear-gradient(90deg, #15803d, #166534)' }
+            }}
           >
             Accept & Dispatch
           </Button>
@@ -153,8 +159,10 @@ function ActiveMission({ incident, status, onStatusUpdate }) {
             <Chip label={incident.severity} size="small"
               sx={{ bgcolor: color, color: 'white', height: 18, fontSize: '0.65rem' }} />
           </Box>
-          <Chip label={status.replace('_', ' ')} size="small" sx={{ ml: 'auto',
-            bgcolor: 'rgba(255,255,255,0.1)', color: 'white' }} />
+          <Chip label={status.replace('_', ' ')} size="small" sx={{
+            ml: 'auto',
+            bgcolor: 'rgba(255,255,255,0.1)', color: 'white'
+          }} />
         </Box>
 
         <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', my: 1 }} />

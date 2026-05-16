@@ -36,7 +36,6 @@ export default function Navbar() {
             { to: "/predict",   label: "Predict" },
             { to: "/patient",   label: "Patients" },
             { to: "/reminders", label: "Reminders" },
-            { to: "/mci",      label: "MCI Board" },
             { to: "/ask-ai",      label: "CliniQ" },
             { to: "/clinical-ai", label: "Clinical AI" },
             { to: "/hospitals",   label: "Hospitals" },

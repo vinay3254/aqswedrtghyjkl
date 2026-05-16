@@ -2,6 +2,13 @@
 import numpy as np
 import sys
 
+if "pytest" in sys.modules and __name__ != "__main__":
+    import pytest
+    pytest.skip(
+        "Script-style functional test; run with `python test_new_features.py`.",
+        allow_module_level=True,
+    )
+
 print("=== Functional Tests ===")
 passed = 0
 failed = 0

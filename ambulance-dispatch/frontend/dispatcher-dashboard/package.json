@@ -14,6 +14,7 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.9",
     "@mui/material": "^7.3.9",
+    "@react-google-maps/api": "^2.20.8",
     "axios": "^1.14.0",
     "date-fns": "^4.1.0",
     "leaflet": "^1.9.4",

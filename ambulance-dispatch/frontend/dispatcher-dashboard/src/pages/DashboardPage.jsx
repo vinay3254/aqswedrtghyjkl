@@ -2,12 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box, Paper, Typography, Grid, Button, Tab, Tabs, Chip,
   Drawer, IconButton, Divider, AppBar, Toolbar, Badge,
-  Avatar, Tooltip, Snackbar, Alert
+  Avatar, Tooltip, Snackbar, Alert, useTheme
 } from '@mui/material';
 import {
   Menu as MenuIcon, Notifications, Refresh, Add,
   FilterList, FullscreenExit, Fullscreen, Warning,
-  DirectionsCar, Close, LocalTaxi, AutoAwesome, CheckCircle
+  DirectionsCar, Close, LocalTaxi, AutoAwesome, CheckCircle,
+  LightMode, DarkMode
 } from '@mui/icons-material';
 
 import DispatchMap from '../components/DispatchMap';
@@ -23,7 +24,14 @@ import { dispatchBroadcast, DISPATCH_EVENTS } from '../services/dispatchBroadcas
 
 const DRAWER_WIDTH = 380;
 
-export default function DashboardPage({ user, onLogout }) {
+export default function DashboardPage({ user, onLogout, onToggleTheme, themeMode }) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const bg   = isDark ? '#0d1117' : '#f1f5f9';
+  const paperBg  = isDark ? '#161b22' : '#ffffff';
+  const border   = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.10)';
+  const drawerBg = isDark ? 'linear-gradient(180deg, #0d1117, #0f1629)' : '#ffffff';
+  const appbarBg = isDark ? 'linear-gradient(90deg, #0d1117, #161b22)' : 'linear-gradient(90deg, #1e293b, #0f172a)';
   const { incidents: remoteIncidents, loading: incidentsLoading, refetch: refetchIncidents } = useIncidents();
   const { ambulances, loading: ambulancesLoading, refetch: refetchAmbulances } = useAmbulances();
   const { hospitals, loading: hospitalsLoading } = useHospitals();
@@ -45,6 +53,8 @@ export default function DashboardPage({ user, onLogout }) {
   const [snackbar, setSnackbar] = useState(null);
   const [autoDispatchLoading, setAutoDispatchLoading] = useState(false);
   const [autoDispatchResult, setAutoDispatchResult] = useState(null);
+  // Fleet ambulances with live GPS positions pushed up from LiveTrackingPanel
+  const [fleetAmbulances, setFleetAmbulances] = useState([]);
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -232,14 +242,14 @@ export default function DashboardPage({ user, onLogout }) {
   const pendingCount = incidents.filter(i => i.status === 'PENDING').length;
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh', bgcolor: '#0d1117' }}>
+    <Box sx={{ display: 'flex', height: '100vh', bgcolor: bg }}>
       {/* ── App Bar ── */}
       <AppBar
         position="fixed"
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
-          background: 'linear-gradient(90deg, #0d1117, #161b22)',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          background: appbarBg,
+          borderBottom: `1px solid ${border}`,
           boxShadow: 'none',
         }}
       >
@@ -295,6 +305,20 @@ export default function DashboardPage({ user, onLogout }) {
             </IconButton>
           </Tooltip>
 
+          <Tooltip title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}>
+            <IconButton
+              color="inherit"
+              onClick={onToggleTheme}
+              sx={{
+                bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.12)',
+                '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.2)' },
+                transition: 'all 0.2s',
+              }}
+            >
+              {isDark ? <LightMode sx={{ fontSize: 20, color: '#fbbf24' }} /> : <DarkMode sx={{ fontSize: 20 }} />}
+            </IconButton>
+          </Tooltip>
+
           <IconButton color="inherit" onClick={() => { refetchIncidents(); refetchAmbulances(); }}>
             <Refresh />
           </IconButton>
@@ -327,9 +351,9 @@ export default function DashboardPage({ user, onLogout }) {
             boxSizing: 'border-box',
             top: 64,
             height: 'calc(100% - 64px)',
-            background: 'linear-gradient(180deg, #0d1117, #0f1629)',
-            borderRight: '1px solid rgba(255,255,255,0.08)',
-            color: 'white',
+            background: drawerBg,
+            borderRight: `1px solid ${border}`,
+            color: isDark ? 'white' : 'text.primary',
           }
         }}
       >
@@ -368,7 +392,7 @@ export default function DashboardPage({ user, onLogout }) {
           </Tabs>
         </Box>
 
-        <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+        <Divider sx={{ borderColor: border }} />
 
         <Box sx={{ overflow: 'auto', flexGrow: 1, '&::-webkit-scrollbar': { width: 4 },
           '&::-webkit-scrollbar-track': { bgcolor: 'transparent' },
@@ -383,8 +407,8 @@ export default function DashboardPage({ user, onLogout }) {
 
         {selectedIncident && (
           <Box sx={{
-            p: 2, borderTop: '1px solid rgba(255,255,255,0.08)',
-            background: 'rgba(0,0,0,0.3)',
+            p: 2, borderTop: `1px solid ${border}`,
+            background: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.03)',
           }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
               <Typography variant="subtitle2" sx={{ color: 'white' }}>
@@ -485,12 +509,12 @@ export default function DashboardPage({ user, onLogout }) {
 
           <Paper sx={{
             mt: 2, flex: 1, overflow: 'hidden',
-            bgcolor: '#0d1117', border: '1px solid rgba(255,255,255,0.08)',
+            bgcolor: paperBg, border: `1px solid ${border}`,
             borderRadius: 2,
           }}>
             <DispatchMap
               incidents={incidents.filter(i => !['RESOLVED', 'CANCELLED'].includes(i.status))}
-              ambulances={ambulances}
+              ambulances={fleetAmbulances.length > 0 ? fleetAmbulances : ambulances}
               hospitals={hospitals}
               selectedIncident={selectedIncident}
               activeAssignment={activeAssignment}
@@ -506,13 +530,14 @@ export default function DashboardPage({ user, onLogout }) {
         {rightPanel === 'tracking' && (
           <Paper sx={{
             width: 320, flexShrink: 0,
-            background: 'linear-gradient(180deg, #0d1117, #0f1629)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            background: drawerBg,
+            border: `1px solid ${border}`,
             borderRadius: 2, overflow: 'hidden',
             display: 'flex', flexDirection: 'column',
           }}>
             <LiveTrackingPanel
               ambulances={ambulances}
+              onFleetUpdate={setFleetAmbulances}
               onAmbulanceSelect={(amb) => setFocusAmbulance({ ...amb, _ts: Date.now() })}
             />
           </Paper>

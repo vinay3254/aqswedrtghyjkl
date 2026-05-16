@@ -23,13 +23,22 @@ const proxy = async (req, res, path, body) => {
 
 // NLP
 router.post("/analyze-notes",    (req, res) => proxy(req, res, "/analyze-notes"));
+router.post("/extract-symptoms", (req, res) => proxy(req, res, "/extract-symptoms"));
 router.post("/drug-interactions",(req, res) => proxy(req, res, "/drug-interactions"));
+
+// Advanced risk intelligence
+router.post("/risk-profile",     (req, res) => proxy(req, res, "/risk-profile"));
+router.post("/population-risk",  (req, res) => proxy(req, res, "/population-risk"));
+router.post("/compare-visits",   (req, res) => proxy(req, res, "/compare-visits"));
+router.post("/patient-timeline", (req, res) => proxy(req, res, "/patient-timeline"));
+router.post("/similar-patients", (req, res) => proxy(req, res, "/similar-patients"));
 
 // MEWS + Forecasting
 router.post("/mews",             (req, res) => proxy(req, res, "/mews"));
 router.post("/forecast-vitals",  (req, res) => proxy(req, res, "/forecast-vitals"));
 
 // AutoML
+router.post("/train-predictive-model", (req, res) => proxy(req, res, "/train-predictive-model"));
 router.post("/optimal-k",        (req, res) => proxy(req, res, "/optimal-k"));
 router.post("/feature-importance",(req, res)=> proxy(req, res, "/feature-importance"));
 router.post("/reduce-dimensions",(req, res) => proxy(req, res, "/reduce-dimensions"));
