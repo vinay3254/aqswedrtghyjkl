@@ -189,7 +189,7 @@ export default function DriverMap({ driverPos, incident, missionStatus, hospital
   }, [incident, hospital, missionStatus]);
 
   return (
-    <Box sx={{ position: 'relative', width: '100%', height: '100%', minHeight: 300 }}>
+    <Box sx={{ position: 'relative', width: '100%', height: '100%', minHeight: 0 }}>
       <Box ref={mapRef} sx={{ width: '100%', height: '100%' }} />
 
       {/* Speed overlay */}
