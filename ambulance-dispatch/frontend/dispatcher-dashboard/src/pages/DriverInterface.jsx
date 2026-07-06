@@ -5,6 +5,9 @@ import DriverMap from '../components/DriverMap';
 import PatientVitalsForm from '../components/PatientVitalsForm';
 import HospitalSelector from '../components/HospitalSelector';
 import MedicalChecklist from '../components/MedicalChecklist';
+import ETACountdown from '../components/ETACountdown';
+import QuickRadioPanel from '../components/QuickRadioPanel';
+import PanicButton from '../components/PanicButton';
 
 /* ── Evergreen tokens ── */
 const BG      = '#051F20';
@@ -356,10 +359,34 @@ export default function DriverInterface() {
           {/* Active mission workflow card */}
           {activeIncident && activeTab === 'mission' && (
             <>
+              {/* ETA Countdown ring indicator */}
+              <ETACountdown
+                missionStatus={missionStatus}
+                driverPos={driverPos}
+                incidentPos={
+                  missionStatus === 'EN_ROUTE'
+                    ? { lat: activeIncident.location_lat || 12.9784, lng: activeIncident.location_lng || 77.6408 }
+                    : selectedHospital || { lat: 28.5672, lng: 77.2100 }
+                }
+                speed={speed}
+              />
+
               <ActiveMission
                 incident={activeIncident}
                 status={missionStatus}
                 onStatusUpdate={handleStatusUpdate}
+              />
+
+              {/* Quick Radio Preset buttons grid */}
+              <QuickRadioPanel
+                onMessage={(msg) => {
+                  setToast({ msg: `Radio: "${msg.label}" transmitted`, sev: 'success' });
+                  dispatchBroadcast.emit(DISPATCH_EVENTS.INCIDENT_UPDATED, {
+                    id: activeIncident.id,
+                    status: missionStatus,
+                    notes: `Radio: ${msg.text}`
+                  });
+                }}
               />
 
               {/* Patient Vitals — shown on scene */}
@@ -438,6 +465,31 @@ export default function DriverInterface() {
               )}
             </Box>
           )}
+
+          {/* Panic Emergency Backup Alert trigger */}
+          <Box sx={{ mt: '20px' }}>
+            <PanicButton
+              driverPos={driverPos}
+              callSign={MOCK_DRIVER.callSign}
+              onPanic={(panicData) => {
+                setToast({ msg: 'MAYDAY Alert Transmitted!', sev: 'error' });
+                dispatchBroadcast.emit(DISPATCH_EVENTS.SOS_CREATED, {
+                  id: `PANIC-${Date.now()}`,
+                  incident_type: 'Officer Emergency',
+                  severity: 'CRITICAL',
+                  location_address: 'Officer Panic Button Activated',
+                  location_lat: driverPos.lat,
+                  location_lng: driverPos.lng,
+                  caller_name: MOCK_DRIVER.name,
+                  caller_phone: MOCK_DRIVER.vehicle,
+                  patients_count: 1,
+                  description: panicData.message,
+                  created_at: panicData.timestamp,
+                  is_sos: true,
+                });
+              }}
+            />
+          </Box>
         </Box>
 
         {/* ══ FIXED BOTTOM ACTION FOOTER BAR ══ */}
@@ -472,6 +524,13 @@ export default function DriverInterface() {
             </Box>
           </Box>
         )}
+
+        {/* Global Toast snackbar alerts */}
+        <Snackbar open={!!toast} autoHideDuration={4000} onClose={()=>setToast(null)} anchorOrigin={{vertical:'bottom',horizontal:'center'}}>
+          <Alert severity={toast?.sev||'info'} onClose={()=>setToast(null)} sx={{ background:SURFACE, color:TEXT, border:`1px solid ${BORDER2}` }}>
+            {toast?.msg}
+          </Alert>
+        </Snackbar>
       </Box>
     </Box>
   );
