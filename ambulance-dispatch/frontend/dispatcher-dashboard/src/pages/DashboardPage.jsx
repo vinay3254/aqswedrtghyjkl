@@ -14,6 +14,9 @@ import LiveTrackingPanel from '../components/LiveTrackingPanel';
 import HospitalStatusPanel from '../components/HospitalStatusPanel';
 import ActivityFeed from '../components/ActivityFeed';
 import ShiftReportModal from '../components/ShiftReportModal';
+import IncidentTimeline from '../components/IncidentTimeline';
+import QuickCommsPanel from '../components/QuickCommsPanel';
+import WeatherWidget from '../components/WeatherWidget';
 import { useIncidents, useAmbulances, useHospitals, useDashboardStats } from '../hooks/useData';
 import socketService from '../services/socket';
 import { incidentsApi } from '../services/api';
@@ -77,16 +80,20 @@ export default function DashboardPage({ user, onLogout }) {
   const [fleetOpen, setFleetOpen]                   = useState(false);
   const [hospitalOpen, setHospitalOpen]             = useState(false);
   const [activityOpen, setActivityOpen]             = useState(false);
+  const [timelineOpen, setTimelineOpen]             = useState(false);
+  const [commsOpen, setCommsOpen]                   = useState(false);
   const [snackbar, setSnackbar]                     = useState(null);
   const [autoDispatchLoading, setAutoDispatchLoading] = useState(false);
   const [autoDispatchResult, setAutoDispatchResult]   = useState(null);
   const [fleetAmbulances, setFleetAmbulances]       = useState([]);
 
   // Ensure only one right-panel open at a time
-  const openFleet    = () => { setFleetOpen(true);    setHospitalOpen(false); setActivityOpen(false); };
-  const openHospital = () => { setHospitalOpen(true); setFleetOpen(false);    setActivityOpen(false); };
-  const openActivity = () => { setActivityOpen(true); setFleetOpen(false);    setHospitalOpen(false); };
-  const closeAll     = () => { setFleetOpen(false);   setHospitalOpen(false); setActivityOpen(false); };
+  const openFleet    = () => { setFleetOpen(true);    setHospitalOpen(false); setActivityOpen(false); setTimelineOpen(false); setCommsOpen(false); };
+  const openHospital = () => { setHospitalOpen(true); setFleetOpen(false);    setActivityOpen(false); setTimelineOpen(false); setCommsOpen(false); };
+  const openActivity = () => { setActivityOpen(true); setFleetOpen(false);    setHospitalOpen(false); setTimelineOpen(false); setCommsOpen(false); };
+  const openTimeline = () => { setTimelineOpen(true); setFleetOpen(false);    setHospitalOpen(false); setActivityOpen(false); setCommsOpen(false); };
+  const openComms    = () => { setCommsOpen(true);    setFleetOpen(false);    setHospitalOpen(false); setActivityOpen(false); setTimelineOpen(false); };
+  const closeAll     = () => { setFleetOpen(false);   setHospitalOpen(false); setActivityOpen(false); setTimelineOpen(false); setCommsOpen(false); };
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -98,6 +105,8 @@ export default function DashboardPage({ user, onLogout }) {
   const handleIncidentSelect = (incident) => {
     setSelectedIncident(incident);
     setActiveAssignment(null);
+    // Auto-open timeline when an incident is selected
+    if (incident) openTimeline();
   };
 
   const handleAcknowledge = async () => {
@@ -244,6 +253,18 @@ export default function DashboardPage({ user, onLogout }) {
         >
           Driver View
         </Button>
+
+        {/* Comms panel toggle */}
+        <Tooltip title="Quick Comms">
+          <Box
+            onClick={() => commsOpen ? closeAll() : openComms()}
+            sx={{ width:34, height:34, borderRadius:'9px', background: commsOpen ? 'rgba(142,182,155,0.18)' : 'rgba(142,182,155,0.08)', border:`1px solid ${commsOpen ? 'rgba(142,182,155,0.35)' : 'transparent'}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.15s' }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={commsOpen ? G : TEXT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </Box>
+        </Tooltip>
 
         {/* Hospital panel toggle */}
         <Tooltip title="Hospital Status">
@@ -412,13 +433,15 @@ export default function DashboardPage({ user, onLogout }) {
           {/* ── Stats row — sits above the map in normal flow ── */}
           <Box sx={{
             display:'flex', gap:'10px', alignItems:'stretch',
-            px:'14px', py:'12px', flexShrink:0,
+            px:'14px', py:'10px', flexShrink:0,
             background: BG,
             borderBottom: `1px solid ${BORDER}`,
           }}>
             <Box sx={{ flex:1, minWidth:0 }}>
               <StatsCards stats={stats} incidents={incidents} ambulances={ambulances} hospitals={hospitals} />
             </Box>
+            {/* Weather widget */}
+            <WeatherWidget />
             {/* Fleet toggle button */}
             <Tooltip title={fleetOpen ? 'Close' : 'Live Fleet'}>
               <Box
@@ -512,6 +535,31 @@ export default function DashboardPage({ user, onLogout }) {
               zIndex: 1000,
             }}>
               <ActivityFeed />
+            </Box>
+            {/* Incident Timeline slide-in panel */}
+            <Box sx={{
+              position: 'absolute', top:0, right:0, bottom:0, width:310,
+              background: 'rgba(5,31,32,0.97)',
+              borderLeft: `1px solid ${BORDER}`,
+              display:'flex', flexDirection:'column',
+              transform: timelineOpen && selectedIncident ? 'translateX(0)' : 'translateX(100%)',
+              transition: 'transform 0.25s ease',
+              zIndex: 1000,
+            }}>
+              <IncidentTimeline incident={selectedIncident} onClose={closeAll} />
+            </Box>
+
+            {/* Quick Comms slide-in panel */}
+            <Box sx={{
+              position: 'absolute', top:0, right:0, bottom:0, width:320,
+              background: 'rgba(5,31,32,0.97)',
+              borderLeft: `1px solid ${BORDER}`,
+              display:'flex', flexDirection:'column',
+              transform: commsOpen ? 'translateX(0)' : 'translateX(100%)',
+              transition: 'transform 0.25s ease',
+              zIndex: 1000,
+            }}>
+              <QuickCommsPanel ambulances={ambulances} />
             </Box>
           </Box>
         </Box>
