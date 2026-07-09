@@ -453,9 +453,8 @@ export default function DispatchMap({
     <Box
       ref={mapRef}
       sx={{
-        width: '100%',
-        height: '100%',
-        minHeight: 400,
+        position: 'absolute',
+        top: 0, left: 0, right: 0, bottom: 0,
         '& .ambulance-marker, & .hospital-marker, & .incident-marker': {
           background: 'transparent',
           border: 'none',

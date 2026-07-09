@@ -200,7 +200,7 @@ export default function DashboardPage({ user, onLogout }) {
   const tabs = ['Active','Pending','All'];
 
   return (
-    <Box sx={{ display:'flex', flexDirection:'column', height:'100vh', background:BG, overflow:'hidden' }}>
+    <Box sx={{ display:'flex', flexDirection:'column', height:'100vh', width:'100vw', background:BG, overflow:'hidden', position:'fixed', top:0, left:0 }}>
 
       {/* ══ HEADER ══════════════════════════════════════════════════════════════ */}
       <Box sx={{
@@ -296,6 +296,21 @@ export default function DashboardPage({ user, onLogout }) {
           </Box>
         </Tooltip>
 
+        {/* Live Fleet toggle */}
+        <Tooltip title={fleetOpen ? 'Close Fleet' : 'Live Fleet'}>
+          <Box
+            onClick={() => fleetOpen ? closeAll() : openFleet()}
+            sx={{ width:34, height:34, borderRadius:'9px', background: fleetOpen ? 'rgba(142,182,155,0.18)' : 'rgba(142,182,155,0.08)', border:`1px solid ${fleetOpen ? 'rgba(142,182,155,0.35)' : 'transparent'}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.15s' }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={fleetOpen ? G : TEXT} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="7" width="13" height="9" rx="2"/>
+              <path d="M15 10h4l3 3v3h-7"/>
+              <circle cx="7" cy="18" r="1.6"/>
+              <circle cx="18" cy="18" r="1.6"/>
+            </svg>
+          </Box>
+        </Tooltip>
+
         {/* Refresh */}
         <Tooltip title="Refresh">
           <IconButton size="small" onClick={() => { refetchIncidents(); refetchAmbulances(); }} sx={{ color:TEXT, background:'rgba(142,182,155,0.08)', borderRadius:'9px' }}>
@@ -310,15 +325,22 @@ export default function DashboardPage({ user, onLogout }) {
       </Box>
 
       {/* ══ BODY ════════════════════════════════════════════════════════════════ */}
-      <Box sx={{ flex:1, display:'flex', minHeight:0 }}>
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'row', minHeight: 0, overflow: 'hidden' }}>
 
         {/* ── Left Sidebar ── */}
         <Box sx={{
-          width: SIDEBAR, flexShrink:0,
-          display:'flex', flexDirection:'column',
+          width: '260px',
+          minWidth: '260px',
+          maxWidth: '260px',
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
           background: SURFACE,
           borderRight: `1px solid ${BORDER}`,
-          minHeight: 0, zIndex: 2,
+          height: '100%',
+          overflow: 'hidden',
+          position: 'relative',
+          zIndex: 2,
         }}>
           {/* Sidebar header */}
           <Box sx={{ p:'16px 16px 10px' }}>
@@ -431,43 +453,21 @@ export default function DashboardPage({ user, onLogout }) {
         </Box>
 
         {/* ── Map area (flex column: stats row + map) ── */}
-        <Box sx={{ flex:1, display:'flex', flexDirection:'column', minWidth:0 }}>
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden', height: '100%' }}>
 
           {/* ── Stats row — sits above the map in normal flow ── */}
           <Box sx={{
-            display:'flex', gap:'10px', alignItems:'stretch',
-            px:'14px', py:'10px', flexShrink:0,
+            display:'flex', gap:'8px', alignItems:'center',
+            px:'12px', py:'8px', flexShrink:0,
             background: BG,
             borderBottom: `1px solid ${BORDER}`,
+            overflow: 'hidden',
           }}>
-            <Box sx={{ flex:1, minWidth:0 }}>
-              <StatsCards stats={stats} incidents={incidents} ambulances={ambulances} hospitals={hospitals} />
-            </Box>
-            {/* Fleet toggle button */}
-            <Tooltip title={fleetOpen ? 'Close' : 'Live Fleet'}>
-              <Box
-                onClick={() => fleetOpen ? closeAll() : openFleet()}
-                sx={{
-                  width:44, flexShrink:0, borderRadius:'12px',
-                  background: fleetOpen ? 'rgba(142,182,155,0.15)' : 'rgba(142,182,155,0.07)',
-                  border: `1px solid ${fleetOpen ? G : 'rgba(142,182,155,0.22)'}`,
-                  display:'flex', alignItems:'center', justifyContent:'center',
-                  cursor:'pointer', transition:'all 0.15s',
-                  '&:hover': { background:'rgba(142,182,155,0.14)', borderColor:G },
-                }}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={G} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="7" width="13" height="9" rx="2"/>
-                  <path d="M15 10h4l3 3v3h-7"/>
-                  <circle cx="7" cy="18" r="1.6"/>
-                  <circle cx="18" cy="18" r="1.6"/>
-                </svg>
-              </Box>
-            </Tooltip>
+            <StatsCards stats={stats} incidents={incidents} ambulances={ambulances} hospitals={hospitals} />
           </Box>
 
           {/* ── Map — fills all remaining height ── */}
-          <Box sx={{ flex:1, position:'relative', minWidth:0 }}>
+          <Box sx={{ flex: 1, position: 'relative', overflow: 'hidden', minWidth: 0, minHeight: 0 }}>
             <DispatchMap
               incidents={incidents.filter(i=>!['RESOLVED','CANCELLED'].includes(i.status))}
               ambulances={fleetAmbulances.length>0 ? fleetAmbulances : ambulances}
