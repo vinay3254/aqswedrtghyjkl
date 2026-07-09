@@ -204,33 +204,36 @@ export default function DashboardPage({ user, onLogout }) {
 
       {/* ══ HEADER ══════════════════════════════════════════════════════════════ */}
       <Box sx={{
-        height: 60, flexShrink: 0,
-        display: 'flex', alignItems: 'center', gap: '16px', px: '22px',
+        height: 56, flexShrink: 0,
+        display: 'flex', alignItems: 'center', gap: '10px', px: '16px',
         background: SURFACE,
         borderBottom: `1px solid ${BORDER}`,
-        zIndex: 200,
+        zIndex: 200, overflow: 'hidden',
       }}>
         {/* Logo */}
         <Box sx={{ width:32, height:32, borderRadius:'9px', background:'rgba(142,182,155,0.14)', display:'flex', alignItems:'center', justifyContent:'center' }}>
           <CrossIcon size={14} color={G} />
         </Box>
-        <Typography sx={{ fontSize:15, fontWeight:800, color:TEXT }}>
-          Dispatch Command Center
+        <Typography sx={{ fontSize:13, fontWeight:800, color:TEXT, whiteSpace:'nowrap' }}>
+          Dispatch Center
         </Typography>
+        <Box sx={{ flex:1 }} />
+        {/* Weather widget — compact in header */}
+        <WeatherWidget compact />
         <Box sx={{ flex:1 }} />
 
         {/* SOS button */}
         <Button
           onClick={() => setSosModalOpen(true)}
           sx={{
-            display:'flex', alignItems:'center', gap:'8px',
-            px:'15px', py:'8px', borderRadius:'9px',
-            background: RED, color:'white', fontWeight:700, fontSize:'12.5px',
+            display:'flex', alignItems:'center', gap:'6px', flexShrink:0,
+            px:'11px', py:'6px', borderRadius:'8px',
+            background: RED, color:'white', fontWeight:700, fontSize:'11.5px',
             animation: 'sosPulse 2s infinite',
             '&:hover': { background:'#c94a3f' },
           }}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
             <path d="M12 3.5L22 20H2L12 3.5z" stroke="white" strokeWidth="2.2" strokeLinejoin="round"/>
             <line x1="12" y1="10" x2="12" y2="14" stroke="white" strokeWidth="2.2" strokeLinecap="round"/>
             <circle cx="12" cy="17" r="1.1" fill="white"/>
@@ -241,7 +244,7 @@ export default function DashboardPage({ user, onLogout }) {
         {/* Shift Report */}
         <Button
           onClick={() => setShiftReportOpen(true)}
-          sx={{ px:'14px', py:'8px', borderRadius:'9px', border:`1px solid ${BORDER2}`, color:TEXT, fontWeight:600, fontSize:'12px', '&:hover':{ background:'rgba(142,182,155,0.08)' } }}
+          sx={{ px:'10px', py:'6px', borderRadius:'8px', border:`1px solid ${BORDER2}`, color:TEXT, fontWeight:600, fontSize:'11px', flexShrink:0, '&:hover':{ background:'rgba(142,182,155,0.08)' } }}
         >
           Shift Report
         </Button>
@@ -249,7 +252,7 @@ export default function DashboardPage({ user, onLogout }) {
         {/* Driver view */}
         <Button
           onClick={() => window.open('/#/driver', '_blank')}
-          sx={{ px:'15px', py:'8px', borderRadius:'9px', border:`1px solid ${BORDER2}`, color:TEXT, fontWeight:600, fontSize:'12.5px', '&:hover':{ background:'rgba(142,182,155,0.08)' } }}
+          sx={{ px:'10px', py:'6px', borderRadius:'8px', border:`1px solid ${BORDER2}`, color:TEXT, fontWeight:600, fontSize:'11px', flexShrink:0, '&:hover':{ background:'rgba(142,182,155,0.08)' } }}
         >
           Driver View
         </Button>
@@ -440,8 +443,6 @@ export default function DashboardPage({ user, onLogout }) {
             <Box sx={{ flex:1, minWidth:0 }}>
               <StatsCards stats={stats} incidents={incidents} ambulances={ambulances} hospitals={hospitals} />
             </Box>
-            {/* Weather widget */}
-            <WeatherWidget />
             {/* Fleet toggle button */}
             <Tooltip title={fleetOpen ? 'Close' : 'Live Fleet'}>
               <Box

@@ -25,7 +25,7 @@ function responseImpact(w) {
   return { label:'✓ Normal Ops', color:G };
 }
 
-export default function WeatherWidget() {
+export default function WeatherWidget({ compact = false }) {
   const [idx, setIdx]       = useState(0);
   const [flipped, setFlip]  = useState(false);
 
@@ -40,6 +40,28 @@ export default function WeatherWidget() {
 
   const w      = MOCK_CONDITIONS[idx];
   const impact = responseImpact(w);
+
+  if (compact) {
+    return (
+      <Tooltip title={`${w.desc} · ${w.temp}°C · 💨${w.wind}km/h · 👁${w.visibility}km${w.alert ? ' · ⚠ '+w.alert : ''}`} placement="bottom">
+        <Box sx={{
+          display:'flex', alignItems:'center', gap:'6px',
+          px:'8px', py:'4px', borderRadius:'8px',
+          background:'rgba(142,182,155,0.06)',
+          border:`1px solid ${BRD}`,
+          cursor:'default', flexShrink:0,
+          opacity: flipped ? 0 : 1, transition:'opacity 0.3s',
+        }}>
+          <Typography sx={{ fontSize:'16px', lineHeight:1 }}>{w.icon}</Typography>
+          <Typography sx={{ fontSize:'12px', fontWeight:800, color:TEXT }}>{w.temp}°</Typography>
+          <Box sx={{ fontSize:'9px', fontWeight:700, px:'6px', py:'2px', borderRadius:'5px', color:impact.color, background:`${impact.color}18`, whiteSpace:'nowrap' }}>
+            {impact.label}
+          </Box>
+          {w.alert && <Box sx={{ width:6, height:6, borderRadius:'50%', background:AMBER, flexShrink:0, animation:'blinkDot 1.5s infinite' }}/>}
+        </Box>
+      </Tooltip>
+    );
+  }
 
   return (
     <Tooltip title="Weather conditions affect EMS response" placement="bottom">
