@@ -575,7 +575,7 @@ async function chatText(prompt, { system, model, maxTokens = 800, temperature } 
         const req = model || "meta-llama/llama-3.3-70b-instruct";
         const lower = req.toLowerCase();
         if (lower.includes("gemma") || lower.includes("minimax") || lower.includes("llama")) {
-          return "tllm/GPT_4o";
+          return "mediCluster";
         }
         return req;
       })();
@@ -595,7 +595,7 @@ async function chatText(prompt, { system, model, maxTokens = 800, temperature } 
             Authorization: `Bearer ${dynamicConfig.omniRouteKey}`,
             "Content-Type": "application/json"
           },
-          timeout: 20000
+          timeout: 120000
         }
       );
       const reply = response.data?.choices?.[0]?.message?.content;
@@ -731,7 +731,7 @@ async function chatVision({
         const req = model || "meta-llama/llama-3.2-90b-vision-instruct";
         const lower = req.toLowerCase();
         if (lower.includes("gemma") || lower.includes("minimax") || lower.includes("llama")) {
-          return "tllm/GPT_4o";
+          return "mediCluster";
         }
         return req;
       })();
@@ -761,7 +761,7 @@ async function chatVision({
             Authorization: `Bearer ${dynamicConfig.omniRouteKey}`,
             "Content-Type": "application/json"
           },
-          timeout: 20000
+          timeout: 120000
         }
       );
       const reply = response.data?.choices?.[0]?.message?.content;

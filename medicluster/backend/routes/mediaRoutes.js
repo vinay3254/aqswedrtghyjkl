@@ -5,6 +5,7 @@ const { GridFSBucket } = require("mongodb");
 const { Readable } = require("stream");
 const axios = require("axios");
 const PatientMedia = require("../models/PatientMedia");
+const SystemConfig = require("../models/SystemConfig");
 const {
   chatText,
   chatVision,
@@ -280,8 +281,7 @@ Rules:
   }
 });
 
-// POST /api/media/explain/:fileId  — clinical explanation via Ollama (primary)
-// with NVIDIA NIM kept as a secondary fallback for users who still have a key.
+// POST /api/media/explain/:fileId  — clinical explanation via OmniRoute mediCluster
 router.post("/explain/:fileId", async (req, res) => {
   const { findings, model_name } = req.body;
 
@@ -294,6 +294,59 @@ router.post("/explain/:fileId", async (req, res) => {
     .map((f) => `${f.label} (${Math.round((f.confidence ?? 0) * 100)}% confidence)`)
     .join(", ");
 
+  const systemPrompt = `You are a medical AI assistant.
+For the given condition, respond with:
+1. A brief, plain-language explanation of what the condition is.
+2. General categories of how it is typically managed (e.g., "often managed with rest and monitoring," "may involve antibiotic treatment," "sometimes requires surgical evaluation") — described in broad terms only.
+3. Red-flag symptoms that would warrant urgent/emergency care.
+4. A clear closing statement that this is general information only, the classification may be imperfect, and a licensed physician must confirm diagnosis and determine actual treatment.`;
+
+  const topFinding = top[0];
+  let userMessage = `Identified condition: ${topFinding.label}`;
+  if (typeof topFinding.confidence === "number") {
+    userMessage += ` (model confidence: ${Math.round(topFinding.confidence * 100)}%)`;
+  }
+
+  // Retrieve dynamic configuration from database
+  let omniRouteKey = process.env.OMNIROUTE_API_KEY || "";
+  try {
+    const config = await SystemConfig.findOne({ key: "omniRouteKey" });
+    if (config && config.value) {
+      omniRouteKey = config.value;
+    }
+  } catch (dbErr) {
+    console.error("Failed to load omniRouteKey from database:", dbErr.message);
+  }
+
+  // 1. OmniRoute mediCluster (primary)
+  try {
+    console.log("Generating clinical explanation via OmniRoute mediCluster...");
+    const response = await axios.post(
+      "http://localhost:20128/v1/chat/completions",
+      {
+        model: "mediCluster",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userMessage }
+        ]
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${omniRouteKey || "YOUR_OMNIROUTE_API_KEY"}`,
+          "Content-Type": "application/json"
+        },
+        timeout: 20000
+      }
+    );
+    const explanation = response.data?.choices?.[0]?.message?.content;
+    if (explanation) {
+      return res.json({ explanation: explanation.trim() });
+    }
+  } catch (err) {
+    console.error("OmniRoute explanation failed, trying Ollama...", err.message);
+  }
+
+  // 2. Ollama (secondary fallback)
   const prompt = `A chest X-ray / medical scan analysis detected the following findings: ${findingsList}.
 
 In plain English (2–3 short paragraphs), explain:
@@ -303,7 +356,6 @@ In plain English (2–3 short paragraphs), explain:
 
 Be clear, concise, and avoid unnecessary medical jargon. Do not provide a specific diagnosis — this is for educational purposes only.`;
 
-  // 1. Ollama (primary) — local daemon or cloud, authenticated with OLLAMA_API_KEY
   try {
     const { reply, model } = await chatText(prompt, { maxTokens: 500 });
     if (reply) {
@@ -313,11 +365,11 @@ Be clear, concise, and avoid unnecessary medical jargon. Do not provide a specif
     console.error("Ollama explanation failed, trying NVIDIA NIM...", err.message);
   }
 
-  // 2. NVIDIA NIM fallback (only if user still has a key)
+  // 3. NVIDIA NIM fallback (only if key is active)
   const nvidiaKey = process.env.NVIDIA_API_KEY;
   if (nvidiaKey && nvidiaKey.startsWith("nvapi-")) {
     try {
-      console.log("Using NVIDIA NIM for clinical explanation...");
+      console.log("Using NVIDIA NIM for clinical explanation fallback...");
       const response = await axios.post(
         "https://integrate.api.nvidia.com/v1/chat/completions",
         {
@@ -336,7 +388,7 @@ Be clear, concise, and avoid unnecessary medical jargon. Do not provide a specif
       );
       const explanation = response.data?.choices?.[0]?.message?.content;
       if (explanation) {
-        return res.json({ explanation });
+        return res.json({ explanation: explanation.trim() });
       }
     } catch (err) {
       console.error("NVIDIA NIM explanation failed:", err.message);
@@ -373,16 +425,12 @@ router.post("/ai-chat", async (req, res, next) => {
       ? ""
       : `\nIMPORTANT: You MUST respond entirely in ${langName}. All section headings, explanations, and the disclaimer must be written in ${langName} script.`;
 
-    const systemPrompt = `You are a medical AI assistant helping analyze medical images.
-When first analyzing an image, structure your response with these clear sections:
-|**Condition Name**: The medical condition or finding visible
-|**What It Is**: A brief plain-English explanation
-|**Prevention**: Steps to prevent this condition
-|**Treatment / Cure**: How this condition is typically treated
-|**Medications**: Common medications used for this condition
-
-For follow-up questions, respond conversationally.
-Always end with: "⚠️ Educational purposes only — consult a qualified physician for diagnosis and treatment."${langInstruction}`;
+    const systemPrompt = `You are a medical AI assistant.
+For the given condition, respond with:
+1. A brief, plain-language explanation of what the condition is.
+2. General categories of how it is typically managed (e.g., "often managed with rest and monitoring," "may involve antibiotic treatment," "sometimes requires surgical evaluation") — described in broad terms only.
+3. Red-flag symptoms that would warrant urgent/emergency care.
+4. A clear closing statement that this is general information only, the classification may be imperfect, and a licensed physician must confirm diagnosis and determine actual treatment.${langInstruction}`;
 
     // Optional NVIDIA NIM fallback for users who still have a key configured.
     const nvidiaKey = process.env.NVIDIA_API_KEY;
@@ -474,16 +522,12 @@ router.post("/ai-assistant/:fileId", async (req, res, next) => {
 
     const { chatHistory = [], question = "" } = req.body;
 
-    const systemPrompt = `You are a medical AI assistant helping analyze medical images.
-When first analyzing an image, structure your response with these clear sections:
-|**Condition Name**: The medical condition or finding visible
-|**What It Is**: A brief plain-English explanation
-|**Prevention**: Steps to prevent this condition
-|**Treatment / Cure**: How this condition is typically treated
-|**Medications**: Common medications used for this condition
-
-For follow-up questions, respond conversationally.
-Always end with: "⚠️ Educational purposes only — consult a qualified physician for diagnosis and treatment."`;
+    const systemPrompt = `You are a medical AI assistant.
+For the given condition, respond with:
+1. A brief, plain-language explanation of what the condition is.
+2. General categories of how it is typically managed (e.g., "often managed with rest and monitoring," "may involve antibiotic treatment," "sometimes requires surgical evaluation") — described in broad terms only.
+3. Red-flag symptoms that would warrant urgent/emergency care.
+4. A clear closing statement that this is general information only, the classification may be imperfect, and a licensed physician must confirm diagnosis and determine actual treatment.`;
 
     const firstUserText = chatHistory.length === 0
       ? "Please analyze this medical image. Tell me what condition is visible, how to prevent it, how to treat it, and what medications are commonly used."
