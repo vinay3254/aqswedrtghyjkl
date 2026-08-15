@@ -8,7 +8,7 @@ const express = require("express");
 const axios   = require("axios");
 
 const router = express.Router();
-const ML = process.env.ML_ENGINE_URL || "http://localhost:8000";
+const ML = process.env.ML_ENGINE_URL || "http://localhost:8080";
 const TIMEOUT = 120_000;
 
 const proxy = async (req, res, path, body) => {
@@ -35,6 +35,7 @@ router.post("/similar-patients", (req, res) => proxy(req, res, "/similar-patient
 
 // MEWS + Forecasting
 router.post("/mews",             (req, res) => proxy(req, res, "/mews"));
+router.post("/news2",            (req, res) => proxy(req, res, "/news2"));
 router.post("/forecast-vitals",  (req, res) => proxy(req, res, "/forecast-vitals"));
 
 // AutoML

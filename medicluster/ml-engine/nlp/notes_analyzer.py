@@ -639,6 +639,20 @@ def _generate_summary(
     Generate a plain-language patient summary.
     Uses transformers summarization if available, else rule-based template.
     """
+    # Try local Ollama integration first
+    try:
+        from utils.ollama_helper import query_ollama
+        prompt = (
+            f"Generate a brief, plain-language patient summary (max 100 words) from this clinical note. "
+            f"Focus on symptoms, risk level ({risk_tier}), trajectory ({trajectory}), and key medications or test findings.\n\n"
+            f"Note: {text}"
+        )
+        ollama_summary = query_ollama(prompt, system_prompt="You are a clinical summarization tool. Output only the plain-language summary.")
+        if ollama_summary:
+            return ollama_summary
+    except Exception as e:
+        logger.warning(f"Ollama note summarization failed: {e}")
+
     if TRANSFORMERS_AVAILABLE:
         try:
             summarizer = hf_pipeline(

@@ -59,7 +59,7 @@ from anomaly.isolation_forest import detect_anomalies
 from automl.feature_selector import find_optimal_k, rank_features, compute_umap, compute_tsne
 from automl.supervised import train_predictive_model
 from nlp.notes_analyzer import analyze_clinical_notes
-from forecasting.vitals_forecaster import forecast_vitals, calculate_mews
+from forecasting.vitals_forecaster import forecast_vitals, calculate_mews, calculate_news2
 from chatbot.rag_assistant import answer_query, check_drug_interactions, update_patient_index
 from risk.advanced_risk import (
     build_patient_timeline,
@@ -861,6 +861,32 @@ def mews_score():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/news2", methods=["POST"])
+def news2_score():
+    """
+    Calculate the National Early Warning Score 2 (NEWS2) for a single patient.
+
+    Body: {
+        respiratory_rate: float,
+        spo2: float,
+        spo2_scale: int (1 or 2, default 1),
+        air_or_oxygen: int (0=Air, 1=Oxygen, default 0),
+        systolic_bp: float,
+        heart_rate: float,
+        consciousness: int (0=Alert, 1=Confusion/Voice/Pain/Unresponsive),
+        temperature: float
+    }
+    Returns: { news2_score, alert_level, component_scores, recommendation }
+    """
+    body = request.get_json(force=True)
+    try:
+        result = calculate_news2(body)
+        return jsonify(result)
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Image analysis routes
 # ─────────────────────────────────────────────────────────────────────────────
@@ -969,4 +995,4 @@ def ask():
 # ─────────────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=False)
+    app.run(host="0.0.0.0", port=8080, debug=False)

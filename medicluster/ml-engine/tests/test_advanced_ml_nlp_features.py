@@ -82,3 +82,35 @@ def test_supervised_automl_classification_baseline():
     assert result["best_model"]
     assert result["leaderboard"]
     assert result["feature_importance"] is not None
+
+
+def test_news2_score_calculation():
+    from forecasting.vitals_forecaster import calculate_news2
+    # Alert, respiratory rate 12-20, oxygen saturation Scale 1 >=96, no air or oxygen, systolic 111-219, pulse 51-90, temp 36.1-38.0
+    res_low = calculate_news2({
+        "respiratory_rate": 15,
+        "spo2": 98,
+        "spo2_scale": 1,
+        "air_or_oxygen": 0,
+        "systolic_bp": 120,
+        "heart_rate": 72,
+        "consciousness": 0,
+        "temperature": 36.5
+    })
+    assert res_low["news2_score"] == 0
+    assert res_low["alert_level"] == "low"
+
+    # All extreme values (3 points each + 2 for oxygen therapy = 20 points total)
+    res_high = calculate_news2({
+        "respiratory_rate": 30,       # 3
+        "spo2": 88,                   # 3 (Scale 1 <=91)
+        "spo2_scale": 1,
+        "air_or_oxygen": 1,           # 2
+        "systolic_bp": 85,            # 3 (<=90)
+        "heart_rate": 135,            # 3 (>=131)
+        "consciousness": 3,           # 3
+        "temperature": 39.5           # 3
+    })
+    assert res_high["news2_score"] == 20
+    assert res_high["alert_level"] == "high"
+

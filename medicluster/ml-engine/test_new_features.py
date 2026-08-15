@@ -118,6 +118,35 @@ try:
 except Exception as e:
     fail("SHAP Explainability", e)
 
+# Test 11: NEWS2 Score
+try:
+    from forecasting.vitals_forecaster import calculate_news2
+    # Alert, respiratory rate 12-20, oxygen saturation Scale 1 >=96, no air or oxygen, systolic 111-219, pulse 51-90, temp 36.1-38.0
+    news2_low = calculate_news2({
+        "respiratory_rate": 15,
+        "spo2": 98,
+        "spo2_scale": 1,
+        "air_or_oxygen": 0,
+        "systolic_bp": 120,
+        "heart_rate": 72,
+        "consciousness": 0,
+        "temperature": 36.5
+    })
+    # Respiratory rate >=25 (3), SpO2 scale 1 <=91 (3), on oxygen (2), systolic <=90 (3), pulse >=131 (3), temp >=39.1 (3), unconscious (3)
+    news2_high = calculate_news2({
+        "respiratory_rate": 30,
+        "spo2": 88,
+        "spo2_scale": 1,
+        "air_or_oxygen": 1,
+        "systolic_bp": 85,
+        "heart_rate": 135,
+        "consciousness": 3,
+        "temperature": 39.5
+    })
+    ok("NEWS2 Score", f"low_score={news2_low['news2_score']} ({news2_low['alert_level']}), high_score={news2_high['news2_score']} ({news2_high['alert_level']})")
+except Exception as e:
+    fail("NEWS2 Score", e)
+
 print()
 print(f"=== Results: {passed} passed, {failed} failed ===")
 sys.exit(0 if failed == 0 else 1)

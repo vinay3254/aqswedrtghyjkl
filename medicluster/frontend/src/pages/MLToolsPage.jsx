@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ApiKeysCard from "../components/ApiKeysCard";
 import {
   analyzeNotes, calcMews, forecastVitals,
   getOptimalK, detectAnomalies, explainClusters,
@@ -426,13 +427,14 @@ export default function MLToolsPage() {
           </div>
           <div className="ml-auto flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-xs text-slate-400">ML Engine live on :8000</span>
+            <span className="text-xs text-slate-400">ML Engine live on :8080</span>
           </div>
         </div>
       </div>
 
       {/* Grid */}
       <div className="max-w-7xl mx-auto px-6 py-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+        <ApiKeysCard />
         <NLPNotes />
         <DrugInteractions />
         <MewsScore />

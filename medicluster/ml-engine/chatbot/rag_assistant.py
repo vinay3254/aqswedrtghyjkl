@@ -217,6 +217,27 @@ def _generate_answer(query: str, relevant_patients: list[dict], filters: dict) -
     if n == 0:
         return f"No patients found matching your query: '{query}'. Try broadening the search."
 
+    # Try local Ollama integration first
+    try:
+        from utils.ollama_helper import query_ollama
+        patient_summaries = []
+        for p in relevant_patients[:10]:
+            p_details = {k: v for k, v in p.items() if k not in ("pca_x", "pca_y")}
+            patient_summaries.append(str(p_details))
+        
+        prompt = (
+            f"Here are the patient records matching the search criteria:\n"
+            f"{chr(10).join(patient_summaries)}\n\n"
+            f"Question: {query}\n\n"
+            f"Generate a professional and concise clinical answer summarizing the matched patients, "
+            f"key vitals, statistical patterns, or warning signs. Do not hallucinate fields not present."
+        )
+        ollama_ans = query_ollama(prompt, system_prompt="You are an advanced medical dashboard assistant. Be highly concise, structured, and clinically precise.")
+        if ollama_ans:
+            return ollama_ans
+    except Exception as e:
+        logger.warning(f"Ollama answer generation failed: {e}. Falling back to template.")
+
     risk_tiers = {}
     for p in relevant_patients:
         tier = p.get("risk_tier", "Unknown")

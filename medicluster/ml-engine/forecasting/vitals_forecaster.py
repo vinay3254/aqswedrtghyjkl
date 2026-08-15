@@ -114,6 +114,154 @@ def calculate_mews(vitals: dict) -> dict:
     }
 
 
+def calculate_news2(vitals: dict) -> dict:
+    """
+    Calculate the National Early Warning Score 2 (NEWS2).
+
+    Parameters
+    ----------
+    vitals : dict with optional keys:
+        respiratory_rate, spo2, spo2_scale (1 or 2), air_or_oxygen (0=Air, 1=Oxygen),
+        systolic_bp, heart_rate, consciousness (0=Alert, 1=Confusion/Voice/Pain/Unresponsive),
+        temperature
+
+    Returns
+    -------
+    {
+        "news2_score"  : int,
+        "alert_level"  : "low" | "low-medium" | "medium" | "high",
+        "component_scores": { vital: score },
+        "recommendation": str
+    }
+    """
+    scores = {}
+
+    # 1. Respiration rate
+    if "respiratory_rate" in vitals and vitals["respiratory_rate"] is not None:
+        rr = float(vitals["respiratory_rate"])
+        if rr <= 8:
+            scores["respiratory_rate"] = 3
+        elif rr <= 11:
+            scores["respiratory_rate"] = 1
+        elif rr <= 20:
+            scores["respiratory_rate"] = 0
+        elif rr <= 24:
+            scores["respiratory_rate"] = 2
+        else:
+            scores["respiratory_rate"] = 3
+
+    # 2. SpO2 (Scale 1 or Scale 2)
+    if "spo2" in vitals and vitals["spo2"] is not None:
+        spo2 = float(vitals["spo2"])
+        scale = int(vitals.get("spo2_scale", 1))
+        on_oxygen = int(vitals.get("air_or_oxygen", 0)) == 1
+
+        if scale == 2:
+            if spo2 <= 83:
+                scores["spo2"] = 3
+            elif spo2 <= 85:
+                scores["spo2"] = 2
+            elif spo2 <= 87:
+                scores["spo2"] = 1
+            elif spo2 <= 92:
+                scores["spo2"] = 0
+            elif spo2 <= 94:
+                scores["spo2"] = 1 if on_oxygen else 0
+            elif spo2 <= 96:
+                scores["spo2"] = 2 if on_oxygen else 0
+            else:
+                scores["spo2"] = 3 if on_oxygen else 0
+        else:
+            if spo2 <= 91:
+                scores["spo2"] = 3
+            elif spo2 <= 93:
+                scores["spo2"] = 2
+            elif spo2 <= 95:
+                scores["spo2"] = 1
+            else:
+                scores["spo2"] = 0
+
+    # 3. Air or Oxygen therapy
+    if "air_or_oxygen" in vitals and vitals["air_or_oxygen"] is not None:
+        scores["air_or_oxygen"] = 2 if int(vitals["air_or_oxygen"]) == 1 else 0
+
+    # 4. Systolic BP
+    if "systolic_bp" in vitals and vitals["systolic_bp"] is not None:
+        sbp = float(vitals["systolic_bp"])
+        if sbp <= 90:
+            scores["systolic_bp"] = 3
+        elif sbp <= 100:
+            scores["systolic_bp"] = 2
+        elif sbp <= 110:
+            scores["systolic_bp"] = 1
+        elif sbp <= 219:
+            scores["systolic_bp"] = 0
+        else:
+            scores["systolic_bp"] = 3
+
+    # 5. Heart Rate
+    if "heart_rate" in vitals and vitals["heart_rate"] is not None:
+        hr = float(vitals["heart_rate"])
+        if hr <= 40:
+            scores["heart_rate"] = 3
+        elif hr <= 50:
+            scores["heart_rate"] = 1
+        elif hr <= 90:
+            scores["heart_rate"] = 0
+        elif hr <= 110:
+            scores["heart_rate"] = 1
+        elif hr <= 130:
+            scores["heart_rate"] = 2
+        else:
+            scores["heart_rate"] = 3
+
+    # 6. Consciousness (ACVPU)
+    if "consciousness" in vitals and vitals["consciousness"] is not None:
+        c = int(vitals["consciousness"])
+        scores["consciousness"] = 3 if c > 0 else 0
+
+    # 7. Temperature
+    if "temperature" in vitals and vitals["temperature"] is not None:
+        temp = float(vitals["temperature"])
+        if temp <= 35.0:
+            scores["temperature"] = 3
+        elif temp <= 36.0:
+            scores["temperature"] = 1
+        elif temp <= 38.0:
+            scores["temperature"] = 0
+        elif temp <= 39.0:
+            scores["temperature"] = 1
+        else:
+            scores["temperature"] = 3
+
+    total = sum(scores.values())
+    has_single_3 = any(s == 3 for s in scores.values())
+
+    if total == 0:
+        alert_level = "low"
+        recommendation = "Low clinical risk. Routine ward-based monitoring."
+    elif total <= 4:
+        if has_single_3:
+            alert_level = "low-medium"
+            recommendation = "Low-medium risk. Urgent clinician assessment required for single score of 3."
+        else:
+            alert_level = "low"
+            recommendation = "Low clinical risk. Assessment by ward nurse."
+    elif total <= 6:
+        alert_level = "medium"
+        recommendation = "Medium clinical risk. Urgent team assessment required. Consider escalation."
+    else:
+        alert_level = "high"
+        recommendation = "High clinical risk. Emergency assessment by critical care team/rapid response team."
+
+    return {
+        "news2_score":       total,
+        "alert_level":      alert_level,
+        "component_scores": scores,
+        "recommendation":   recommendation,
+    }
+
+
 # ── Simple LSTM forecaster ─────────────────────────────────────────────────────
 
 class _LSTMForecaster(nn.Module if TORCH_AVAILABLE else object):

@@ -4,16 +4,30 @@
  */
 
 const express = require("express");
+const {
+  chatText,
+  messagesCreate,
+  ollamaConfigured,
+  OllamaUnavailableError,
+} = require("../utils/ollamaClient");
 
 const router = express.Router();
 
-const AI_MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-4-5-20251001";
+const AI_MODEL = process.env.OLLAMA_MODEL || process.env.OLLAMA_TEXT_MODEL || "";
 const RISK_ORDER = { Critical: 4, High: 3, Moderate: 2, Low: 1, Noise: 0, Unknown: 0 };
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+// Backwards-compatible shim: any caller still checking ANTHROPIC_API_KEY
+// should now treat the presence of OLLAMA_API_KEY as the configured signal.
 function aiConfigured() {
-  const key = process.env.ANTHROPIC_API_KEY;
-  return Boolean(key && !key.startsWith("sk-ant-placeholder") && key.length > 20);
+  if (ollamaConfigured()) return true;
+  const legacy = process.env.ANTHROPIC_API_KEY;
+  return Boolean(
+    legacy &&
+    !legacy.startsWith("«redacted:sk-…»") &&
+    !legacy.startsWith("sk-ant") &&
+    legacy.length > 20,
+  );
 }
 
 function extractJson(raw) {
@@ -212,16 +226,13 @@ function normalizeClusterInsights(parsed, fallback, source = "ai") {
   };
 }
 
-async function callAnthropic(prompt, system, maxTokens = 1200) {
-  const Anthropic = require("@anthropic-ai/sdk");
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  const message = await client.messages.create({
-    model: AI_MODEL,
-    max_tokens: maxTokens,
+async function callOllama(prompt, system, maxTokens = 1200) {
+  const { reply } = await chatText(prompt, {
     system,
-    messages: [{ role: "user", content: prompt }],
+    model: AI_MODEL || undefined,
+    maxTokens,
   });
-  return message.content?.[0]?.text || "";
+  return reply || "";
 }
 
 router.post("/cluster-insights", async (req, res) => {
@@ -251,11 +262,15 @@ Cluster context:
 ${JSON.stringify(context, null, 2)}`;
 
   try {
-    const raw = await callAnthropic(prompt, system, 1400);
+    const raw = await callOllama(prompt, system, 1400);
     const parsed = extractJson(raw);
     return res.json(normalizeClusterInsights(parsed, fallback, "ai"));
   } catch (err) {
-    console.error("AI cluster insight error:", err.message);
+    if (err instanceof OllamaUnavailableError) {
+      console.error("AI cluster insight (Ollama unavailable):", err.message);
+    } else {
+      console.error("AI cluster insight error:", err.message);
+    }
     return res.json({ ...fallback, error: "AI insight temporarily unavailable; showing local decision support." });
   }
 });
@@ -418,11 +433,15 @@ Prescription text:
 ${text.trim()}`;
 
   try {
-    const raw = await callAnthropic(prompt, system, 1000);
+    const raw = await callOllama(prompt, system, 1000);
     const parsed = extractJson(raw);
     return res.json(normalizeMedicationPlan(parsed, fallback, "ai"));
   } catch (err) {
-    console.error("AI medication plan error:", err.message);
+    if (err instanceof OllamaUnavailableError) {
+      console.error("AI medication plan (Ollama unavailable):", err.message);
+    } else {
+      console.error("AI medication plan error:", err.message);
+    }
     return res.json({ ...fallback, error: "AI extraction temporarily unavailable; showing local parser output." });
   }
 });

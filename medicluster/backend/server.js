@@ -4,7 +4,7 @@
  * Connects to MongoDB, proxies ML requests to the Python engine.
  */
 
-require("dotenv").config();
+require("dotenv").config({ override: true });
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -17,6 +17,8 @@ const dispatchRoutes  = require("./routes/dispatchRoutes");
 const triageRoutes    = require("./routes/triageRoutes");
 const aiRoutes        = require("./routes/aiRoutes");
 const mlRoutes        = require("./routes/mlRoutes");
+const healthRoutes    = require("./routes/healthRoutes");
+const settingsRoutes  = require("./routes/settingsRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -25,7 +27,10 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({ origin: ["http://localhost:3000", "http://localhost:5173"] }));
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
-
+app.use((req, _res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use("/api/data", dataRoutes);
 app.use("/api/cluster", clusterRoutes);
@@ -35,6 +40,8 @@ app.use("/api/dispatch", dispatchRoutes);
 app.use("/api/triage",  triageRoutes);
 app.use("/api/ai",      aiRoutes);
 app.use("/api/ml",      mlRoutes);
+app.use("/api/health",  healthRoutes);
+app.use("/api/settings", settingsRoutes);
 
 app.get("/api/health", (_req, res) =>
   res.json({ status: "ok", service: "medicluster-backend" })

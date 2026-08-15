@@ -1,7 +1,7 @@
 /**
  * backend/routes/triageRoutes.js
  * Patient-level triage records, vitals scoring, per-patient hospital allocation,
- * voice-to-triage (Claude API), and MCI board data.
+ * voice-to-triage (Ollama), and MCI board data.
  */
 
 const express  = require("express");
@@ -9,6 +9,10 @@ const mongoose = require("mongoose");
 const IncidentPatient = require("../models/IncidentPatient");
 const Hospital        = require("../models/Hospital");
 const { scoreVitals, detectPathways, suggestBedType, requiredSpecialties } = require("../utils/triageScoring");
+const {
+  chatText,
+  OllamaUnavailableError,
+} = require("../utils/ollamaClient");
 
 const router = express.Router();
 
@@ -155,16 +159,11 @@ router.post("/score", (req, res) => {
 });
 
 // ── POST /api/triage/voice ────────────────────────────────────────────────────
-// Voice/text-to-triage: Claude extracts vitals + category from free text
+// Voice/text-to-triage: Ollama extracts vitals + category from free text
 router.post("/voice", async (req, res, next) => {
   const { text, incidentId } = req.body;
   if (!text || !text.trim()) {
     return res.status(400).json({ error: "text is required" });
-  }
-
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey || apiKey.startsWith("sk-ant-placeholder")) {
-    return res.status(503).json({ error: "ANTHROPIC_API_KEY not configured" });
   }
 
   const prompt = `You are a paramedic triage assistant. Analyze the following dispatcher call transcript or field crew notes and extract:
@@ -198,15 +197,20 @@ Transcript/notes:
 ${text.trim()}`;
 
   try {
-    const Anthropic = require("@anthropic-ai/sdk");
-    const client    = new Anthropic({ apiKey });
-    const message   = await client.messages.create({
-      model:      "claude-haiku-4-5-20251001",
-      max_tokens: 512,
-      messages:   [{ role: "user", content: prompt }],
-    });
+    let reply;
+    try {
+      const out = await chatText(prompt, { maxTokens: 512 });
+      reply = out.reply;
+    } catch (err) {
+      if (err instanceof OllamaUnavailableError) {
+        return res.status(503).json({
+          error: "Voice-to-triage unavailable — OLLAMA_API_KEY / OLLAMA_URL not configured or Ollama daemon unreachable",
+        });
+      }
+      throw err;
+    }
 
-    const raw = message.content?.[0]?.text ?? "";
+    const raw = reply ?? "";
     let parsed;
     try {
       const m = raw.match(/\{[\s\S]*\}/);

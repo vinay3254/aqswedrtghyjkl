@@ -84,9 +84,63 @@ python app.py          # runs on port 8000
 ```bash
 cd backend
 npm install
-# Edit .env: set MONGO_URI and ML_ENGINE_URL
+# Edit .env: set MONGO_URI, ML_ENGINE_URL, and OLLAMA_URL/OLLAMA_API_KEY (see below)
 npm run dev            # runs on port 5000
 ```
+
+#### LLM provider — Ollama (primary)
+
+All LLM features (cluster insights, medication-plan extraction, vision analysis,
+clinical explanation, ARIA dispatch, voice-to-triage, chatbot) now use **Ollama**
+instead of Anthropic. Configure via `backend/.env`:
+
+```env
+# Local daemon:
+OLLAMA_URL=http://localhost:11434
+OLLAMA_API_KEY=                         # leave blank for unauthenticated local daemon
+
+# OR Ollama Cloud:
+OLLAMA_URL=https://ollama.com
+OLLAMA_API_KEY=ollama_…
+
+# Optional pinning (auto-detected from /api/tags when blank):
+OLLAMA_MODEL=nemotron-mini              # default text model
+OLLAMA_VISION_MODEL=minimax-m3:cloud    # default vision model
+
+# Reorder priority, e.g. "minimax,gemma,qwen" puts those families first:
+OLLAMA_PREFERRED_FAMILIES=
+```
+
+If `OLLAMA_API_KEY` is set it's sent as `Authorization: Bearer <key>` on every
+request. For Ollama Cloud this is required; for a local daemon it's optional
+unless you've put an auth proxy in front of `OLLAMA_URL`. NVIDIA NIM remains a
+secondary fallback (set `NVIDIA_API_KEY` if you want it).
+
+#### Supported vision models
+
+`looksLikeVisionModel()` auto-classifies the following families as
+multimodal — pin any of them with `OLLAMA_VISION_MODEL` or set
+`OLLAMA_PREFERRED_FAMILIES` to control ordering:
+
+| Family       | Example picks                                  |
+|--------------|------------------------------------------------|
+| minimax      | `minimax-m3:cloud`, `minimax-m2.7:cloud`        |
+| Gemma 3+ / 4 | `gemma4:31b-cloud`, `gemma3:27b`                |
+| Qwen-VL      | `qwen3-vl:8b`, `qwen2.5-vl:32b`, `qwen3.5:cloud` |
+| Kimi-VL      | `kimi-vl`, `kimi-k3:cloud`, `kimi-k2.6:cloud`   |
+| Llama Vision | `llama3.2-vision`                                |
+| LLaVA        | `llava:13b`, `llava-llama3`                      |
+| Mistral      | `mistral-large-3:675b-cloud`, `pixtral:12b`      |
+| GLM          | `glm-5.1:cloud`, `glm-5.2:cloud`, `glm-4v`       |
+| DeepSeek     | `deepseek-v4-flash:cloud`                        |
+| Nemotron     | `nemotron-3-vl`, `nemotron-3-super:cloud`        |
+| InternVL     | `internvl2:8b`, `internvl2:26b`                  |
+| Molmo        | `molmo:7b`                                       |
+
+Anything tagged `:cloud` from a known multimodal family (above) is treated as
+vision-capable. Pure text-only models (`*-embed-text`, `*-index-advisor`,
+ad-hoc community finetunes like `laravel12-php84-boost`) are explicitly
+excluded even if they share a family name.
 
 ### 3. React Frontend
 

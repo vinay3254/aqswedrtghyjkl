@@ -8,6 +8,10 @@ const mongoose  = require("mongoose");
 const Ambulance = require("../models/Ambulance");
 const Hospital  = require("../models/Hospital");
 const Dispatch  = require("../models/Dispatch");
+const {
+  chatText,
+  OllamaUnavailableError,
+} = require("../utils/ollamaClient");
 
 const router = express.Router();
 
@@ -204,11 +208,6 @@ router.post("/emergency", async (req, res, next) => {
     return res.status(400).json({ error: "severity_score must be between 1 and 10" });
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey || apiKey.startsWith("sk-ant-placeholder")) {
-    return res.status(503).json({ error: "ARIA unavailable — ANTHROPIC_API_KEY not configured" });
-  }
-
   try {
     const [ambulances, hospitals] = await Promise.all([
       Ambulance.find().lean(),
@@ -245,23 +244,24 @@ router.post("/emergency", async (req, res, next) => {
       },
     };
 
-    const Anthropic = require("@anthropic-ai/sdk");
-    const client = new Anthropic({ apiKey });
-
-    const message = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1024,
-      system: ARIA_SYSTEM_PROMPT,
-      messages: [
-        {
-          role: "user",
-          content: `Process this emergency dispatch request:\n\n${JSON.stringify(contextPayload, null, 2)}`,
-        },
-      ],
-    });
+    let reply;
+    try {
+      const out = await chatText(
+        `Process this emergency dispatch request:\n\n${JSON.stringify(contextPayload, null, 2)}`,
+        { system: ARIA_SYSTEM_PROMPT, maxTokens: 1024 },
+      );
+      reply = out.reply;
+    } catch (err) {
+      if (err instanceof OllamaUnavailableError) {
+        return res.status(503).json({
+          error: "ARIA unavailable — OLLAMA_API_KEY / OLLAMA_URL not configured or Ollama daemon unreachable",
+        });
+      }
+      throw err;
+    }
 
     let ariaResponse;
-    const raw = message.content?.[0]?.text ?? "";
+    const raw = reply ?? "";
     try {
       const jsonMatch = raw.match(/\{[\s\S]*\}/);
       ariaResponse = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
