@@ -555,7 +555,7 @@ async function chatText(prompt, { system, model, maxTokens = 800, temperature } 
             Authorization: `Bearer ${dynamicConfig.agentRouterKey}`,
             "Content-Type": "application/json"
           },
-          timeout: 30000
+          timeout: 20000
         }
       );
       const reply = response.data?.choices?.[0]?.message?.content;
@@ -572,7 +572,7 @@ async function chatText(prompt, { system, model, maxTokens = 800, temperature } 
     try {
       console.log("Routing text query via OmniRoute...");
       const response = await axios.post(
-        "https://api.omniroute.ai/v1/chat/completions",
+        "http://localhost:20128/v1/chat/completions",
         {
           model: model || "meta-llama/llama-3.3-70b-instruct",
           messages: [
@@ -587,7 +587,7 @@ async function chatText(prompt, { system, model, maxTokens = 800, temperature } 
             Authorization: `Bearer ${dynamicConfig.omniRouteKey}`,
             "Content-Type": "application/json"
           },
-          timeout: 30000
+          timeout: 20000
         }
       );
       const reply = response.data?.choices?.[0]?.message?.content;
@@ -649,7 +649,7 @@ async function chatText(prompt, { system, model, maxTokens = 800, temperature } 
       return payload;
     },
     request: ({ url, headers, payload }) =>
-      axios.post(`${url}/api/generate`, payload, { headers, timeout: 30_000 }),
+      axios.post(`${url}/api/generate`, payload, { headers, timeout: 20_000 }),
   });
 }
 
@@ -698,7 +698,7 @@ async function chatVision({
             Authorization: `Bearer ${dynamicConfig.agentRouterKey}`,
             "Content-Type": "application/json"
           },
-          timeout: 45000
+          timeout: 20000
         }
       );
       const reply = response.data?.choices?.[0]?.message?.content;
@@ -720,7 +720,7 @@ async function chatVision({
     try {
       console.log("Routing vision query via OmniRoute...");
       const response = await axios.post(
-        "https://api.omniroute.ai/v1/chat/completions",
+        "http://localhost:20128/v1/chat/completions",
         {
           model: model || "meta-llama/llama-3.2-90b-vision-instruct",
           messages: [
@@ -745,7 +745,7 @@ async function chatVision({
             Authorization: `Bearer ${dynamicConfig.omniRouteKey}`,
             "Content-Type": "application/json"
           },
-          timeout: 45000
+          timeout: 20000
         }
       );
       const reply = response.data?.choices?.[0]?.message?.content;
@@ -846,11 +846,9 @@ async function chatVision({
       return payload;
     },
     request: ({ url, headers, payload, candidate }) => {
-      // Vision models usually need more time than text-only.
-      const isVision = looksLikeVisionModel(candidate.name);
       return axios.post(`${url}/api/generate`, payload, {
         headers,
-        timeout: isVision ? 60_000 : 30_000,
+        timeout: 20_000,
       });
     },
   });

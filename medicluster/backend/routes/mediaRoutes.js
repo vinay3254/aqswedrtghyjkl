@@ -406,7 +406,7 @@ Always end with: "⚠️ Educational purposes only — consult a qualified physi
         const response = await axios.post(
           "https://integrate.api.nvidia.com/v1/chat/completions",
           payload,
-          { headers: { Authorization: `Bearer ${nvidiaKey}`, "Content-Type": "application/json" }, timeout: 90000 }
+          { headers: { Authorization: `Bearer ${nvidiaKey}`, "Content-Type": "application/json" }, timeout: 20000 }
         );
         const reply = response.data?.choices?.[0]?.message?.content;
         if (reply) {
@@ -510,7 +510,7 @@ Always end with: "⚠️ Educational purposes only — consult a qualified physi
             max_tokens: 1024,
             temperature: 0.2
           },
-          { headers: { Authorization: `Bearer ${nvidiaKey}`, "Content-Type": "application/json" }, timeout: 90000 }
+          { headers: { Authorization: `Bearer ${nvidiaKey}`, "Content-Type": "application/json" }, timeout: 20000 }
         );
         const reply = response.data?.choices?.[0]?.message?.content;
         if (reply) {
