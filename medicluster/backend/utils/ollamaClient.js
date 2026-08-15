@@ -818,6 +818,8 @@ async function chatVision({
   gemmaPart.forEach((c) => {
     if (c.name === "gemma4:cloud") {
       finalCandidates.push({ name: "gemma4:31b-cloud" });
+    } else if (c.name === "gemma4") {
+      finalCandidates.push({ name: "gemma4:31b" });
     } else {
       finalCandidates.push({ name: c.name });
     }
