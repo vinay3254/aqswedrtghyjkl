@@ -571,10 +571,18 @@ async function chatText(prompt, { system, model, maxTokens = 800, temperature } 
   if (dynamicConfig.omniRouteKey) {
     try {
       console.log("Routing text query via OmniRoute...");
+      const omniModel = (() => {
+        const req = model || "meta-llama/llama-3.3-70b-instruct";
+        const lower = req.toLowerCase();
+        if (lower.includes("gemma") || lower.includes("minimax") || lower.includes("llama")) {
+          return "tllm/GPT_4o";
+        }
+        return req;
+      })();
       const response = await axios.post(
         "http://localhost:20128/v1/chat/completions",
         {
-          model: model || "meta-llama/llama-3.3-70b-instruct",
+          model: omniModel,
           messages: [
             ...(system ? [{ role: "system", content: system }] : []),
             { role: "user", content: prompt }
@@ -719,10 +727,18 @@ async function chatVision({
   if (dynamicConfig.omniRouteKey) {
     try {
       console.log("Routing vision query via OmniRoute...");
+      const omniModel = (() => {
+        const req = model || "meta-llama/llama-3.2-90b-vision-instruct";
+        const lower = req.toLowerCase();
+        if (lower.includes("gemma") || lower.includes("minimax") || lower.includes("llama")) {
+          return "tllm/GPT_4o";
+        }
+        return req;
+      })();
       const response = await axios.post(
         "http://localhost:20128/v1/chat/completions",
         {
-          model: model || "meta-llama/llama-3.2-90b-vision-instruct",
+          model: omniModel,
           messages: [
             {
               role: "user",
