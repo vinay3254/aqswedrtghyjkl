@@ -1,7 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Box } from '@mui/material';
+import { Box, Chip, Typography, IconButton } from '@mui/material';
+import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
+import CloseIcon from '@mui/icons-material/Close';
 
 // CARTO Voyager High-DPI Style (Google Maps-like vector street design, road hierarchy, POIs)
 const CARTO_VOYAGER_STYLE = {
@@ -32,11 +34,10 @@ const CARTO_VOYAGER_STYLE = {
 
 const BENGALURU_LNG_LAT = [77.5946, 12.9716]; // [lng, lat] Central Bengaluru
 
-/* ── Robust Coordinate Converter (Converts any lat/lng format to MapLibre [lng, lat]) ── */
+/* ── Robust Coordinate Converter ── */
 export function toLngLat(coord) {
   if (!coord) return null;
   if (Array.isArray(coord) && coord.length >= 2) {
-    // If given [lat, lng] where lat is ~12-13 and lng is ~77-78
     if (coord[0] < 50 && coord[1] > 50) return [Number(coord[1]), Number(coord[0])];
     return [Number(coord[0]), Number(coord[1])];
   }
@@ -48,10 +49,27 @@ export function toLngLat(coord) {
   return null;
 }
 
+/* ── Geographic Heading / Bearing Calculator ── */
+export function calculateBearing(coord1, coord2) {
+  if (!coord1 || !coord2) return 0;
+  const lon1 = (coord1[0] * Math.PI) / 180;
+  const lat1 = (coord1[1] * Math.PI) / 180;
+  const lon2 = (coord2[0] * Math.PI) / 180;
+  const lat2 = (coord2[1] * Math.PI) / 180;
+
+  const y = Math.sin(lon2 - lon1) * Math.cos(lat2);
+  const x =
+    Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
+
+  const brng = (Math.atan2(y, x) * 180) / Math.PI;
+  return (brng + 360) % 360;
+}
+
 /* ── DOM Element Creators for MapLibre Markers ── */
 function createAmbulanceDomElement(amb) {
   const wrapper = document.createElement('div');
-  wrapper.className = 'maplibre-ambulance-wrapper';
+  wrapper.className = `maplibre-ambulance-wrapper amb-node-${amb.id}`;
   wrapper.style.cursor = 'pointer';
 
   const status = amb.status || 'AVAILABLE';
@@ -87,7 +105,7 @@ function createAmbulanceDomElement(amb) {
       ${callsign} ${isStale ? '⚠️ OFFLINE' : (speed ? `• ${speed}` : '')}
     </div>
 
-    <!-- Google Pin Circle with Drop-Shadow -->
+    <!-- Google Pin Circle with Drop-Shadow & Rotatable Vehicle Icon -->
     <div style="
       position:relative;width:38px;height:38px;border-radius:50%;
       background:${color};border:3px solid #FFFFFF;
@@ -96,13 +114,15 @@ function createAmbulanceDomElement(amb) {
       transition:all 0.3s ease;
     ">
       ${moving ? `<div style="position:absolute;inset:-6px;border-radius:50%;border:2px solid ${color};opacity:0.6;animation:amb-pulse 1.2s infinite"></div>` : ''}
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <rect x="3" y="6" width="14" height="11" rx="2" fill="white"/>
-        <path d="M17 9l4 2v6h-4V9z" fill="white"/>
-        <circle cx="7.5" cy="17.5" r="2.5" fill="#0F172A"/>
-        <circle cx="17.5" cy="17.5" r="2.5" fill="#0F172A"/>
-        <path d="M10 8.5v6M7 11.5h6" stroke="${color}" stroke-width="2" stroke-linecap="round"/>
-      </svg>
+      <div class="vehicle-icon-rotator" style="width:20px;height:20px;display:flex;align-items:center;justify-content:center;transition:transform 0.15s linear;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="6" width="14" height="11" rx="2" fill="white"/>
+          <path d="M17 9l4 2v6h-4V9z" fill="white"/>
+          <circle cx="7.5" cy="17.5" r="2.5" fill="#0F172A"/>
+          <circle cx="17.5" cy="17.5" r="2.5" fill="#0F172A"/>
+          <path d="M10 8.5v6M7 11.5h6" stroke="${color}" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
     </div>
 
     <!-- Pointer -->
@@ -166,19 +186,21 @@ function createIncidentDomElement(inc) {
 }
 
 function createHospitalDomElement(h) {
-  const el = document.createElement('div');
-  el.className = 'maplibre-custom-marker maplibre-hospital-marker';
-  el.style.cursor = 'pointer';
-  el.style.position = 'relative';
-  el.style.display = 'flex';
-  el.style.flexDirection = 'column';
-  el.style.alignItems = 'center';
+  const wrapper = document.createElement('div');
+  wrapper.className = 'maplibre-hospital-wrapper';
+  wrapper.style.cursor = 'pointer';
 
   const beds = h.available_beds ?? 12;
   const icu = h.icu_beds_available ?? 4;
   const color = beds > 10 ? '#2563EB' : beds > 3 ? '#F59E0B' : '#EF4444';
 
-  el.innerHTML = `
+  const inner = document.createElement('div');
+  inner.style.display = 'flex';
+  inner.style.flexDirection = 'column';
+  inner.style.alignItems = 'center';
+  inner.style.pointerEvents = 'auto';
+
+  inner.innerHTML = `
     <!-- Bed count pill -->
     <div style="
       background:#1E293B;color:#FFFFFF;padding:1px 6px;border-radius:10px;
@@ -206,7 +228,8 @@ function createHospitalDomElement(h) {
       border-top:7px solid #FFFFFF;margin-top:-2px;
     "></div>
   `;
-  return el;
+  wrapper.appendChild(inner);
+  return wrapper;
 }
 
 export default function DispatchMap({
@@ -223,7 +246,20 @@ export default function DispatchMap({
   const mapInstanceRef = useRef(null);
   const markersRef = useRef({ incidents: new Map(), ambulances: new Map(), hospitals: new Map() });
   const activeRoutesRef = useRef(new Set());
-  const [mapReady, setMapReady] = React.useState(false);
+  const [mapReady, setMapReady] = useState(false);
+
+  // Opt-in vehicle tracking / camera auto-follow state
+  const [followedUnitId, setFollowedUnitId] = useState(null);
+  const unitWaypointsRef = useRef(new Map()); // ambId -> [[lng, lat], ...]
+  const unitProgressRef = useRef(new Map());  // ambId -> { index: 0, fraction: 0 }
+  const animationFrameRef = useRef(null);
+
+  // Sync external focus prop to followedUnitId
+  useEffect(() => {
+    if (focusAmbulance?.id) {
+      setFollowedUnitId(focusAmbulance.id);
+    }
+  }, [focusAmbulance]);
 
   /* ── Initialize MapLibre GL Map ── */
   useEffect(() => {
@@ -260,6 +296,7 @@ export default function DispatchMap({
 
     return () => {
       resizeObserver.disconnect();
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -267,13 +304,12 @@ export default function DispatchMap({
     };
   }, []);
 
-  /* ── Sub-step 2b: Render Incident Markers with toLngLat() ── */
+  /* ── Sub-step 2b: Render Incident Markers ── */
   useEffect(() => {
     if (!mapInstanceRef.current || !mapReady) return;
     const map = mapInstanceRef.current;
     const currentIds = new Set(incidents.map(i => i.id));
 
-    // Remove deleted incident markers
     markersRef.current.incidents.forEach((marker, id) => {
       if (!currentIds.has(id)) {
         marker.remove();
@@ -281,11 +317,9 @@ export default function DispatchMap({
       }
     });
 
-    // Add or update incidents
     incidents.forEach(inc => {
       const lngLat = toLngLat(inc);
       if (!lngLat) return;
-      console.log('[DispatchMap toLngLat trace]', 'Incident:', inc.id, 'Raw lat/lng:', [inc.location_lat, inc.location_lng], '-> Output [lng, lat]:', lngLat);
 
       const existing = markersRef.current.incidents.get(inc.id);
       if (existing) {
@@ -316,13 +350,12 @@ export default function DispatchMap({
     });
   }, [incidents, onIncidentClick, mapReady]);
 
-  /* ── Sub-step 2b: Render Ambulance Markers with toLngLat() ── */
+  /* ── Sub-step 2b: Render Ambulance Markers ── */
   useEffect(() => {
     if (!mapInstanceRef.current || !mapReady) return;
     const map = mapInstanceRef.current;
     const currentIds = new Set(ambulances.map(a => a.id));
 
-    // Remove deleted ambulance markers
     markersRef.current.ambulances.forEach((marker, id) => {
       if (!currentIds.has(id)) {
         marker.remove();
@@ -330,25 +363,27 @@ export default function DispatchMap({
       }
     });
 
-    // Add or update ambulances
     ambulances.forEach(amb => {
       const lngLat = toLngLat(amb);
       if (!lngLat) return;
-      console.log('[DispatchMap toLngLat trace]', 'Ambulance:', amb.id, 'Raw lat/lng:', [amb.latitude, amb.longitude], '-> Output [lng, lat]:', lngLat);
 
       const existing = markersRef.current.ambulances.get(amb.id);
       if (existing) {
         existing.setLngLat(lngLat);
       } else {
         const el = createAmbulanceDomElement(amb);
-        el.addEventListener('click', () => onAmbulanceClick?.(amb));
+        el.addEventListener('click', () => {
+          setFollowedUnitId(amb.id);
+          onAmbulanceClick?.(amb);
+          map.easeTo({ center: lngLat, zoom: 14.5, duration: 1000 });
+        });
 
         const popup = new maplibregl.Popup({ offset: [0, -45], closeButton: true, className: 'google-maplibre-popup' })
           .setHTML(`
             <div style="font-family:'Inter',sans-serif;padding:6px 8px;min-width:180px;">
               <div style="font-weight:800;font-size:13px;color:#0F172A;">🚑 ${amb.call_sign || amb.vehicle_number}</div>
               <div style="font-size:11px;color:#475569;margin-bottom:4px;">Driver: ${amb.driver || 'Active Paramedic'}</div>
-              <div style="font-size:11px;font-weight:700;color:#2563EB;">Status: ${amb.status}</div>
+              <div style="font-size:11px;font-weight:700;color:#2563EB;">Status: ${amb.status} (Speed: ${amb.speed || 0} km/h)</div>
             </div>
           `);
 
@@ -362,7 +397,7 @@ export default function DispatchMap({
     });
   }, [ambulances, onAmbulanceClick, mapReady]);
 
-  /* ── Sub-step 2b: Render Hospital Markers with toLngLat() ── */
+  /* ── Sub-step 2b: Render Hospital Markers ── */
   useEffect(() => {
     if (!mapInstanceRef.current || !mapReady) return;
     const map = mapInstanceRef.current;
@@ -403,19 +438,16 @@ export default function DispatchMap({
     });
   }, [hospitals, mapReady]);
 
-  /* ── Generalized Multi-Unit Route Manager: Render distinct OSRM routes for all dispatched units ── */
+  /* ── Multi-Unit Route Management & 60fps Interpolated Waypoints Storage ── */
   useEffect(() => {
     if (!mapInstanceRef.current || !mapReady) return;
     const map = mapInstanceRef.current;
 
-    // Filter dispatched / active ambulances
     const activeAmbulances = ambulances.filter(
       amb => ['EN_ROUTE', 'TRANSPORTING'].includes(amb.status) || amb.assigned_incident_id
     );
-
     const activeIds = new Set(activeAmbulances.map(a => a.id));
 
-    // Remove routes for units that are no longer active / dispatched
     activeRoutesRef.current.forEach(ambId => {
       if (!activeIds.has(ambId)) {
         if (map.isStyleLoaded()) {
@@ -424,12 +456,13 @@ export default function DispatchMap({
           if (map.getSource(`route-source-${ambId}`)) map.removeSource(`route-source-${ambId}`);
         }
         activeRoutesRef.current.delete(ambId);
+        unitWaypointsRef.current.delete(ambId);
+        unitProgressRef.current.delete(ambId);
       }
     });
 
     if (activeAmbulances.length === 0) return;
 
-    // Color palette for distinct unit routes
     const ROUTE_THEMES = {
       'AMB-001': { core: '#2563EB', casing: '#1E40AF' }, // Alpha-1: Royal Blue
       'AMB-002': { core: '#EA580C', casing: '#9A3412' }, // Bravo-2: Orange
@@ -442,7 +475,6 @@ export default function DispatchMap({
       const ambCoord = toLngLat(amb);
       if (!ambCoord) return;
 
-      // Find matching incident
       const targetIncident = incidents.find(i => i.id === amb.assigned_incident_id) || incidents[0];
       if (!targetIncident) return;
       const incCoord = toLngLat(targetIncident);
@@ -461,11 +493,16 @@ export default function DispatchMap({
           if (!data || !data.routes || !data.routes[0]) return;
 
           const route = data.routes[0];
+          const coords = route.geometry.coordinates;
+          unitWaypointsRef.current.set(amb.id, coords);
+          if (!unitProgressRef.current.has(amb.id)) {
+            unitProgressRef.current.set(amb.id, { index: 0, fraction: 0 });
+          }
+
           const geojsonData = {
             type: 'Feature',
             properties: {
               ambulanceId: amb.id,
-              callsign: amb.call_sign,
               distance: route.distance,
               duration: route.duration,
             },
@@ -512,13 +549,6 @@ export default function DispatchMap({
               }
 
               activeRoutesRef.current.add(amb.id);
-
-              console.log(`[Multi-Route] Rendered route for ${amb.call_sign || amb.id}:`, {
-                sourceId,
-                distanceKm: (route.distance / 1000).toFixed(2),
-                durationMins: Math.ceil(route.duration / 60),
-                waypoints: geojsonData.geometry.coordinates.length,
-              });
             } catch (e) {
               console.error(`[Multi-Route] Error adding layer for ${amb.id}:`, e);
             }
@@ -536,6 +566,76 @@ export default function DispatchMap({
     });
   }, [ambulances, incidents, mapReady]);
 
+  /* ── Step 4: 60fps RequestAnimationFrame Smooth Position & Heading Interpolation Loop ── */
+  useEffect(() => {
+    let lastTime = performance.now();
+
+    const animateVehicles = (now) => {
+      const dt = (now - lastTime) / 1000;
+      lastTime = now;
+
+      // Speed in waypoints progression per second
+      const SPEED_FACTOR = 0.8;
+
+      unitWaypointsRef.current.forEach((waypoints, ambId) => {
+        if (!waypoints || waypoints.length < 2) return;
+
+        const marker = markersRef.current.ambulances.get(ambId);
+        if (!marker) return;
+
+        let prog = unitProgressRef.current.get(ambId) || { index: 0, fraction: 0 };
+        prog.fraction += dt * SPEED_FACTOR;
+
+        while (prog.fraction >= 1) {
+          prog.fraction -= 1;
+          prog.index++;
+          if (prog.index >= waypoints.length - 1) {
+            prog.index = 0; // Loop back or smoothly navigate
+          }
+        }
+        unitProgressRef.current.set(ambId, prog);
+
+        const pA = waypoints[prog.index];
+        const pB = waypoints[Math.min(prog.index + 1, waypoints.length - 1)];
+
+        // Smooth sub-segment interpolation
+        const currentLng = pA[0] + (pB[0] - pA[0]) * prog.fraction;
+        const currentLat = pA[1] + (pB[1] - pA[1]) * prog.fraction;
+        const currentLngLat = [currentLng, currentLat];
+
+        // 1. Move marker smoothly
+        marker.setLngLat(currentLngLat);
+
+        // 2. Rotate vehicle icon to match heading
+        const heading = calculateBearing(pA, pB);
+        const el = marker.getElement();
+        if (el) {
+          const rotator = el.querySelector('.vehicle-icon-rotator');
+          if (rotator) {
+            rotator.style.transform = `rotate(${heading}deg)`;
+          }
+        }
+
+        // 3. Opt-in Camera Auto-Follow (smoothly keeps active unit centered)
+        if (followedUnitId === ambId && mapInstanceRef.current) {
+          mapInstanceRef.current.easeTo({
+            center: currentLngLat,
+            duration: 120,
+            easing: (t) => t,
+          });
+        }
+      });
+
+      animationFrameRef.current = requestAnimationFrame(animateVehicles);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animateVehicles);
+
+    return () => {
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    };
+  }, [followedUnitId]);
+
   return (
     <Box
       sx={{
@@ -547,6 +647,7 @@ export default function DispatchMap({
         overflow: 'hidden',
       }}
     >
+      {/* Map Container */}
       <div
         ref={mapContainerRef}
         style={{
@@ -560,6 +661,41 @@ export default function DispatchMap({
         }}
       />
 
+      {/* Floating Opt-In Camera Follow HUD Indicator */}
+      {followedUnitId && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 14,
+            left: 14,
+            zIndex: 1000,
+            background: 'rgba(15, 23, 42, 0.88)',
+            backdropFilter: 'blur(8px)',
+            color: '#FFFFFF',
+            borderRadius: '10px',
+            px: '12px',
+            py: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+            border: '1px solid rgba(255,255,255,0.15)',
+          }}
+        >
+          <CenterFocusStrongIcon sx={{ fontSize: 18, color: '#38BDF8', animation: 'pulse-slow 2s infinite' }} />
+          <Typography sx={{ fontSize: '12px', fontWeight: 700, fontFamily: 'Inter, sans-serif' }}>
+            Auto-Following Unit: <span style={{ color: '#38BDF8' }}>{followedUnitId === 'AMB-001' ? 'Alpha-1' : followedUnitId === 'AMB-002' ? 'Bravo-2' : followedUnitId}</span>
+          </Typography>
+          <IconButton
+            size="small"
+            onClick={() => setFollowedUnitId(null)}
+            sx={{ color: '#94A3B8', p: '2px', '&:hover': { color: '#FFFFFF', bgcolor: 'rgba(255,255,255,0.1)' } }}
+          >
+            <CloseIcon sx={{ fontSize: 16 }} />
+          </IconButton>
+        </Box>
+      )}
+
       <style>{`
         @keyframes amb-pulse {
           0% { transform: scale(1); opacity: 0.8; }
@@ -568,6 +704,10 @@ export default function DispatchMap({
         @keyframes inc-pulse {
           0% { transform: scale(1); opacity: 0.6; }
           100% { transform: scale(1.8); opacity: 0; }
+        }
+        @keyframes pulse-slow {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.6; transform: scale(1.1); }
         }
         .maplibregl-popup-content {
           border-radius: 12px !important;
