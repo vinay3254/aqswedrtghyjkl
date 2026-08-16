@@ -262,7 +262,7 @@ export default function DispatchMap({
 
   /* ── Sub-step 2b: Render Incident Markers with toLngLat() ── */
   useEffect(() => {
-    if (!mapInstanceRef.current) return;
+    if (!mapInstanceRef.current || !mapReady) return;
     const map = mapInstanceRef.current;
     const currentIds = new Set(incidents.map(i => i.id));
 

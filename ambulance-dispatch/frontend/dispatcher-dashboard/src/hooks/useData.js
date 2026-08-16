@@ -21,21 +21,21 @@ const MOCK_HOSPITALS = [
 const MOCK_INCIDENTS = [
   {
     id: 'INC-001', incident_type: 'Cardiac Arrest', severity: 'CRITICAL', status: 'PENDING',
-    location_address: 'Indiranagar, Bangalore', location_lat: 12.9784, location_lng: 77.6408,
+    location_address: 'Indiranagar 100ft Road, Bengaluru', location_lat: 12.9784, location_lng: 77.6408,
     caller_name: 'Rahul Sharma', caller_phone: '+91 98765 43210',
     description: 'Patient unconscious, severe chest pain. Immediate ALS required.', patients_count: 1,
     is_sos: false, created_at: new Date(Date.now() - 3 * 60000).toISOString(),
   },
   {
     id: 'INC-002', incident_type: 'Road Accident', severity: 'HIGH', status: 'PENDING',
-    location_address: 'Outer Ring Road, Bellandur, Bangalore', location_lat: 12.9263, location_lng: 77.6761,
+    location_address: 'Outer Ring Road, Bellandur, Bengaluru', location_lat: 12.9263, location_lng: 77.6761,
     caller_name: 'Traffic Police Patrol', caller_phone: '+91 100',
     description: 'Multi-vehicle collision, 3 injured, trauma bay needed.', patients_count: 3,
     is_sos: false, created_at: new Date(Date.now() - 7 * 60000).toISOString(),
   },
   {
     id: 'INC-003', incident_type: 'Fire Emergency', severity: 'HIGH', status: 'PENDING',
-    location_address: 'Koramangala 5th Block, Bangalore', location_lat: 12.9352, location_lng: 77.6245,
+    location_address: 'Koramangala 6th Block, Bengaluru', location_lat: 12.9340, location_lng: 77.6180,
     caller_name: 'Fire Control', caller_phone: '+91 101',
     description: 'Commercial complex fire, smoke inhalation.', patients_count: 2,
     is_sos: false, created_at: new Date(Date.now() - 12 * 60000).toISOString(),
@@ -50,45 +50,40 @@ const MOCK_INCIDENTS = [
 ];
 
 const MOCK_STATS = {
-  active_incidents: 3,
+  active_incidents: 4,
   available_ambulances: 5,
   total_ambulances: 5,
   hospitals_in_network: 3,
   avg_response_time_minutes: 7.9,
-  incidents_today: 3,
+  incidents_today: 4,
   response_time_improvement: 23,
 };
-
-let livePositions = {};
-MOCK_AMBULANCES.forEach(a => {
-  livePositions[a.id] = { lat: a.latitude, lng: a.longitude };
-});
 
 /* ── Hooks ───────────────────────────────────────────────────── */
 
 export function useIncidents() {
-  const [incidents, setIncidents] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [incidents, setIncidents] = useState(MOCK_INCIDENTS);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchIncidents = useCallback(async (filters = {}) => {
+  const fetchIncidents = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await incidentsApi.getAll({ ...filters, limit: 100 });
+      const response = await incidentsApi.getAll({ status: 'active', limit: 200 });
       const data = response.data.incidents || response.data;
-      setIncidents(Array.isArray(data) && data.length > 0 ? data : []);
+      if (Array.isArray(data) && data.length > 0) {
+        setIncidents(data);
+      }
       setError(null);
     } catch {
-      // Backend offline — show mock incidents so dispatcher has something to dispatch
-      setIncidents(MOCK_INCIDENTS);
+      // Keep mock data silently
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchIncidents({ status: 'active' });
-
+    fetchIncidents();
     const handleNewIncident = (incident) => setIncidents(prev => [incident, ...prev]);
     const handleIncidentUpdated = (updated) =>
       setIncidents(prev => prev.map(i => i.id === updated.id ? updated : i));
@@ -105,7 +100,7 @@ export function useIncidents() {
 }
 
 export function useAmbulances() {
-  const [ambulances, setAmbulances] = useState(MOCK_AMBULANCES); // start with mock immediately
+  const [ambulances, setAmbulances] = useState(MOCK_AMBULANCES);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -117,7 +112,6 @@ export function useAmbulances() {
       if (Array.isArray(data) && data.length > 0) {
         setAmbulances(data);
       }
-      // else keep mock data
       setError(null);
     } catch {
       // Keep mock data silently
@@ -128,17 +122,6 @@ export function useAmbulances() {
 
   useEffect(() => {
     fetchAmbulances();
-
-    // Animate live mock positions (sync with module-level GPS simulation)
-    const liveInterval = setInterval(() => {
-      setAmbulances(prev => prev.map(a => {
-        const pos = livePositions[a.id];
-        if (pos && ['EN_ROUTE', 'TRANSPORTING'].includes(a.status)) {
-          return { ...a, latitude: pos.lat, longitude: pos.lng };
-        }
-        return a;
-      }));
-    }, 1500);
 
     const handleLocationUpdate = (data) =>
       setAmbulances(prev => prev.map(a =>
