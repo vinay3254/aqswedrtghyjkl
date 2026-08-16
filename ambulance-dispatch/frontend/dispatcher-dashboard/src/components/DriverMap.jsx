@@ -1,213 +1,267 @@
 import React, { useEffect, useRef, useState } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import * as maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { Box, Typography, Chip } from '@mui/material';
 
-/* ── Ambulance SVG icon ─────────────────────────── */
-const makeAmbulanceIcon = (heading = 0) => L.divIcon({
-  html: `
-    <div style="transform:rotate(${heading}deg);transition:transform 0.5s;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.7))">
-      <svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
-        <!-- body -->
-        <rect x="4" y="14" width="32" height="18" rx="4" fill="#dc2626"/>
-        <!-- cab -->
-        <rect x="28" y="17" width="10" height="12" rx="3" fill="#fca5a5"/>
-        <!-- cross symbol -->
-        <rect x="12" y="20" width="10" height="3" rx="1" fill="white"/>
-        <rect x="15.5" y="17" width="3" height="10" rx="1" fill="white"/>
-        <!-- wheels -->
-        <circle cx="11" cy="33" r="4" fill="#FFFFFF" stroke="#475569" stroke-width="1.5"/>
-        <circle cx="11" cy="33" r="1.5" fill="#64748b"/>
-        <circle cx="31" cy="33" r="4" fill="#FFFFFF" stroke="#475569" stroke-width="1.5"/>
-        <circle cx="31" cy="33" r="1.5" fill="#64748b"/>
-        <!-- lights -->
-        <rect x="4" y="14" width="5" height="3" rx="1" fill="#ef4444"
-          style="animation:light-blink 0.8s infinite alternate"/>
-        <rect x="35" y="14" width="5" height="3" rx="1" fill="#3b82f6"
-          style="animation:light-blink 0.8s 0.4s infinite alternate"/>
-        <!-- direction arrow -->
-        <polygon points="22,6 18,13 26,13" fill="#fbbf24"/>
+// CARTO Voyager High-DPI Style (Google Maps-like vector street design)
+const CARTO_VOYAGER_STYLE = {
+  version: 8,
+  sources: {
+    'carto-voyager': {
+      type: 'raster',
+      tiles: [
+        'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+        'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+        'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+        'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+      ],
+      tileSize: 256,
+      attribution: '&copy; OpenStreetMap &copy; CARTO',
+    },
+  },
+  layers: [
+    {
+      id: 'carto-voyager-layer',
+      type: 'raster',
+      source: 'carto-voyager',
+      minzoom: 0,
+      maxzoom: 22,
+    },
+  ],
+};
+
+/* ── DOM Marker Generators ── */
+function createDriverMarkerElement() {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'driver-marker-wrapper';
+  wrapper.style.cursor = 'pointer';
+
+  const inner = document.createElement('div');
+  inner.style.position = 'relative';
+  inner.style.width = '42px';
+  inner.style.height = '42px';
+  inner.style.borderRadius = '50%';
+  inner.style.background = '#2563EB';
+  inner.style.border = '3px solid #FFFFFF';
+  inner.style.boxShadow = '0 4px 16px rgba(37,99,235,0.5)';
+  inner.style.display = 'flex';
+  inner.style.alignItems = 'center';
+  inner.style.justifyContent = 'center';
+
+  inner.innerHTML = `
+    <div class="driver-vehicle-rotator" style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;transition:transform 0.2s linear;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <rect x="3" y="6" width="14" height="11" rx="2" fill="white"/>
+        <path d="M17 9l4 2v6h-4V9z" fill="white"/>
+        <circle cx="7.5" cy="17.5" r="2.5" fill="#0F172A"/>
+        <circle cx="17.5" cy="17.5" r="2.5" fill="#0F172A"/>
+        <path d="M10 8.5v6M7 11.5h6" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/>
       </svg>
     </div>
-    <style>
-      @keyframes light-blink { from{opacity:1} to{opacity:0.2} }
-    </style>`,
-  iconSize: [44, 44],
-  iconAnchor: [22, 36],
-  className: '',
-});
+  `;
+  wrapper.appendChild(inner);
+  return wrapper;
+}
 
-const INCIDENT_ICON = L.divIcon({
-  html: `<div style="position:relative;width:36px;height:36px">
-    <div style="position:absolute;inset:0;border-radius:50%;background:rgba(239,68,68,0.3);animation:sos-ring 1s infinite"></div>
-    <div style="position:absolute;inset:6px;border-radius:50%;background:#ef4444;display:flex;align-items:center;justify-content:center;font-size:14px">🚨</div>
-    <style>@keyframes sos-ring{0%{transform:scale(1);opacity:.8}100%{transform:scale(2.2);opacity:0}}</style>
-  </div>`,
-  iconSize: [36, 36],
-  iconAnchor: [18, 18],
-  className: '',
-});
+function createIncidentMarkerElement() {
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = `
+    <div style="width:36px;height:36px;border-radius:50%;background:#EF4444;border:3px solid #FFFFFF;box-shadow:0 4px 14px rgba(239,68,68,0.5);display:flex;align-items:center;justify-content:center;font-size:16px;">
+      🚨
+    </div>
+  `;
+  return wrapper;
+}
 
-const HOSPITAL_ICON = L.divIcon({
-  html: `<div style="background:#2563eb;border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(37,99,235,0.6);border:2px solid #93c5fd">🏥</div>`,
-  iconSize: [32, 32],
-  iconAnchor: [16, 16],
-  className: '',
-});
-
-/* ── Fetch OSRM road route ───────────────────────── */
-async function fetchRoute(from, to) {
-  try {
-    const url = `https://router.project-osrm.org/route/v1/driving/${from[1]},${from[0]};${to[1]},${to[0]}?overview=simplified&geometries=geojson`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
-    const data = await res.json();
-    if (data.routes?.[0]) {
-      return data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-    }
-  } catch {}
-  return [from, to]; // fallback straight line
+function createHospitalMarkerElement() {
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = `
+    <div style="width:34px;height:34px;border-radius:10px;background:#2563EB;border:2.5px solid #FFFFFF;box-shadow:0 4px 12px rgba(37,99,235,0.4);display:flex;align-items:center;justify-content:center;font-size:16px;">
+      🏥
+    </div>
+  `;
+  return wrapper;
 }
 
 export default function DriverMap({ driverPos, incident, missionStatus, hospital }) {
-  const mapRef = useRef(null);
+  const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const driverMarkerRef = useRef(null);
-  const routeLayersRef = useRef([]);
-  const prevPosRef = useRef(null);
+  const incidentMarkerRef = useRef(null);
+  const hospitalMarkerRef = useRef(null);
+  const [mapReady, setMapReady] = useState(false);
   const [heading, setHeading] = useState(0);
+  const prevPosRef = useRef(null);
 
-  /* ── Init map ─── */
+  /* ── Init MapLibre Map ── */
   useEffect(() => {
-    if (mapInstanceRef.current) return;
+    if (!mapContainerRef.current || mapInstanceRef.current) return;
 
-    const map = L.map(mapRef.current, {
-      zoomControl: false,
+    const initialLngLat = [driverPos?.lng || 77.5946, driverPos?.lat || 12.9716];
+
+    const map = new maplibregl.Map({
+      container: mapContainerRef.current,
+      style: CARTO_VOYAGER_STYLE,
+      center: initialLngLat,
+      zoom: 15,
+      pitch: 35,
+      bearing: 0,
       attributionControl: false,
-      zoomSnap: 0.5,
-      zoomDelta: 0.5,
-      wheelPxPerZoomLevel: 120,
-    }).setView([driverPos.lat, driverPos.lng], 15);
+    });
 
-    // Google Maps-style CARTO Voyager tiles
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      maxZoom: 19,
-      subdomains: 'abcd',
-    }).addTo(map);
+    map.on('load', () => {
+      setMapReady(true);
+      map.resize();
 
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
-    L.control.attribution({ position: 'bottomleft', prefix: '© OSM' }).addTo(map);
+      // Add driver marker
+      const el = createDriverMarkerElement();
+      driverMarkerRef.current = new maplibregl.Marker({ element: el, anchor: 'center' })
+        .setLngLat(initialLngLat)
+        .addTo(map);
+    });
 
-    // Driver marker
-    driverMarkerRef.current = L.marker([driverPos.lat, driverPos.lng], {
-      icon: makeAmbulanceIcon(0),
-      zIndexOffset: 1000,
-    }).addTo(map);
+    const resizeObserver = new ResizeObserver(() => {
+      if (mapInstanceRef.current) mapInstanceRef.current.resize();
+    });
+    resizeObserver.observe(mapContainerRef.current);
 
     mapInstanceRef.current = map;
 
     return () => {
-      map.remove();
-      mapInstanceRef.current = null;
+      resizeObserver.disconnect();
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
     };
   }, []);
 
-  /* ── Update driver position + heading ─── */
+  /* ── Update Driver Position & Heading Rotation ── */
   useEffect(() => {
-    if (!mapInstanceRef.current || !driverMarkerRef.current) return;
+    if (!mapInstanceRef.current || !driverMarkerRef.current || !driverPos) return;
 
-    const latlng = [driverPos.lat, driverPos.lng];
+    const currentLngLat = [driverPos.lng, driverPos.lat];
+    driverMarkerRef.current.setLngLat(currentLngLat);
 
-    // Calculate heading from previous position
     if (prevPosRef.current) {
-      const dlat = driverPos.lat - prevPosRef.current.lat;
-      const dlng = driverPos.lng - prevPosRef.current.lng;
-      if (Math.abs(dlat) > 0.00001 || Math.abs(dlng) > 0.00001) {
-        const deg = Math.atan2(dlng, dlat) * (180 / Math.PI);
+      const dLat = driverPos.lat - prevPosRef.current.lat;
+      const dLng = driverPos.lng - prevPosRef.current.lng;
+      if (Math.abs(dLat) > 0.00001 || Math.abs(dLng) > 0.00001) {
+        const deg = (Math.atan2(dLng, dLat) * 180) / Math.PI;
         setHeading(deg);
+
+        const el = driverMarkerRef.current.getElement();
+        if (el) {
+          const rotator = el.querySelector('.driver-vehicle-rotator');
+          if (rotator) rotator.style.transform = `rotate(${deg}deg)`;
+        }
       }
     }
     prevPosRef.current = driverPos;
 
-    driverMarkerRef.current.setLatLng(latlng);
-    driverMarkerRef.current.setIcon(makeAmbulanceIcon(heading));
-
-    // Smooth follow
-    if (missionStatus === 'EN_ROUTE' || missionStatus === 'TRANSPORTING') {
-      mapInstanceRef.current.panTo(latlng, { animate: true, duration: 1 });
+    if (['EN_ROUTE', 'TRANSPORTING'].includes(missionStatus)) {
+      mapInstanceRef.current.easeTo({
+        center: currentLngLat,
+        bearing: heading,
+        duration: 800,
+        easing: (t) => t,
+      });
     }
   }, [driverPos, heading, missionStatus]);
 
-  /* ── Draw route when mission starts ─── */
+  /* ── Render Navigation Route & Markers ── */
   useEffect(() => {
-    if (!mapInstanceRef.current) return;
+    if (!mapInstanceRef.current || !mapReady) return;
+    const map = mapInstanceRef.current;
 
-    // Clear old routes
-    routeLayersRef.current.forEach(l => mapInstanceRef.current.removeLayer(l));
-    routeLayersRef.current = [];
-
-    if (!incident?.location_lat || !incident?.location_lng) return;
-
-    const driverLatLng = [driverPos.lat, driverPos.lng];
-    const incidentLatLng = [incident.location_lat, incident.location_lng];
-
-    // Add incident marker
-    const incidentMarker = L.marker(incidentLatLng, { icon: INCIDENT_ICON })
-      .addTo(mapInstanceRef.current)
-      .bindPopup(`<b>🚨 ${incident.incident_type}</b><br>${incident.location_address}`);
-    routeLayersRef.current.push(incidentMarker);
-
-    // Add hospital marker if transporting
-    if (hospital?.latitude && hospital?.longitude) {
-      const hospMarker = L.marker([hospital.latitude, hospital.longitude], { icon: HOSPITAL_ICON })
-        .addTo(mapInstanceRef.current)
-        .bindPopup(`<b>🏥 ${hospital.name}</b>`);
-      routeLayersRef.current.push(hospMarker);
+    // Manage incident marker
+    if (incident?.location_lat && incident?.location_lng) {
+      const incLngLat = [incident.location_lng, incident.location_lat];
+      if (!incidentMarkerRef.current) {
+        incidentMarkerRef.current = new maplibregl.Marker({ element: createIncidentMarkerElement(), anchor: 'center' })
+          .setLngLat(incLngLat)
+          .addTo(map);
+      } else {
+        incidentMarkerRef.current.setLngLat(incLngLat);
+      }
+    } else if (incidentMarkerRef.current) {
+      incidentMarkerRef.current.remove();
+      incidentMarkerRef.current = null;
     }
 
-    // Fetch and draw routes
-    const drawRoutes = async () => {
-      if (missionStatus === 'EN_ROUTE' || missionStatus === 'ON_SCENE') {
-        const pts = await fetchRoute(driverLatLng, incidentLatLng);
-        const line = L.polyline(pts, { color: '#ef4444', weight: 5, opacity: 0.85 })
-          .addTo(mapInstanceRef.current);
-        line.bindTooltip('🚑 Route to incident', { sticky: true });
-        routeLayersRef.current.push(line);
+    // Manage hospital marker
+    if (hospital?.latitude && hospital?.longitude) {
+      const hospLngLat = [hospital.longitude, hospital.latitude];
+      if (!hospitalMarkerRef.current) {
+        hospitalMarkerRef.current = new maplibregl.Marker({ element: createHospitalMarkerElement(), anchor: 'center' })
+          .setLngLat(hospLngLat)
+          .addTo(map);
+      } else {
+        hospitalMarkerRef.current.setLngLat(hospLngLat);
       }
+    } else if (hospitalMarkerRef.current) {
+      hospitalMarkerRef.current.remove();
+      hospitalMarkerRef.current = null;
+    }
 
-      if ((missionStatus === 'TRANSPORTING' || missionStatus === 'AT_HOSPITAL') && hospital?.latitude) {
-        const from = missionStatus === 'TRANSPORTING' ? driverLatLng : incidentLatLng;
-        const pts = await fetchRoute(from, [hospital.latitude, hospital.longitude]);
-        const line = L.polyline(pts, { color: '#3b82f6', weight: 5, opacity: 0.85 })
-          .addTo(mapInstanceRef.current);
-        line.bindTooltip('🏥 Route to hospital', { sticky: true });
-        routeLayersRef.current.push(line);
-      }
+    // Fetch and draw road route
+    if (incident?.location_lat && incident?.location_lng) {
+      const from = [driverPos.lng, driverPos.lat];
+      const target = (missionStatus === 'TRANSPORTING' && hospital?.latitude)
+        ? [hospital.longitude, hospital.latitude]
+        : [incident.location_lng, incident.location_lat];
 
-      // Fit bounds to show everything
-      const allPoints = [driverLatLng, incidentLatLng];
-      if (hospital?.latitude) allPoints.push([hospital.latitude, hospital.longitude]);
-      if (allPoints.length > 1) {
-        mapInstanceRef.current.fitBounds(L.latLngBounds(allPoints), { padding: [60, 60] });
-      }
-    };
+      const url = `https://router.project-osrm.org/route/v1/driving/${from[0]},${from[1]};${target[0]},${target[1]}?overview=full&geometries=geojson`;
 
-    drawRoutes();
-  }, [incident, hospital, missionStatus]);
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          if (!data?.routes?.[0]) return;
+          const route = data.routes[0];
+
+          const geojson = {
+            type: 'Feature',
+            geometry: route.geometry,
+          };
+
+          if (map.getSource('driver-route-source')) {
+            map.getSource('driver-route-source').setData(geojson);
+          } else {
+            map.addSource('driver-route-source', { type: 'geojson', data: geojson });
+            map.addLayer({
+              id: 'driver-route-casing',
+              type: 'line',
+              source: 'driver-route-source',
+              layout: { 'line-join': 'round', 'line-cap': 'round' },
+              paint: { 'line-color': '#1E40AF', 'line-width': 8, 'line-opacity': 0.6 },
+            });
+            map.addLayer({
+              id: 'driver-route-line',
+              type: 'line',
+              source: 'driver-route-source',
+              layout: { 'line-join': 'round', 'line-cap': 'round' },
+              paint: { 'line-color': '#2563EB', 'line-width': 5, 'line-opacity': 1.0 },
+            });
+          }
+        })
+        .catch(err => console.error('[DriverMap Route Error]', err));
+    }
+  }, [incident, hospital, missionStatus, mapReady, driverPos]);
 
   return (
     <Box sx={{ position: 'relative', width: '100%', height: '100%', minHeight: 0 }}>
-      <Box ref={mapRef} sx={{ width: '100%', height: '100%' }} />
+      <div ref={mapContainerRef} style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }} />
 
       {/* Speed overlay */}
       <Box sx={{
-        position: 'absolute', bottom: 16, left: 16, zIndex: 1000,
-        bgcolor: 'rgba(0,0,0,0.75)', borderRadius: 2, px: 2, py: 1,
+        position: 'absolute', bottom: 12, left: 12, zIndex: 1000,
+        bgcolor: 'rgba(15,23,42,0.85)', borderRadius: 2, px: 1.5, py: 0.8,
         border: '1px solid rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)',
       }}>
-        <Typography variant="h5" sx={{ color: 'white', fontWeight: 900, lineHeight: 1, fontFamily: 'monospace' }}>
-          {['EN_ROUTE', 'TRANSPORTING'].includes(missionStatus) ? `${Math.floor(40 + Math.random() * 30)}` : '0'}
+        <Typography variant="h6" sx={{ color: 'white', fontWeight: 900, lineHeight: 1, fontFamily: 'monospace' }}>
+          {['EN_ROUTE', 'TRANSPORTING'].includes(missionStatus) ? '42' : '0'}
         </Typography>
-        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.6rem' }}>km/h</Typography>
+        <Typography variant="caption" sx={{ color: '#94A3B8', fontSize: '0.65rem' }}>km/h</Typography>
       </Box>
 
       {/* Status badge */}
@@ -215,9 +269,9 @@ export default function DriverMap({ driverPos, incident, missionStatus, hospital
         <Chip
           label={missionStatus?.replace(/_/g, ' ') || 'STANDBY'}
           sx={{
-            bgcolor: missionStatus === 'EN_ROUTE' ? '#ef4444' : missionStatus === 'TRANSPORTING' ? '#3b82f6' : missionStatus === 'ON_SCENE' ? '#f97316' : '#22c55e',
+            bgcolor: missionStatus === 'EN_ROUTE' ? '#EF4444' : missionStatus === 'TRANSPORTING' ? '#2563EB' : missionStatus === 'ON_SCENE' ? '#F97316' : '#10B981',
             color: 'white', fontWeight: 800, fontSize: '0.75rem',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.5)',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
           }}
         />
       </Box>
@@ -225,16 +279,16 @@ export default function DriverMap({ driverPos, incident, missionStatus, hospital
       {/* GPS live indicator */}
       <Box sx={{
         position: 'absolute', top: 12, right: 12, zIndex: 1000,
-        bgcolor: 'rgba(0,0,0,0.7)', borderRadius: 1.5, px: 1, py: 0.5,
+        bgcolor: 'rgba(15,23,42,0.85)', borderRadius: 1.5, px: 1, py: 0.5,
         display: 'flex', alignItems: 'center', gap: 0.5,
-        border: '1px solid rgba(34,197,94,0.3)',
+        border: '1px solid rgba(16,185,129,0.3)',
       }}>
         <Box sx={{
-          width: 7, height: 7, borderRadius: '50%', bgcolor: '#22c55e',
+          width: 7, height: 7, borderRadius: '50%', bgcolor: '#10B981',
           animation: 'gps-blink 1.5s infinite',
           '@keyframes gps-blink': { '0%,100%': { opacity: 1 }, '50%': { opacity: 0.2 } },
         }} />
-        <Typography variant="caption" sx={{ color: '#22c55e', fontSize: '0.6rem', fontWeight: 700 }}>GPS LIVE</Typography>
+        <Typography variant="caption" sx={{ color: '#10B981', fontSize: '0.65rem', fontWeight: 800 }}>GPS LIVE</Typography>
       </Box>
     </Box>
   );

@@ -312,17 +312,19 @@ export default function DispatchMap({
   const mapInstanceRef = useRef(null);
   const markersRef = useRef({ incidents: new Map(), ambulances: new Map(), hospitals: new Map() });
   const activeRoutesRef = useRef(new Set());
+  const routeCacheRef = useRef(new Map()); // cacheKey -> { geometry, distance, duration }
   const [mapReady, setMapReady] = useState(false);
 
   // Opt-in vehicle tracking / live telemetry HUD state
   const [followedUnitId, setFollowedUnitId] = useState(null);
   const [liveTelemetry, setLiveTelemetry] = useState({ distanceKm: '0.0', etaMinutes: 0, speed: 40 });
-  const [rerouteAlert, setRerouteAlert] = useState(null); // { unit: 'Alpha-1', deviationMeters: 340 }
+  const [rerouteAlert, setRerouteAlert] = useState(null);
 
   const unitWaypointsRef = useRef(new Map()); // ambId -> [[lng, lat], ...]
   const unitProgressRef = useRef(new Map());  // ambId -> { index: 0, fraction: 0 }
   const rerouteCooldownRef = useRef(new Map()); // ambId -> lastRerouteTimestamp
   const isReroutingRef = useRef(new Map());     // ambId -> boolean
+  const lastTelemetryUpdateRef = useRef(0);
   const animationFrameRef = useRef(null);
 
   // Sync external focus prop to followedUnitId
@@ -333,19 +335,19 @@ export default function DispatchMap({
   }, [focusAmbulance]);
 
   /* ── Dynamic Re-Routing Function (Re-queries OSRM on >200m Deviation) ── */
-  const triggerReroute = useCallback((ambId, currentLngLat, targetLngLat) => {
+  const triggerReroute = useCallback((ambId, currentLngLat, targetLngLat, reason = 'GPS Deviation') => {
     if (!mapInstanceRef.current || isReroutingRef.current.get(ambId)) return;
 
     const now = Date.now();
     const lastReroute = rerouteCooldownRef.current.get(ambId) || 0;
-    if (now - lastReroute < 6000) return; // 6-second cooldown to guard against rapid API loops
+    if (now - lastReroute < 6000) return; // 6-second cooldown
 
     isReroutingRef.current.set(ambId, true);
     rerouteCooldownRef.current.set(ambId, now);
 
     const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${currentLngLat[0]},${currentLngLat[1]};${targetLngLat[0]},${targetLngLat[1]}?overview=full&geometries=geojson`;
 
-    console.log(`[Deviation Re-Routing] Fetching new alternate route for ${ambId}...`, osrmUrl);
+    console.log(`[RouteManager] Re-route triggered for: ${ambId} | Reason: ${reason} | Timestamp: ${new Date().toISOString()}`);
 
     fetch(osrmUrl)
       .then(res => res.json())
@@ -355,7 +357,6 @@ export default function DispatchMap({
         const newRoute = data.routes[0];
         const newCoords = newRoute.geometry.coordinates;
 
-        // Smoothly update waypoints and reset progress without jitter
         unitWaypointsRef.current.set(ambId, newCoords);
         unitProgressRef.current.set(ambId, { index: 0, fraction: 0 });
 
@@ -368,13 +369,12 @@ export default function DispatchMap({
           etaMinutes: Math.ceil(newRoute.duration / 60),
         });
 
-        // Auto-dismiss alert after 4.5 seconds
         setTimeout(() => setRerouteAlert(null), 4500);
 
-        console.log(`[Deviation Re-Routing] Alternate route loaded for ${callsign}! Distance: ${(newRoute.distance / 1000).toFixed(2)} km`);
+        console.log(`[RouteManager] Alternate route applied for ${callsign} | Distance: ${(newRoute.distance / 1000).toFixed(2)} km | Timestamp: ${new Date().toISOString()}`);
       })
       .catch(err => {
-        console.error(`[Deviation Re-Routing] Failed for ${ambId}:`, err);
+        console.error(`[RouteManager] Failed to fetch reroute for ${ambId}:`, err);
       })
       .finally(() => {
         isReroutingRef.current.set(ambId, false);
@@ -392,7 +392,6 @@ export default function DispatchMap({
       }
 
       const pA = waypoints[prog.index];
-      // Nudge vehicle 350 meters off-course (approx ~0.003 degrees)
       const detouredLngLat = [pA[0] + 0.0035, pA[1] + 0.0025];
       console.log(`[Detour Test] Nudged ${ambId} 350m off-route to:`, detouredLngLat);
 
@@ -404,7 +403,7 @@ export default function DispatchMap({
       const incCoord = toLngLat(targetInc);
 
       if (incCoord) {
-        triggerReroute(ambId, detouredLngLat, incCoord);
+        triggerReroute(ambId, detouredLngLat, incCoord, 'Manual Detour Simulation');
       }
     };
 
@@ -590,7 +589,7 @@ export default function DispatchMap({
     });
   }, [hospitals, mapReady]);
 
-  /* ── Multi-Unit Route Management with Dual-Segment Traveled / Remaining Layers ── */
+  /* ── Stable Multi-Unit Route Management (with persistent geometry caching) ── */
   useEffect(() => {
     if (!mapInstanceRef.current || !mapReady) return;
     const map = mapInstanceRef.current;
@@ -625,11 +624,71 @@ export default function DispatchMap({
       const incCoord = toLngLat(targetIncident);
       if (!incCoord) return;
 
+      const cacheKey = `${amb.id}:${targetIncident.id}`;
       const sourceId = `route-source-${amb.id}`;
       const casingLayerId = `route-casing-${amb.id}`;
       const lineLayerId = `route-line-${amb.id}`;
       const traveledLayerId = `route-traveled-${amb.id}`;
       const theme = ROUTE_THEMES[amb.id] || { core: '#2563EB', casing: '#1E40AF' };
+
+      // Helper to mount layers
+      const applyGeojsonLayers = (geojsonData) => {
+        try {
+          if (map.getSource(sourceId)) {
+            map.getSource(sourceId).setData(geojsonData);
+            console.log(`[RouteManager] Source updated: ${sourceId} | Timestamp: ${new Date().toISOString()}`);
+          } else {
+            map.addSource(sourceId, { type: 'geojson', data: geojsonData });
+            console.log(`[RouteManager] Source created: ${sourceId} | Timestamp: ${new Date().toISOString()}`);
+          }
+
+          if (!map.getLayer(traveledLayerId)) {
+            map.addLayer({
+              id: traveledLayerId,
+              type: 'line',
+              source: sourceId,
+              filter: ['==', ['get', 'segment'], 'traveled'],
+              layout: { 'line-join': 'round', 'line-cap': 'round' },
+              paint: { 'line-color': '#94A3B8', 'line-width': 4.5, 'line-dasharray': [2, 2], 'line-opacity': 0.65 },
+            });
+          }
+
+          if (!map.getLayer(casingLayerId)) {
+            map.addLayer({
+              id: casingLayerId,
+              type: 'line',
+              source: sourceId,
+              filter: ['==', ['get', 'segment'], 'remaining'],
+              layout: { 'line-join': 'round', 'line-cap': 'round' },
+              paint: { 'line-color': theme.casing, 'line-width': 8.5, 'line-opacity': 0.75 },
+            });
+          }
+
+          if (!map.getLayer(lineLayerId)) {
+            map.addLayer({
+              id: lineLayerId,
+              type: 'line',
+              source: sourceId,
+              filter: ['==', ['get', 'segment'], 'remaining'],
+              layout: { 'line-join': 'round', 'line-cap': 'round' },
+              paint: { 'line-color': theme.core, 'line-width': 5.5, 'line-opacity': 1.0 },
+            });
+          }
+
+          activeRoutesRef.current.add(amb.id);
+        } catch (e) {
+          console.error(`[RouteManager] Error mounting layers for ${amb.id}:`, e);
+        }
+      };
+
+      // Check cache to avoid re-fetching on simple re-renders
+      if (routeCacheRef.current.has(cacheKey) && unitWaypointsRef.current.has(amb.id)) {
+        if (map.isStyleLoaded()) {
+          const cached = routeCacheRef.current.get(cacheKey);
+          applyGeojsonLayers(cached.geojsonData);
+        }
+        return;
+      }
 
       const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${ambCoord[0]},${ambCoord[1]};${incCoord[0]},${incCoord[1]}?overview=full&geometries=geojson`;
 
@@ -645,7 +704,6 @@ export default function DispatchMap({
             unitProgressRef.current.set(amb.id, { index: 0, fraction: 0 });
           }
 
-          // Initial FeatureCollection with remaining route
           const geojsonData = {
             type: 'FeatureCollection',
             features: [
@@ -662,85 +720,21 @@ export default function DispatchMap({
             ],
           };
 
-          const renderUnitRoute = () => {
-            try {
-              if (map.getSource(sourceId)) {
-                map.getSource(sourceId).setData(geojsonData);
-              } else {
-                map.addSource(sourceId, {
-                  type: 'geojson',
-                  data: geojsonData,
-                });
-              }
-
-              // 1. Traveled Faded Path Layer (behind moving vehicle)
-              if (!map.getLayer(traveledLayerId)) {
-                map.addLayer({
-                  id: traveledLayerId,
-                  type: 'line',
-                  source: sourceId,
-                  filter: ['==', ['get', 'segment'], 'traveled'],
-                  layout: { 'line-join': 'round', 'line-cap': 'round' },
-                  paint: {
-                    'line-color': '#94A3B8',
-                    'line-width': 4.5,
-                    'line-dasharray': [2, 2],
-                    'line-opacity': 0.65,
-                  },
-                });
-              }
-
-              // 2. Remaining Path Outer Casing
-              if (!map.getLayer(casingLayerId)) {
-                map.addLayer({
-                  id: casingLayerId,
-                  type: 'line',
-                  source: sourceId,
-                  filter: ['==', ['get', 'segment'], 'remaining'],
-                  layout: { 'line-join': 'round', 'line-cap': 'round' },
-                  paint: {
-                    'line-color': theme.casing,
-                    'line-width': 8.5,
-                    'line-opacity': 0.75,
-                  },
-                });
-              }
-
-              // 3. Remaining Path Core Glowing Navigation Line
-              if (!map.getLayer(lineLayerId)) {
-                map.addLayer({
-                  id: lineLayerId,
-                  type: 'line',
-                  source: sourceId,
-                  filter: ['==', ['get', 'segment'], 'remaining'],
-                  layout: { 'line-join': 'round', 'line-cap': 'round' },
-                  paint: {
-                    'line-color': theme.core,
-                    'line-width': 5.5,
-                    'line-opacity': 1.0,
-                  },
-                });
-              }
-
-              activeRoutesRef.current.add(amb.id);
-            } catch (e) {
-              console.error(`[Multi-Route] Error adding layer for ${amb.id}:`, e);
-            }
-          };
+          routeCacheRef.current.set(cacheKey, { geojsonData, distance: route.distance, duration: route.duration });
 
           if (map.isStyleLoaded()) {
-            renderUnitRoute();
+            applyGeojsonLayers(geojsonData);
           } else {
-            map.once('styledata', renderUnitRoute);
+            map.once('styledata', () => applyGeojsonLayers(geojsonData));
           }
         })
         .catch(err => {
-          console.error(`[Multi-Route] OSRM fetch error for ${amb.id}:`, err);
+          console.error(`[RouteManager] OSRM fetch error for ${amb.id}:`, err);
         });
     });
   }, [ambulances, incidents, mapReady]);
 
-  /* ── Step 5: 60fps Position Interpolation, Live Deviation Detection & Real-Time ETA ── */
+  /* ── Step 5: 60fps Position Interpolation & Throttled Telemetry Updates ── */
   useEffect(() => {
     let lastTime = performance.now();
     let frameCount = 0;
@@ -791,7 +785,7 @@ export default function DispatchMap({
           }
         }
 
-        // 3. Traveled vs. Remaining Dynamic Polyline Slicing & Deviation Check
+        // 3. Traveled vs. Remaining Dynamic Polyline Slicing (every 3 frames)
         if (frameCount % 3 === 0 && mapInstanceRef.current) {
           const traveledCoords = [...waypoints.slice(0, prog.index + 1), currentLngLat];
           const remainingCoords = [currentLngLat, ...waypoints.slice(prog.index + 1)];
@@ -815,18 +809,7 @@ export default function DispatchMap({
             });
           }
 
-          // 4. Deviation Detection Check (>200m off-route)
-          const offRouteMeters = minDistanceToPolylineMeters(currentLngLat, waypoints);
-          if (offRouteMeters > 200) {
-            const ambObj = ambulances.find(a => a.id === ambId);
-            const targetInc = incidents.find(i => i.id === ambObj?.assigned_incident_id) || incidents[0];
-            const incCoord = toLngLat(targetInc);
-            if (incCoord) {
-              triggerReroute(ambId, currentLngLat, incCoord);
-            }
-          }
-
-          // 5. Live Dynamic Remaining Distance & ETA Calculation
+          // 4. Live Dynamic Remaining Distance & ETA Calculation
           let remainingMeters = 0;
           for (let k = 0; k < remainingCoords.length - 1; k++) {
             remainingMeters += calculateDistanceMeters(remainingCoords[k], remainingCoords[k + 1]);
@@ -834,7 +817,7 @@ export default function DispatchMap({
           const remainingKm = (remainingMeters / 1000).toFixed(1);
           const remainingMinutes = Math.max(1, Math.ceil((remainingMeters / 1000) / (38 / 60)));
 
-          // Update marker DOM pill live
+          // Update marker DOM pill directly (zero React re-render overhead)
           if (el) {
             const badge = el.querySelector('.amb-live-badge');
             if (badge) {
@@ -844,12 +827,12 @@ export default function DispatchMap({
             }
           }
 
-          // If this unit is currently followed, update HUD telemetry state
-          if (followedUnitId === ambId) {
-            setLiveTelemetry({
-              distanceKm: remainingKm,
-              etaMinutes: remainingMinutes,
-              speed: 42,
+          // 5. Throttled HUD update for followed unit (max once per 500ms)
+          if (followedUnitId === ambId && now - lastTelemetryUpdateRef.current > 500) {
+            lastTelemetryUpdateRef.current = now;
+            setLiveTelemetry(prev => {
+              if (prev.distanceKm === remainingKm && prev.etaMinutes === remainingMinutes) return prev;
+              return { distanceKm: remainingKm, etaMinutes: remainingMinutes, speed: 42 };
             });
           }
         }
@@ -872,7 +855,7 @@ export default function DispatchMap({
     return () => {
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [followedUnitId, ambulances, incidents, triggerReroute]);
+  }, [followedUnitId, ambulances]);
 
   return (
     <Box
