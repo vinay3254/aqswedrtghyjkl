@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Typography } from '@mui/material';
 
-const G     = '#8EB69B';
-const TEXT  = '#DAF1DE';
-const DIM   = 'rgba(218,241,222,0.50)';
-const FAINT = 'rgba(218,241,222,0.28)';
-const BRD   = 'rgba(142,182,155,0.22)';
+const G     = '#2563EB';
+const TEXT  = '#0F172A';
+const DIM   = '#475569';
+const FAINT = '#94A3B8';
+const BRD   = '#E2E8F0';
 const RED   = '#E25C50';
 const AMBER = '#E3A94F';
-const BG    = '#051F20';
+const BG    = '#F8FAFC';
 
 const STATUS_DEST = {
   EN_ROUTE:    'Scene',
@@ -27,7 +27,7 @@ function RingProgress({ value, max, color, size=84 }) {
   return (
     <svg width={size} height={size} style={{ transform:'rotate(-90deg)' }}>
       {/* Track */}
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(142,182,155,0.10)" strokeWidth={5}/>
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#E2E8F0" strokeWidth={5}/>
       {/* Progress */}
       <circle
         cx={size/2} cy={size/2} r={r} fill="none"
@@ -86,11 +86,11 @@ export default function ETACountdown({ missionStatus, driverPos, incidentPos, sp
     <Box sx={{
       mx:'12px', mb:'12px', p:'14px',
       borderRadius:'14px',
-      background:'linear-gradient(135deg, rgba(142,182,155,0.10), rgba(5,31,32,0.5))',
+      background:'linear-gradient(135deg, #E2E8F0, #FFFFFF)',
       border:`1px solid ${urgent ? 'rgba(142,182,155,0.4)' : BRD}`,
       display:'flex', alignItems:'center', gap:'14px',
       animation: urgent ? 'none' : 'none',
-      boxShadow: urgent ? `0 0 20px rgba(142,182,155,0.12)` : 'none',
+      boxShadow: urgent ? `0 0 20px rgba(37,99,235,0.10)` : 'none',
       transition:'all 0.3s',
     }}>
       {/* Ring */}
@@ -115,15 +115,15 @@ export default function ETACountdown({ missionStatus, driverPos, incidentPos, sp
           {mins > 0 ? `${mins} min ${secs} sec` : `${secs} seconds`}
         </Typography>
         <Box sx={{ display:'flex', gap:'8px' }}>
-          <Box sx={{ flex:1, p:'5px 8px', borderRadius:'7px', background:'rgba(142,182,155,0.07)', textAlign:'center' }}>
+          <Box sx={{ flex:1, p:'5px 8px', borderRadius:'7px', background:'#F1F5F9', textAlign:'center' }}>
             <Typography sx={{ fontSize:'8px', color:FAINT, mb:'1px' }}>DISTANCE</Typography>
             <Typography sx={{ fontSize:'11px', fontWeight:700, color:TEXT }}>{distKm} km</Typography>
           </Box>
-          <Box sx={{ flex:1, p:'5px 8px', borderRadius:'7px', background:'rgba(142,182,155,0.07)', textAlign:'center' }}>
+          <Box sx={{ flex:1, p:'5px 8px', borderRadius:'7px', background:'#F1F5F9', textAlign:'center' }}>
             <Typography sx={{ fontSize:'8px', color:FAINT, mb:'1px' }}>SPEED</Typography>
             <Typography sx={{ fontSize:'11px', fontWeight:700, color:TEXT }}>{speed||0} km/h</Typography>
           </Box>
-          <Box sx={{ flex:1, p:'5px 8px', borderRadius:'7px', background: urgent ? 'rgba(142,182,155,0.15)' : 'rgba(142,182,155,0.07)', textAlign:'center' }}>
+          <Box sx={{ flex:1, p:'5px 8px', borderRadius:'7px', background: urgent ? 'rgba(142,182,155,0.15)' : '#F1F5F9', textAlign:'center' }}>
             <Typography sx={{ fontSize:'8px', color:FAINT, mb:'1px' }}>STATUS</Typography>
             <Typography sx={{ fontSize:'10px', fontWeight:700, color }}>
               {urgent ? 'ARRIVING' : 'EN ROUTE'}

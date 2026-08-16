@@ -21,16 +21,19 @@ import { useIncidents, useAmbulances, useHospitals, useDashboardStats } from '..
 import socketService from '../services/socket';
 import { incidentsApi } from '../services/api';
 import { dispatchBroadcast, DISPATCH_EVENTS } from '../services/dispatchBroadcast';
+import { useNavigate } from 'react-router-dom';
+import GreenCorridorModal from '../components/GreenCorridorModal';
+import { Traffic } from '@mui/icons-material';
 
 /* ── Evergreen tokens ── */
-const BG      = '#051F20';
-const SURFACE = '#0B2B26';
-const G       = '#8EB69B';
-const TEXT    = '#DAF1DE';
-const DIM     = 'rgba(218,241,222,0.50)';
-const FAINT   = 'rgba(218,241,222,0.30)';
-const BORDER  = 'rgba(142,182,155,0.10)';
-const BORDER2 = 'rgba(142,182,155,0.25)';
+const BG      = '#F8FAFC';
+const SURFACE = '#FFFFFF';
+const G       = '#2563EB';
+const TEXT    = '#0F172A';
+const DIM     = '#475569';
+const FAINT   = '#94A3B8';
+const BORDER  = '#E2E8F0';
+const BORDER2 = '#CBD5E1';
 const RED     = '#E25C50';
 const SIDEBAR = 260;
 
@@ -86,6 +89,8 @@ export default function DashboardPage({ user, onLogout }) {
   const [autoDispatchLoading, setAutoDispatchLoading] = useState(false);
   const [autoDispatchResult, setAutoDispatchResult]   = useState(null);
   const [fleetAmbulances, setFleetAmbulances]       = useState([]);
+  const [greenCorridorOpen, setGreenCorridorOpen]   = useState(false);
+  const navigate = useNavigate();
 
   // Ensure only one right-panel open at a time
   const openFleet    = () => { setFleetOpen(true);    setHospitalOpen(false); setActivityOpen(false); setTimelineOpen(false); setCommsOpen(false); };
@@ -210,17 +215,60 @@ export default function DashboardPage({ user, onLogout }) {
         borderBottom: `1px solid ${BORDER}`,
         zIndex: 200, overflow: 'hidden',
       }}>
-        {/* Logo */}
-        <Box sx={{ width:32, height:32, borderRadius:'9px', background:'rgba(142,182,155,0.14)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <CrossIcon size={14} color={G} />
+        {/* Logo & Main Nav */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Box sx={{ width:32, height:32, borderRadius:'9px', background:'rgba(37,99,235,0.12)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <CrossIcon size={14} color={G} />
+          </Box>
+          <Typography sx={{ fontSize:13, fontWeight:800, color:TEXT, whiteSpace:'nowrap', mr: 1 }}>
+            Dispatch Center
+          </Typography>
         </Box>
-        <Typography sx={{ fontSize:13, fontWeight:800, color:TEXT, whiteSpace:'nowrap' }}>
-          Dispatch Center
-        </Typography>
+
+        {/* Global Navigation Tabs */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <Button
+            size="small"
+            sx={{ px: '10px', py: '5px', borderRadius: '8px', bgcolor: 'rgba(37,99,235,0.12)', color: G, fontWeight: 700, fontSize: '11px', textTransform: 'none' }}
+          >
+            Live Command
+          </Button>
+          <Button
+            size="small" onClick={() => navigate('/insights')}
+            sx={{ px: '10px', py: '5px', borderRadius: '8px', color: DIM, fontWeight: 600, fontSize: '11px', textTransform: 'none', '&:hover': { bgcolor: '#F1F5F9', color: TEXT } }}
+          >
+            AI Insights
+          </Button>
+          <Button
+            size="small" onClick={() => navigate('/analytics')}
+            sx={{ px: '10px', py: '5px', borderRadius: '8px', color: DIM, fontWeight: 600, fontSize: '11px', textTransform: 'none', '&:hover': { bgcolor: '#F1F5F9', color: TEXT } }}
+          >
+            Analytics & SLAs
+          </Button>
+          <Button
+            size="small" onClick={() => navigate('/mobile')}
+            sx={{ px: '10px', py: '5px', borderRadius: '8px', color: DIM, fontWeight: 600, fontSize: '11px', textTransform: 'none', '&:hover': { bgcolor: '#F1F5F9', color: TEXT } }}
+          >
+            Fleet Telemetry
+          </Button>
+        </Box>
+
         <Box sx={{ flex:1 }} />
         {/* Weather widget — compact in header */}
         <WeatherWidget compact />
         <Box sx={{ flex:1 }} />
+
+        {/* Green Corridor Trigger */}
+        <Button
+          onClick={() => setGreenCorridorOpen(true)}
+          startIcon={<Traffic sx={{ fontSize: 14 }} />}
+          sx={{
+            px:'10px', py:'6px', borderRadius:'8px', border:`1px solid ${BORDER2}`, color:TEXT, fontWeight:700, fontSize:'11px', flexShrink:0,
+            textTransform: 'none', '&:hover':{ background:'#F1F5F9' }
+          }}
+        >
+          Green Corridor
+        </Button>
 
         {/* SOS button */}
         <Button
@@ -244,7 +292,7 @@ export default function DashboardPage({ user, onLogout }) {
         {/* Shift Report */}
         <Button
           onClick={() => setShiftReportOpen(true)}
-          sx={{ px:'10px', py:'6px', borderRadius:'8px', border:`1px solid ${BORDER2}`, color:TEXT, fontWeight:600, fontSize:'11px', flexShrink:0, '&:hover':{ background:'rgba(142,182,155,0.08)' } }}
+          sx={{ px:'10px', py:'6px', borderRadius:'8px', border:`1px solid ${BORDER2}`, color:TEXT, fontWeight:600, fontSize:'11px', flexShrink:0, '&:hover':{ background:'#F1F5F9' } }}
         >
           Shift Report
         </Button>
@@ -252,7 +300,7 @@ export default function DashboardPage({ user, onLogout }) {
         {/* Driver view */}
         <Button
           onClick={() => window.open('/#/driver', '_blank')}
-          sx={{ px:'10px', py:'6px', borderRadius:'8px', border:`1px solid ${BORDER2}`, color:TEXT, fontWeight:600, fontSize:'11px', flexShrink:0, '&:hover':{ background:'rgba(142,182,155,0.08)' } }}
+          sx={{ px:'10px', py:'6px', borderRadius:'8px', border:`1px solid ${BORDER2}`, color:TEXT, fontWeight:600, fontSize:'11px', flexShrink:0, '&:hover':{ background:'#F1F5F9' } }}
         >
           Driver View
         </Button>
@@ -261,7 +309,7 @@ export default function DashboardPage({ user, onLogout }) {
         <Tooltip title="Quick Comms">
           <Box
             onClick={() => commsOpen ? closeAll() : openComms()}
-            sx={{ width:34, height:34, borderRadius:'9px', background: commsOpen ? 'rgba(142,182,155,0.18)' : 'rgba(142,182,155,0.08)', border:`1px solid ${commsOpen ? 'rgba(142,182,155,0.35)' : 'transparent'}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.15s' }}
+            sx={{ width:34, height:34, borderRadius:'9px', background: commsOpen ? 'rgba(142,182,155,0.18)' : '#F1F5F9', border:`1px solid ${commsOpen ? 'rgba(142,182,155,0.35)' : 'transparent'}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.15s' }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={commsOpen ? G : TEXT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -273,10 +321,10 @@ export default function DashboardPage({ user, onLogout }) {
         <Tooltip title="Hospital Status">
           <Box
             onClick={() => hospitalOpen ? closeAll() : openHospital()}
-            sx={{ width:34, height:34, borderRadius:'9px', background: hospitalOpen ? 'rgba(142,182,155,0.18)' : 'rgba(142,182,155,0.08)', border:`1px solid ${hospitalOpen ? 'rgba(142,182,155,0.35)' : 'transparent'}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.15s' }}
+            sx={{ width:34, height:34, borderRadius:'9px', background: hospitalOpen ? 'rgba(142,182,155,0.18)' : '#F1F5F9', border:`1px solid ${hospitalOpen ? 'rgba(142,182,155,0.35)' : 'transparent'}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.15s' }}
           >
             <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-              <path d="M8 2.5v11M2.5 8h11" stroke={hospitalOpen ? '#8EB69B' : TEXT} strokeWidth="2.3" strokeLinecap="round"/>
+              <path d="M8 2.5v11M2.5 8h11" stroke={hospitalOpen ? '#2563EB' : TEXT} strokeWidth="2.3" strokeLinecap="round"/>
             </svg>
           </Box>
         </Tooltip>
@@ -285,7 +333,7 @@ export default function DashboardPage({ user, onLogout }) {
         <Tooltip title="Activity Feed">
           <Box
             onClick={() => activityOpen ? closeAll() : openActivity()}
-            sx={{ position:'relative', width:34, height:34, borderRadius:'9px', background: activityOpen ? 'rgba(142,182,155,0.18)' : 'rgba(142,182,155,0.08)', border:`1px solid ${activityOpen ? 'rgba(142,182,155,0.35)' : 'transparent'}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.15s' }}
+            sx={{ position:'relative', width:34, height:34, borderRadius:'9px', background: activityOpen ? 'rgba(142,182,155,0.18)' : '#F1F5F9', border:`1px solid ${activityOpen ? 'rgba(142,182,155,0.35)' : 'transparent'}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.15s' }}
           >
             <Notifications sx={{ fontSize:16, color: activityOpen ? G : TEXT }} />
             {pendingCount > 0 && (
@@ -300,7 +348,7 @@ export default function DashboardPage({ user, onLogout }) {
         <Tooltip title={fleetOpen ? 'Close Fleet' : 'Live Fleet'}>
           <Box
             onClick={() => fleetOpen ? closeAll() : openFleet()}
-            sx={{ width:34, height:34, borderRadius:'9px', background: fleetOpen ? 'rgba(142,182,155,0.18)' : 'rgba(142,182,155,0.08)', border:`1px solid ${fleetOpen ? 'rgba(142,182,155,0.35)' : 'transparent'}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.15s' }}
+            sx={{ width:34, height:34, borderRadius:'9px', background: fleetOpen ? 'rgba(142,182,155,0.18)' : '#F1F5F9', border:`1px solid ${fleetOpen ? 'rgba(142,182,155,0.35)' : 'transparent'}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.15s' }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={fleetOpen ? G : TEXT} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <rect x="2" y="7" width="13" height="9" rx="2"/>
@@ -313,13 +361,13 @@ export default function DashboardPage({ user, onLogout }) {
 
         {/* Refresh */}
         <Tooltip title="Refresh">
-          <IconButton size="small" onClick={() => { refetchIncidents(); refetchAmbulances(); }} sx={{ color:TEXT, background:'rgba(142,182,155,0.08)', borderRadius:'9px' }}>
+          <IconButton size="small" onClick={() => { refetchIncidents(); refetchAmbulances(); }} sx={{ color:TEXT, background:'#F1F5F9', borderRadius:'9px' }}>
             <Refresh sx={{ fontSize:16 }} />
           </IconButton>
         </Tooltip>
 
         {/* Avatar */}
-        <Box sx={{ width:34, height:34, borderRadius:'50%', background:'#235347', color:TEXT, display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:'12.5px' }}>
+        <Box sx={{ width:34, height:34, borderRadius:'50%', background:'#E2E8F0', color:TEXT, display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:'12.5px' }}>
           {user?.name?.[0]||'D'}
         </Box>
       </Box>
@@ -357,14 +405,14 @@ export default function DashboardPage({ user, onLogout }) {
                     +
                   </Box>
                 </Tooltip>
-                <Box sx={{ width:26, height:26, borderRadius:'7px', background:'rgba(142,182,155,0.08)', color:DIM, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+                <Box sx={{ width:26, height:26, borderRadius:'7px', background:'#F1F5F9', color:DIM, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
                   <FilterList sx={{ fontSize:14 }} />
                 </Box>
               </Box>
             </Box>
 
             {/* Tab pills */}
-            <Box sx={{ display:'flex', gap:'4px', background:'rgba(142,182,155,0.07)', borderRadius:'9px', p:'3px' }}>
+            <Box sx={{ display:'flex', gap:'4px', background:'#F1F5F9', borderRadius:'9px', p:'3px' }}>
               {tabs.map((t,i) => (
                 <TabPill key={t} label={t} active={tabValue===i} onClick={() => setTabValue(i)} />
               ))}
@@ -383,7 +431,7 @@ export default function DashboardPage({ user, onLogout }) {
 
           {/* Selected incident action panel */}
           {selectedIncident && (
-            <Box sx={{ p:'16px', borderTop:`1px solid ${BORDER}`, background:'rgba(0,0,0,0.25)', animation:'fadeUp 0.2s ease' }}>
+            <Box sx={{ p:'16px', borderTop:`1px solid ${BORDER}`, background:'rgba(0,0,0,0.03)', animation:'fadeUp 0.2s ease' }}>
               <Box sx={{ display:'flex', alignItems:'center', justifyContent:'space-between', mb:'10px' }}>
                 <Typography sx={{ fontSize:13, fontWeight:700, color:TEXT }}>
                   {selectedIncident.incident_type}
@@ -395,7 +443,7 @@ export default function DashboardPage({ user, onLogout }) {
 
               {/* AI result preview */}
               {autoDispatchResult && (
-                <Box sx={{ mb:'9px', p:'10px 11px', borderRadius:'9px', background:'rgba(142,182,155,0.08)', border:`1px solid rgba(142,182,155,0.20)` }}>
+                <Box sx={{ mb:'9px', p:'10px 11px', borderRadius:'9px', background:'#F1F5F9', border:`1px solid #E2E8F0` }}>
                   <Box sx={{ display:'flex', alignItems:'center', gap:'6px', mb:'7px' }}>
                     <Box sx={{ width:10, height:10, borderRadius:'50%', border:`2px solid rgba(142,182,155,0.3)`, borderTopColor:G, animation:'spin360 0.7s linear infinite' }} />
                     <Typography sx={{ fontSize:'11.5px', color:G, fontWeight:600 }}>AI deciding…</Typography>
@@ -424,7 +472,7 @@ export default function DashboardPage({ user, onLogout }) {
                 >
                   {autoDispatchLoading
                     ? <Box sx={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                        <Box sx={{ width:12, height:12, borderRadius:'50%', border:'2px solid rgba(5,31,32,0.3)', borderTopColor:BG, animation:'spin360 0.7s linear infinite' }} />
+                        <Box sx={{ width:12, height:12, borderRadius:'50%', border:'2px solid #FFFFFF', borderTopColor:BG, animation:'spin360 0.7s linear infinite' }} />
                         Analysing…
                       </Box>
                     : <>
@@ -436,7 +484,7 @@ export default function DashboardPage({ user, onLogout }) {
               )}
 
               {/* Secondary actions */}
-              <Box sx={{ display:'flex', gap:'8px' }}>
+              <Box sx={{ display:'flex', gap:'8px', mb: '8px' }}>
                 {selectedIncident.status === 'PENDING' && (
                   <Button onClick={handleAcknowledge} sx={{ flex:1, py:'8px', borderRadius:'9px', border:`1px solid ${BORDER2}`, color:DIM, fontSize:'11.5px', fontWeight:600, '&:hover':{ background:'rgba(142,182,155,0.06)' } }}>
                     Acknowledge
@@ -448,6 +496,68 @@ export default function DashboardPage({ user, onLogout }) {
                   </Button>
                 )}
               </Box>
+
+              {/* Status Transition Lifecycle Controls */}
+              {['DISPATCHED','EN_ROUTE','ON_SCENE','TRANSPORTING'].includes(selectedIncident.status) && (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {selectedIncident.status === 'DISPATCHED' && (
+                    <Button
+                      fullWidth size="small" variant="contained"
+                      onClick={() => {
+                        setSelectedIncident(prev => ({ ...prev, status: 'EN_ROUTE' }));
+                        setSnackbar({ message: 'Ambulance marked En Route', severity: 'info' });
+                      }}
+                      sx={{ bgcolor: G, color: '#fff', fontSize: 11, fontWeight: 700, textTransform: 'none', borderRadius: '8px' }}
+                    >
+                      Mark Unit En Route →
+                    </Button>
+                  )}
+                  {selectedIncident.status === 'EN_ROUTE' && (
+                    <Button
+                      fullWidth size="small" variant="contained"
+                      onClick={() => {
+                        setSelectedIncident(prev => ({ ...prev, status: 'ON_SCENE' }));
+                        setSnackbar({ message: 'Ambulance arrived On Scene', severity: 'warning' });
+                      }}
+                      sx={{ bgcolor: '#8B5CF6', color: '#fff', fontSize: 11, fontWeight: 700, textTransform: 'none', borderRadius: '8px' }}
+                    >
+                      Mark Arrived On Scene →
+                    </Button>
+                  )}
+                  {selectedIncident.status === 'ON_SCENE' && (
+                    <Button
+                      fullWidth size="small" variant="contained"
+                      onClick={() => {
+                        setSelectedIncident(prev => ({ ...prev, status: 'TRANSPORTING' }));
+                        setSnackbar({ message: 'Patient in transit to ER', severity: 'error' });
+                      }}
+                      sx={{ bgcolor: RED, color: '#fff', fontSize: 11, fontWeight: 700, textTransform: 'none', borderRadius: '8px' }}
+                    >
+                      Depart Scene (In Transit to ER) →
+                    </Button>
+                  )}
+                  {selectedIncident.status === 'TRANSPORTING' && (
+                    <Button
+                      fullWidth size="small" variant="contained"
+                      onClick={() => {
+                        setSelectedIncident(prev => ({ ...prev, status: 'RESOLVED' }));
+                        setSnackbar({ message: 'Emergency Resolved. Hospital Handover Complete.', severity: 'success' });
+                      }}
+                      sx={{ bgcolor: '#10B981', color: '#fff', fontSize: 11, fontWeight: 700, textTransform: 'none', borderRadius: '8px' }}
+                    >
+                      Complete Handover & Resolve Incident ✓
+                    </Button>
+                  )}
+                  <Button
+                    fullWidth size="small" variant="outlined"
+                    onClick={() => setGreenCorridorOpen(true)}
+                    startIcon={<Traffic sx={{ fontSize: 14 }} />}
+                    sx={{ borderColor: RED, color: RED, fontSize: 11, fontWeight: 700, textTransform: 'none', borderRadius: '8px' }}
+                  >
+                    Activate Green Corridor Preemption
+                  </Button>
+                </Box>
+              )}
             </Box>
           )}
         </Box>
@@ -484,7 +594,7 @@ export default function DashboardPage({ user, onLogout }) {
             <Box sx={{
               position:'absolute', bottom:14, left:14, zIndex:1000,
               display:'flex', gap:'12px',
-              background:'rgba(5,31,32,0.88)',
+              background:'#FFFFFF',
               px:'12px', py:'7px', borderRadius:'9px', border:`1px solid ${BORDER}`,
             }}>
               {[{color:RED,label:'Critical'},{color:'#E3A94F',label:'High'},{color:G,label:'Available'}].map(item=>(
@@ -498,7 +608,7 @@ export default function DashboardPage({ user, onLogout }) {
             {/* Fleet slide-in panel */}
             <Box sx={{
               position: 'absolute', top:0, right:0, bottom:0, width:290,
-              background: 'rgba(5,31,32,0.97)',
+              background: '#FFFFFF',
               borderLeft: `1px solid ${BORDER}`,
               display:'flex', flexDirection:'column',
               transform: fleetOpen ? 'translateX(0)' : 'translateX(100%)',
@@ -515,7 +625,7 @@ export default function DashboardPage({ user, onLogout }) {
             {/* Hospital status slide-in panel */}
             <Box sx={{
               position: 'absolute', top:0, right:0, bottom:0, width:290,
-              background: 'rgba(5,31,32,0.97)',
+              background: '#FFFFFF',
               borderLeft: `1px solid ${BORDER}`,
               display:'flex', flexDirection:'column',
               transform: hospitalOpen ? 'translateX(0)' : 'translateX(100%)',
@@ -528,7 +638,7 @@ export default function DashboardPage({ user, onLogout }) {
             {/* Activity feed slide-in panel */}
             <Box sx={{
               position: 'absolute', top:0, right:0, bottom:0, width:310,
-              background: 'rgba(5,31,32,0.97)',
+              background: '#FFFFFF',
               borderLeft: `1px solid ${BORDER}`,
               display:'flex', flexDirection:'column',
               transform: activityOpen ? 'translateX(0)' : 'translateX(100%)',
@@ -540,7 +650,7 @@ export default function DashboardPage({ user, onLogout }) {
             {/* Incident Timeline slide-in panel */}
             <Box sx={{
               position: 'absolute', top:0, right:0, bottom:0, width:310,
-              background: 'rgba(5,31,32,0.97)',
+              background: '#FFFFFF',
               borderLeft: `1px solid ${BORDER}`,
               display:'flex', flexDirection:'column',
               transform: timelineOpen && selectedIncident ? 'translateX(0)' : 'translateX(100%)',
@@ -553,7 +663,7 @@ export default function DashboardPage({ user, onLogout }) {
             {/* Quick Comms slide-in panel */}
             <Box sx={{
               position: 'absolute', top:0, right:0, bottom:0, width:320,
-              background: 'rgba(5,31,32,0.97)',
+              background: '#FFFFFF',
               borderLeft: `1px solid ${BORDER}`,
               display:'flex', flexDirection:'column',
               transform: commsOpen ? 'translateX(0)' : 'translateX(100%)',
@@ -570,6 +680,7 @@ export default function DashboardPage({ user, onLogout }) {
       <SOSAlertModal open={sosModalOpen} onClose={()=>setSosModalOpen(false)} onSOSCreated={handleSOSCreated} />
       <AssignmentWizard open={wizardOpen} onClose={()=>setWizardOpen(false)} incident={selectedIncident} onAssignmentCreated={handleAssignmentCreated} />
       <ShiftReportModal open={shiftReportOpen} onClose={()=>setShiftReportOpen(false)} stats={stats} incidents={incidents} ambulances={ambulances} />
+      <GreenCorridorModal open={greenCorridorOpen} onClose={()=>setGreenCorridorOpen(false)} assignment={activeAssignment} />
 
       {/* ══ Snackbar ══ */}
       <Snackbar open={!!snackbar} autoHideDuration={5000} onClose={()=>setSnackbar(null)} anchorOrigin={{vertical:'bottom',horizontal:'right'}}>

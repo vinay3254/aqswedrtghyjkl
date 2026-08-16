@@ -4,6 +4,8 @@ const mongoose = require("mongoose");
 const { GridFSBucket } = require("mongodb");
 const { Readable } = require("stream");
 const axios = require("axios");
+const { execFile } = require("child_process");
+const path = require("path");
 const PatientMedia = require("../models/PatientMedia");
 const SystemConfig = require("../models/SystemConfig");
 const {
@@ -17,6 +19,76 @@ const {
 const ML_ENGINE_URL = process.env.ML_ENGINE_URL || "http://localhost:8080";
 
 const router = express.Router();
+
+function getNearbyHospitals(city, disease) {
+  return new Promise((resolve) => {
+    const scriptPath = path.join(__dirname, "../utils/search_hospitals.py");
+    execFile("python", [scriptPath, city, disease || ""], (err, stdout, stderr) => {
+      if (err) {
+        console.error("Search hospitals script failed:", err.message);
+        resolve([]);
+        return;
+      }
+      try {
+        const data = JSON.parse(stdout);
+        resolve(data);
+      } catch (parseErr) {
+        resolve([]);
+      }
+    });
+  });
+}
+
+async function enrichReplyWithHospitals(reply, location) {
+  let locationQuery = "Bengaluru";
+  let displayLocation = "Bengaluru";
+  
+  if (location && location.latitude && location.longitude) {
+    locationQuery = `${location.latitude},${location.longitude}`;
+    displayLocation = "your shared location";
+  } else {
+    try {
+      const geoRes = await axios.get("http://ip-api.com/json", { timeout: 3000 });
+      if (geoRes.data && geoRes.data.city) {
+        locationQuery = geoRes.data.city;
+        displayLocation = geoRes.data.city;
+      }
+    } catch (geoErr) {
+      console.error("IP geolocation failed, using default:", geoErr.message);
+    }
+  }
+
+  let diseaseName = "";
+  try {
+    const extractionPrompt = `From the following medical assistant response, extract the single most relevant medical department or disease category (e.g. Pulmonology, Oncology, Neurology, Cardiology, Orthopedics, Gastroenterology). Reply with ONLY the category/department name (1-2 words maximum), and absolutely nothing else.
+
+Response:
+${reply}`;
+    console.log("Extracting medical department/disease category using LLM...");
+    const extractRes = await chatText(extractionPrompt, { maxTokens: 15 });
+    if (extractRes && extractRes.reply) {
+      diseaseName = extractRes.reply.trim().replace(/[^a-zA-Z\s]/g, "");
+    }
+  } catch (extractErr) {
+    console.error("Failed to extract medical department:", extractErr.message);
+  }
+
+  console.log(`Searching hospitals near ${locationQuery} for department: ${diseaseName || "general"}`);
+  const hospitals = await getNearbyHospitals(locationQuery, diseaseName);
+
+  let hospitalText = "";
+  if (hospitals && hospitals.length > 0) {
+    hospitalText = hospitals.map(h => `- [${h.title}](${h.href}): ${h.body}`).join("\n");
+  } else {
+    hospitalText = `- Consult a specialist or general physician at a local hospital near ${displayLocation}.`;
+  }
+
+  const section5Regex = /(5\.\s*\*\*Which hospital to go nearby\*\*\s*:?)([\s\S]*)$/i;
+  if (section5Regex.test(reply)) {
+    return reply.replace(section5Regex, `$1\n\nBased on your location (${displayLocation}) and diagnosed condition, here are nearby options found via web search:\n${hospitalText}`);
+  }
+  return reply + `\n\n### Nearby Hospitals near ${displayLocation}:\n${hospitalText}`;
+}
 
 const ALLOWED_MIMETYPES = new Set([
   "image/jpeg",
@@ -414,7 +486,7 @@ const LANGUAGE_NAMES = {
 // POST /api/media/ai-chat  — Ollama vision chat (direct base64, no GridFS)
 router.post("/ai-chat", async (req, res, next) => {
   try {
-    const { imageBase64, mediaType, chatHistory = [], question = "", language = "en" } = req.body;
+    const { imageBase64, mediaType, chatHistory = [], question = "", language = "en", location } = req.body;
     if (!imageBase64) return res.status(400).json({ error: "imageBase64 is required" });
 
     const SUPPORTED = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
@@ -426,11 +498,12 @@ router.post("/ai-chat", async (req, res, next) => {
       : `\nIMPORTANT: You MUST respond entirely in ${langName}. All section headings, explanations, and the disclaimer must be written in ${langName} script.`;
 
     const systemPrompt = `You are a medical AI assistant.
-For the given condition, respond with:
-1. A brief, plain-language explanation of what the condition is.
-2. General categories of how it is typically managed (e.g., "often managed with rest and monitoring," "may involve antibiotic treatment," "sometimes requires surgical evaluation") — described in broad terms only.
-3. Red-flag symptoms that would warrant urgent/emergency care.
-4. A clear closing statement that this is general information only, the classification may be imperfect, and a licensed physician must confirm diagnosis and determine actual treatment.${langInstruction}`;
+When analyzing a medical image, structure your response with these exact sections:
+1. **Name of the disease**: [Identify name of the condition or finding]
+2. **Cause of the disease**: [Briefly explain the underlying causes]
+3. **How to prevent it**: [Provide prevention steps]
+4. **How to diagnose it**: [Explain diagnostic methods or tests needed]
+5. **Which hospital to go nearby**: [Suggest the type of medical specialist, department, or facility to consult]${langInstruction}`;
 
     // Optional NVIDIA NIM fallback for users who still have a key configured.
     const nvidiaKey = process.env.NVIDIA_API_KEY;
@@ -459,7 +532,8 @@ For the given condition, respond with:
         const reply = response.data?.choices?.[0]?.message?.content;
         if (reply) {
           console.log("Successfully generated analysis using NVIDIA NIM!");
-          return res.json({ reply: reply.trim() });
+          const enrichedReply = await enrichReplyWithHospitals(reply, location);
+          return res.json({ reply: enrichedReply.trim() });
         }
       } catch (nvidiaErr) {
         console.error("NVIDIA NIM API call failed:", nvidiaErr.message || (nvidiaErr.response && nvidiaErr.response.data));
@@ -477,9 +551,13 @@ For the given condition, respond with:
         system: systemPrompt,
         imageB64: imageBase64,
         mediaType: type,
-        maxTokens: 1024,
+        maxTokens: 4096,
+        bypassAgentRouter: true,
+        customCandidates: [{ name: "minimax-m3:cloud" }, { name: "gemma4:31b-cloud" }],
+        bypassOmniRoute: true
       });
-      return res.json({ reply: reply.trim() });
+      const enrichedReply = await enrichReplyWithHospitals(reply, location);
+      return res.json({ reply: enrichedReply.trim() });
     } catch (err) {
       if (err instanceof OllamaUnavailableError) {
         console.error("Ollama vision chat unavailable:", err.message);
@@ -520,14 +598,15 @@ router.post("/ai-assistant/:fileId", async (req, res, next) => {
     });
     const imageB64 = Buffer.concat(chunks).toString("base64");
 
-    const { chatHistory = [], question = "" } = req.body;
+    const { chatHistory = [], question = "", location } = req.body;
 
     const systemPrompt = `You are a medical AI assistant.
-For the given condition, respond with:
-1. A brief, plain-language explanation of what the condition is.
-2. General categories of how it is typically managed (e.g., "often managed with rest and monitoring," "may involve antibiotic treatment," "sometimes requires surgical evaluation") — described in broad terms only.
-3. Red-flag symptoms that would warrant urgent/emergency care.
-4. A clear closing statement that this is general information only, the classification may be imperfect, and a licensed physician must confirm diagnosis and determine actual treatment.`;
+When analyzing a medical image, structure your response with these exact sections:
+1. **Name of the disease**: [Identify name of the condition or finding]
+2. **Cause of the disease**: [Briefly explain the underlying causes]
+3. **How to prevent it**: [Provide prevention steps]
+4. **How to diagnose it**: [Explain diagnostic methods or tests needed]
+5. **Which hospital to go nearby**: [Suggest the type of medical specialist, department, or facility to consult]`;
 
     const firstUserText = chatHistory.length === 0
       ? "Please analyze this medical image. Tell me what condition is visible, how to prevent it, how to treat it, and what medications are commonly used."
@@ -559,7 +638,8 @@ For the given condition, respond with:
         const reply = response.data?.choices?.[0]?.message?.content;
         if (reply) {
           console.log("Successfully generated assistant response using NVIDIA NIM!");
-          return res.json({ reply: reply.trim() });
+          const enrichedReply = await enrichReplyWithHospitals(reply, location);
+          return res.json({ reply: enrichedReply.trim() });
         }
       } catch (nvidiaErr) {
         console.error("NVIDIA NIM assistant failed:", nvidiaErr.message || (nvidiaErr.response && nvidiaErr.response.data));
@@ -573,9 +653,13 @@ For the given condition, respond with:
         system: systemPrompt,
         imageB64,
         mediaType,
-        maxTokens: 1024,
+        maxTokens: 4096,
+        bypassAgentRouter: true,
+        customCandidates: [{ name: "minimax-m3:cloud" }, { name: "gemma4:31b-cloud" }],
+        bypassOmniRoute: true
       });
-      return res.json({ reply: reply.trim() });
+      const enrichedReply = await enrichReplyWithHospitals(reply, location);
+      return res.json({ reply: enrichedReply.trim() });
     } catch (err) {
       if (err instanceof OllamaUnavailableError) {
         console.error("Ollama assistant unavailable:", err.message);

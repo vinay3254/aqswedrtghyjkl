@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 
-const G     = '#8EB69B';
-const TEXT  = '#DAF1DE';
-const DIM   = 'rgba(218,241,222,0.50)';
-const FAINT = 'rgba(218,241,222,0.28)';
-const BRD   = 'rgba(142,182,155,0.10)';
-const BRD2  = 'rgba(142,182,155,0.22)';
+const G     = '#2563EB';
+const TEXT  = '#0F172A';
+const DIM   = '#475569';
+const FAINT = '#94A3B8';
+const BRD   = '#E2E8F0';
+const BRD2  = '#E2E8F0';
 const RED   = '#E25C50';
-const BG    = '#051F20';
+const BG    = '#F8FAFC';
 
 const CHECKLISTS = {
   PRE_DEPARTURE: {
@@ -71,7 +71,7 @@ export default function MedicalChecklist({ phase = 'PRE_DEPARTURE', onComplete }
 
   if (submitted) {
     return (
-      <Box sx={{ p:'13px', borderRadius:'13px', background:'rgba(142,182,155,0.10)', border:`1px solid ${G}`, mb:'14px', animation:'fadeUp 0.3s ease' }}>
+      <Box sx={{ p:'13px', borderRadius:'13px', background:'#E2E8F0', border:`1px solid ${G}`, mb:'14px', animation:'fadeUp 0.3s ease' }}>
         <Typography sx={{ fontSize:'12px', fontWeight:700, color:G }}>✓ Checklist Complete — {list.label}</Typography>
         <Typography sx={{ fontSize:'10px', color:DIM, mt:'3px' }}>
           {total}/{total} items · {new Date().toLocaleTimeString()}
@@ -81,7 +81,7 @@ export default function MedicalChecklist({ phase = 'PRE_DEPARTURE', onComplete }
   }
 
   return (
-    <Box sx={{ p:'14px', borderRadius:'14px', background:'linear-gradient(160deg,rgba(142,182,155,0.07),rgba(0,0,0,0.2))', border:`1px solid ${BRD2}`, mb:'14px', animation:'fadeUp 0.2s ease' }}>
+    <Box sx={{ p:'14px', borderRadius:'14px', background:'linear-gradient(160deg,#F1F5F9,rgba(0,0,0,0.2))', border:`1px solid ${BRD2}`, mb:'14px', animation:'fadeUp 0.2s ease' }}>
       {/* Header + progress */}
       <Box sx={{ display:'flex', alignItems:'center', justifyContent:'space-between', mb:'8px' }}>
         <Typography sx={{ fontSize:'13px', fontWeight:800, color:TEXT }}>{list.label} Checklist</Typography>
@@ -89,7 +89,7 @@ export default function MedicalChecklist({ phase = 'PRE_DEPARTURE', onComplete }
           {done}/{total}
         </Typography>
       </Box>
-      <Box sx={{ height:3, borderRadius:2, background:'rgba(142,182,155,0.10)', overflow:'hidden', mb:'12px' }}>
+      <Box sx={{ height:3, borderRadius:2, background:'#E2E8F0', overflow:'hidden', mb:'12px' }}>
         <Box sx={{ height:'100%', borderRadius:2, background: allDone ? G : 'rgba(142,182,155,0.45)', width:`${pct}%`, transition:'width 0.3s ease' }} />
       </Box>
 
@@ -136,11 +136,11 @@ export default function MedicalChecklist({ phase = 'PRE_DEPARTURE', onComplete }
         disabled={!allDone}
         sx={{
           mt:'12px', py:'10px', borderRadius:'9px', border:'none',
-          background: allDone ? G : 'rgba(142,182,155,0.10)',
+          background: allDone ? G : '#E2E8F0',
           color: allDone ? BG : DIM,
           fontWeight:800, fontSize:'12.5px',
-          '&:disabled':{ color:DIM, background:'rgba(142,182,155,0.10)' },
-          '&:hover':{ background: allDone ? '#7AA887' : 'rgba(142,182,155,0.10)' },
+          '&:disabled':{ color:DIM, background:'#E2E8F0' },
+          '&:hover':{ background: allDone ? '#7AA887' : '#E2E8F0' },
           transition:'all 0.2s',
         }}
       >

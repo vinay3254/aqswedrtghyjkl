@@ -498,8 +498,11 @@ async function _callWithKeyRotation({ candidates, buildPayload, request, label, 
     const headers = { ...authHeadersForKey(keyEntry.key), "Content-Type": "application/json" };
     for (const candidate of candidates) {
       const payload = buildPayload(candidate);
+      const candUrl = (candidate.name.includes(":cloud") || candidate.name.includes("-cloud"))
+        ? "https://ollama.com"
+        : url;
       try {
-        const r = await request({ url, headers, payload, candidate, keyEntry });
+        const r = await request({ url: candUrl, headers, payload, candidate, keyEntry });
         const reply = r?.data?.response;
         if (reply && typeof reply === "string" && reply.trim().length > 0) {
           _markSuccess(keyEntry);
@@ -540,22 +543,23 @@ async function chatText(prompt, { system, model, maxTokens = 800, temperature } 
     try {
       console.log("Routing text query via AgentRouter...");
       const response = await axios.post(
-        "https://api.agentrouter.com/v1/chat/completions",
+        "http://localhost:20128/v1/chat/completions",
         {
-          model: model || "meta-llama/llama-3.3-70b-instruct",
+          model: model || "agentrouter/claude-opus-4-8-high",
           messages: [
             ...(system ? [{ role: "system", content: system }] : []),
             { role: "user", content: prompt }
           ],
           max_tokens: maxTokens,
-          temperature: temperature ?? 0.2
+          temperature: temperature ?? 0.2,
+          thinking: { type: "disabled" }
         },
         {
           headers: {
             Authorization: `Bearer ${dynamicConfig.agentRouterKey}`,
             "Content-Type": "application/json"
           },
-          timeout: 20000
+          timeout: 120000
         }
       );
       const reply = response.data?.choices?.[0]?.message?.content;
@@ -657,7 +661,7 @@ async function chatText(prompt, { system, model, maxTokens = 800, temperature } 
       return payload;
     },
     request: ({ url, headers, payload }) =>
-      axios.post(`${url}/api/generate`, payload, { headers, timeout: 20_000 }),
+      axios.post(`${url}/api/generate`, payload, { headers, timeout: 120000 }),
   });
 }
 
@@ -673,17 +677,20 @@ async function chatVision({
   model,
   maxTokens = 1024,
   temperature,
+  bypassAgentRouter = false,
+  customCandidates = null,
+  bypassOmniRoute = false,
 }) {
   const dynamicConfig = await getDynamicConfig();
 
   // 1. Try AgentRouter if configured
-  if (dynamicConfig.agentRouterKey) {
+  if (dynamicConfig.agentRouterKey && !bypassAgentRouter) {
     try {
       console.log("Routing vision query via AgentRouter...");
       const response = await axios.post(
-        "https://api.agentrouter.com/v1/chat/completions",
+        "http://localhost:20128/v1/chat/completions",
         {
-          model: model || "meta-llama/llama-3.2-90b-vision-instruct",
+          model: model || "agentrouter/claude-opus-4-8-high",
           messages: [
             {
               role: "user",
@@ -699,14 +706,15 @@ async function chatVision({
             }
           ],
           max_tokens: maxTokens,
-          temperature: temperature ?? 0.2
+          temperature: temperature ?? 0.2,
+          thinking: { type: "disabled" }
         },
         {
           headers: {
             Authorization: `Bearer ${dynamicConfig.agentRouterKey}`,
             "Content-Type": "application/json"
           },
-          timeout: 20000
+          timeout: 120000
         }
       );
       const reply = response.data?.choices?.[0]?.message?.content;
@@ -724,64 +732,72 @@ async function chatVision({
   }
 
   // 2. Try OmniRoute if configured
-  if (dynamicConfig.omniRouteKey) {
-    try {
-      console.log("Routing vision query via OmniRoute...");
-      const omniModel = (() => {
-        const req = model || "meta-llama/llama-3.2-90b-vision-instruct";
-        const lower = req.toLowerCase();
-        if (lower.includes("gemma") || lower.includes("minimax") || lower.includes("llama")) {
-          return "mediCluster";
-        }
-        return req;
-      })();
-      const response = await axios.post(
-        "http://localhost:20128/v1/chat/completions",
-        {
-          model: omniModel,
-          messages: [
-            {
-              role: "user",
-              content: [
-                { type: "text", text: `${system ? system + "\n\n" : ""}User: ${prompt}`.trim() },
-                ...(imageB64 ? [{
-                  type: "image_url",
-                  image_url: {
-                    url: `data:${mediaType || "image/jpeg"};base64,${imageB64}`
-                  }
-                }] : [])
-              ]
-            }
-          ],
-          max_tokens: maxTokens,
-          temperature: temperature ?? 0.2
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${dynamicConfig.omniRouteKey}`,
-            "Content-Type": "application/json"
+  if (dynamicConfig.omniRouteKey && !bypassOmniRoute) {
+    const omniCandidates = customCandidates || (model ? [{ name: model }] : [{ name: "meta-llama/llama-3.2-90b-vision-instruct" }]);
+    for (const cand of omniCandidates) {
+      try {
+        console.log(`Routing vision query via OmniRoute (${cand.name})...`);
+        const omniModel = (() => {
+          const req = cand.name;
+          const lower = req.toLowerCase();
+          if (bypassAgentRouter) {
+            return req;
+          }
+          if (lower.includes("gemma") || lower.includes("minimax") || lower.includes("llama")) {
+            return "mediCluster";
+          }
+          return req;
+        })();
+        const response = await axios.post(
+          "http://localhost:20128/v1/chat/completions",
+          {
+            model: omniModel,
+            messages: [
+              {
+                role: "user",
+                content: [
+                  { type: "text", text: `${system ? system + "\n\n" : ""}User: ${prompt}`.trim() },
+                  ...(imageB64 ? [{
+                    type: "image_url",
+                    image_url: {
+                      url: `data:${mediaType || "image/jpeg"};base64,${imageB64}`
+                    }
+                  }] : [])
+                ]
+              }
+            ],
+            max_tokens: maxTokens,
+            temperature: temperature ?? 0.2
           },
-          timeout: 120000
+          {
+            headers: {
+              Authorization: `Bearer ${dynamicConfig.omniRouteKey}`,
+              "Content-Type": "application/json"
+            },
+            timeout: 120000
+          }
+        );
+        const reply = response.data?.choices?.[0]?.message?.content;
+        if (reply) {
+          return {
+            reply: reply.trim(),
+            model: omniModel,
+            usedVision: Boolean(imageB64),
+            mediaType: mediaType || null
+          };
         }
-      );
-      const reply = response.data?.choices?.[0]?.message?.content;
-      if (reply) {
-        return {
-          reply: reply.trim(),
-          model: model || "omniroute-vision-default",
-          usedVision: Boolean(imageB64),
-          mediaType: mediaType || null
-        };
+      } catch (err) {
+        console.error(`OmniRoute vision failed for ${cand.name}:`, err.message);
       }
-    } catch (err) {
-      console.error("OmniRoute vision failed:", err.message);
     }
   }
 
   const { defaultVisionModel, mode } = getConfig();
 
   let candidates = [];
-  if (model) {
+  if (customCandidates) {
+    candidates = customCandidates;
+  } else if (model) {
     candidates = [{ name: model }];
   } else if (defaultVisionModel) {
     candidates = [{ name: defaultVisionModel }];
@@ -809,24 +825,18 @@ async function chatVision({
     return name.includes("minimax") || name.includes("gemma4");
   });
 
-  // Ensure minimax is first, and gemma4 is mapped to gemma4:31b-cloud
+  // Ensure minimax is first, and gemma4 is kept as-is (e.g., gemma4:cloud)
   const finalCandidates = [];
   const minimaxPart = candidates.filter((c) => c.name.toLowerCase().includes("minimax"));
   const gemmaPart = candidates.filter((c) => c.name.toLowerCase().includes("gemma4"));
 
   minimaxPart.forEach((c) => finalCandidates.push({ name: c.name }));
   gemmaPart.forEach((c) => {
-    if (c.name === "gemma4:cloud") {
-      finalCandidates.push({ name: "gemma4:31b-cloud" });
-    } else if (c.name === "gemma4") {
-      finalCandidates.push({ name: "gemma4:31b" });
-    } else {
-      finalCandidates.push({ name: c.name });
-    }
+    finalCandidates.push({ name: c.name });
   });
 
   if (finalCandidates.length === 0) {
-    candidates = [{ name: "minimax-m3:cloud" }, { name: "gemma4:31b-cloud" }];
+    candidates = [{ name: "minimax-m3:cloud" }, { name: "gemma4:cloud" }];
   } else {
     // Deduplicate and set candidates
     const seenNames = new Set();
@@ -866,7 +876,7 @@ async function chatVision({
     request: ({ url, headers, payload, candidate }) => {
       return axios.post(`${url}/api/generate`, payload, {
         headers,
-        timeout: 20_000,
+        timeout: 120_000,
       });
     },
   });

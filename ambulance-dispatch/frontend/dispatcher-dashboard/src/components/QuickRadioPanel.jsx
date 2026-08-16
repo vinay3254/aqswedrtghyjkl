@@ -1,28 +1,28 @@
 import React, { useState } from 'react';
 import { Box, Typography } from '@mui/material';
 
-const G     = '#8EB69B';
-const TEXT  = '#DAF1DE';
-const DIM   = 'rgba(218,241,222,0.50)';
-const FAINT = 'rgba(218,241,222,0.28)';
-const BRD   = 'rgba(142,182,155,0.10)';
-const BRD2  = 'rgba(142,182,155,0.22)';
+const G     = '#2563EB';
+const TEXT  = '#0F172A';
+const DIM   = '#475569';
+const FAINT = '#94A3B8';
+const BRD   = '#E2E8F0';
+const BRD2  = '#E2E8F0';
 const RED   = '#E25C50';
 const AMBER = '#E3A94F';
-const BG    = '#051F20';
-const SURF2 = '#163832';
+const BG    = '#F8FAFC';
+const SURF2 = '#F1F5F9';
 
 const MESSAGES = [
-  { label:'En Route',          icon:'🚑', text:'En route to scene. ETA updating.',   color:G,     bg:'rgba(142,182,155,0.12)' },
-  { label:'On Scene',          icon:'📍', text:'Arrived on scene. Assessing now.',    color:G,     bg:'rgba(142,182,155,0.12)' },
-  { label:'Patient Stable',    icon:'♥',  text:'Patient stable. Vitals recorded.',    color:G,     bg:'rgba(142,182,155,0.12)' },
+  { label:'En Route',          icon:'🚑', text:'En route to scene. ETA updating.',   color:G,     bg:'rgba(37,99,235,0.10)' },
+  { label:'On Scene',          icon:'📍', text:'Arrived on scene. Assessing now.',    color:G,     bg:'rgba(37,99,235,0.10)' },
+  { label:'Patient Stable',    icon:'♥',  text:'Patient stable. Vitals recorded.',    color:G,     bg:'rgba(37,99,235,0.10)' },
   { label:'Patient Critical',  icon:'⚠',  text:'Patient critical. Expediting transport.', color:RED,  bg:'rgba(226,92,80,0.14)' },
   { label:'Need Backup',       icon:'🆘', text:'Requesting backup at current location.', color:RED,  bg:'rgba(226,92,80,0.14)' },
-  { label:'Transporting',      icon:'🏥', text:'Transporting patient. Notify hospital.', color:G,   bg:'rgba(142,182,155,0.12)' },
+  { label:'Transporting',      icon:'🏥', text:'Transporting patient. Notify hospital.', color:G,   bg:'rgba(37,99,235,0.10)' },
   { label:'ETA 5 min',         icon:'⏱',  text:'ETA to destination: 5 minutes.',      color:AMBER, bg:'rgba(227,169,79,0.12)' },
-  { label:'Handed Over',       icon:'✓',  text:'Patient handed over to ER team. Clear.', color:G,  bg:'rgba(142,182,155,0.12)' },
+  { label:'Handed Over',       icon:'✓',  text:'Patient handed over to ER team. Clear.', color:G,  bg:'rgba(37,99,235,0.10)' },
   { label:'Road Blocked',      icon:'🚧', text:'Route blocked. Recalculating alternate.', color:AMBER, bg:'rgba(227,169,79,0.12)' },
-  { label:'Return to Base',    icon:'🏠', text:'Returning to base. Available for next call.', color:G, bg:'rgba(142,182,155,0.10)' },
+  { label:'Return to Base',    icon:'🏠', text:'Returning to base. Available for next call.', color:G, bg:'#E2E8F0' },
 ];
 
 export default function QuickRadioPanel({ onMessage }) {
@@ -38,7 +38,7 @@ export default function QuickRadioPanel({ onMessage }) {
   };
 
   return (
-    <Box sx={{ p:'14px', borderRadius:'14px', background:'linear-gradient(160deg,rgba(142,182,155,0.07),rgba(0,0,0,0.2))', border:`1px solid ${BRD2}`, mb:'14px', animation:'fadeUp 0.2s ease' }}>
+    <Box sx={{ p:'14px', borderRadius:'14px', background:'linear-gradient(160deg,#F1F5F9,rgba(0,0,0,0.2))', border:`1px solid ${BRD2}`, mb:'14px', animation:'fadeUp 0.2s ease' }}>
       {/* Header */}
       <Box sx={{ display:'flex', alignItems:'center', justifyContent:'space-between', mb:'12px' }}>
         <Box>

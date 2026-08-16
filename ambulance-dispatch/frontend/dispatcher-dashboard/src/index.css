@@ -2,23 +2,23 @@
 
 /* ── Design tokens ── */
 :root {
-  --bg:       #051F20;
-  --surface:  #0B2B26;
-  --surface2: #163832;
-  --accent:   #8EB69B;
-  --accent-dim: rgba(142,182,155,0.12);
-  --border:   rgba(142,182,155,0.10);
-  --border-accent: rgba(142,182,155,0.25);
-  --text:     #DAF1DE;
-  --text-dim: rgba(218,241,222,0.50);
-  --text-faint: rgba(218,241,222,0.30);
+  --bg:       #F8FAFC;
+  --surface:  #FFFFFF;
+  --surface2: #F1F5F9;
+  --accent:   #2563EB;
+  --accent-dim: rgba(37,99,235,0.10);
+  --border:   #E2E8F0;
+  --border-accent: #CBD5E1;
+  --text:     #0F172A;
+  --text-dim: #475569;
+  --text-faint: #94A3B8;
   --critical: #E25C50;
   --warning:  #E3A94F;
 
   font-family: 'Inter', system-ui, sans-serif;
   font-size: 14px;
   line-height: 1.5;
-  color-scheme: dark;
+  color-scheme: light;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -43,12 +43,12 @@ body {
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(142,182,155,0.20); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(142,182,155,0.40); }
 
 /* ── Leaflet map ── */
-.leaflet-container { background: #051F20 !important; }
-.leaflet-tile-pane { filter: brightness(0.75) saturate(0.6) hue-rotate(100deg); }
+.leaflet-container { background: #F8FAFC !important; }
+.leaflet-tile-pane { filter: none; }
 
 /* ── Keyframes ── */
 @keyframes spin360   { to { transform: rotate(360deg); } }
@@ -64,7 +64,7 @@ body {
 
 /* ── Glass card utility ── */
 .glass {
-  background: rgba(5,31,32,0.75);
+  background: #FFFFFF;
   backdrop-filter: blur(10px);
   border: 1px solid var(--border);
   border-radius: 12px;

@@ -121,10 +121,10 @@ export async function explainFindings(fileId, findings, modelName = "densenet121
  * @param {Array}  chatHistory  [{role, content}] previous turns
  * @param {string} question     New message (empty for initial analysis)
  */
-export async function aiChat(imageBase64, mediaType, chatHistory = [], question = "", language = "en") {
+export async function aiChat(imageBase64, mediaType, chatHistory = [], question = "", language = "en", location = null) {
   const res = await api.post(
     "/media/ai-chat",
-    { imageBase64, mediaType, chatHistory, question, language },
+    { imageBase64, mediaType, chatHistory, question, language, location },
     { timeout: 120_000 }
   );
   return res.data;

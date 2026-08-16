@@ -122,7 +122,7 @@ async function fetchRoute(from, to) {
 /* ── Popup HTML helpers ──────────────────────────────────────────────── */
 const popupStyle = `
   font-family: -apple-system, sans-serif;
-  background: #1e293b;
+  background: #FFFFFF;
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 8px;
   color: white;
@@ -149,6 +149,8 @@ export default function DispatchMap({
   const trailPointsRef   = useRef(new Map());
   const followIdRef      = useRef(null);
   const initialFitDoneRef = useRef(false);
+  const lastCenteredIncidentIdRef = useRef(null);
+  const lastFitAssignmentIdRef    = useRef(null);
   const routeLayerRef    = useRef(null);
   const previewLayerRef  = useRef(null);
 
@@ -156,23 +158,32 @@ export default function DispatchMap({
   useEffect(() => {
     if (mapInstanceRef.current) return;
 
-    mapInstanceRef.current = L.map(mapRef.current, {
+    const map = L.map(mapRef.current, {
       zoomControl: false,
       attributionControl: false,
+      scrollWheelZoom: true,
+      doubleClickZoom: true,
+      touchZoom: true,
     }).setView(center, zoom);
+
+    map.on('dragstart zoomstart', () => {
+      followIdRef.current = null;
+    });
 
     /* OSM tiles with CSS dark filter — works on any connection */
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '© OpenStreetMap',
-      className: 'map-dark-tiles',
-    }).addTo(mapInstanceRef.current);
+      className: 'map-light-tiles',
+    }).addTo(map);
 
     /* Custom zoom controls — bottom right */
-    L.control.zoom({ position: 'bottomright' }).addTo(mapInstanceRef.current);
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    routeLayerRef.current  = L.layerGroup().addTo(mapInstanceRef.current);
-    previewLayerRef.current = L.layerGroup().addTo(mapInstanceRef.current);
+    routeLayerRef.current  = L.layerGroup().addTo(map);
+    previewLayerRef.current = L.layerGroup().addTo(map);
+
+    mapInstanceRef.current = map;
 
     return () => {
       if (mapInstanceRef.current) {
@@ -343,7 +354,10 @@ export default function DispatchMap({
       dashArray: '5,4',
     }).addTo(previewLayerRef.current);
 
-    mapInstanceRef.current.setView([iLat, iLng], 13, { animate: true });
+    if (selectedIncident && selectedIncident.id !== lastCenteredIncidentIdRef.current) {
+      mapInstanceRef.current.setView([iLat, iLng], 13, { animate: true });
+      lastCenteredIncidentIdRef.current = selectedIncident.id;
+    }
 
     (async () => {
       /* Nearest available ambulance → incident (single orange dashed line) */
@@ -441,8 +455,9 @@ export default function DispatchMap({
         }).addTo(routeLayerRef.current);
       }
 
-      if (boundsPoints.length > 1 && alive) {
+      if (boundsPoints.length > 1 && alive && activeAssignment.id !== lastFitAssignmentIdRef.current) {
         mapInstanceRef.current.fitBounds(L.latLngBounds(boundsPoints), { padding: [80, 80], animate: true });
+        lastFitAssignmentIdRef.current = activeAssignment.id;
       }
     })();
 
@@ -461,7 +476,7 @@ export default function DispatchMap({
         },
         /* Popup dark theme override */
         '& .dark-popup .leaflet-popup-content-wrapper': {
-          background: '#1e293b',
+          background: '#FFFFFF',
           border: '1px solid rgba(255,255,255,0.1)',
           borderRadius: '8px',
           boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
@@ -472,7 +487,7 @@ export default function DispatchMap({
           margin: 0,
         },
         '& .dark-popup .leaflet-popup-tip': {
-          background: '#1e293b',
+          background: '#FFFFFF',
         },
         '& .leaflet-control-zoom': {
           border: '1px solid rgba(255,255,255,0.1) !important',
@@ -480,14 +495,14 @@ export default function DispatchMap({
           overflow: 'hidden',
         },
         '& .leaflet-control-zoom a': {
-          background: '#1e293b !important',
+          background: '#FFFFFF !important',
           color: 'white !important',
           borderColor: 'rgba(255,255,255,0.1) !important',
           '&:hover': { background: '#334155 !important' },
         },
         /* Dark tile filter — inverts OSM to night mode */
         '& .map-dark-tiles': {
-          filter: 'invert(100%) hue-rotate(180deg) brightness(0.72) saturate(0.75)',
+          filter: 'none',
         },
         /* Marker pulse animations */
         '@keyframes amb-pulse': {

@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { Box, Typography, Button, TextField } from '@mui/material';
 
-const BG    = '#051F20';
-const SURF  = '#0B2B26';
-const SURF2 = '#163832';
-const G     = '#8EB69B';
-const TEXT  = '#DAF1DE';
-const DIM   = 'rgba(218,241,222,0.50)';
-const FAINT = 'rgba(218,241,222,0.28)';
-const BRD   = 'rgba(142,182,155,0.10)';
-const BRD2  = 'rgba(142,182,155,0.22)';
+const BG    = '#F8FAFC';
+const SURF  = '#FFFFFF';
+const SURF2 = '#F1F5F9';
+const G     = '#2563EB';
+const TEXT  = '#0F172A';
+const DIM   = '#475569';
+const FAINT = '#94A3B8';
+const BRD   = '#E2E8F0';
+const BRD2  = '#E2E8F0';
 const RED   = '#E25C50';
 const AMBER = '#E3A94F';
 
@@ -47,7 +47,7 @@ export default function PatientVitalsForm({ onSubmit }) {
 
   if (submitted) {
     return (
-      <Box sx={{ p:'14px', borderRadius:'14px', background:'rgba(142,182,155,0.10)', border:`1px solid ${G}`, textAlign:'center', mb:'14px', animation:'fadeUp 0.3s ease' }}>
+      <Box sx={{ p:'14px', borderRadius:'14px', background:'#E2E8F0', border:`1px solid ${G}`, textAlign:'center', mb:'14px', animation:'fadeUp 0.3s ease' }}>
         <Typography sx={{ fontSize:13, fontWeight:700, color:G, mb:'4px' }}>✓ Vitals Recorded</Typography>
         <Typography sx={{ fontSize:'10.5px', color:DIM }}>Transmitted to dispatch · {new Date().toLocaleTimeString()}</Typography>
         {risk && (
@@ -60,7 +60,7 @@ export default function PatientVitalsForm({ onSubmit }) {
   }
 
   return (
-    <Box sx={{ p:'14px', borderRadius:'14px', background:'linear-gradient(160deg,rgba(142,182,155,0.08),rgba(0,0,0,0.2))', border:`1px solid ${BRD2}`, mb:'14px', animation:'fadeUp 0.2s ease' }}>
+    <Box sx={{ p:'14px', borderRadius:'14px', background:'linear-gradient(160deg,#F1F5F9,rgba(0,0,0,0.2))', border:`1px solid ${BRD2}`, mb:'14px', animation:'fadeUp 0.2s ease' }}>
       <Box sx={{ display:'flex', alignItems:'center', justifyContent:'space-between', mb:'14px' }}>
         <Typography sx={{ fontSize:'13.5px', fontWeight:800, color:TEXT }}>Patient Vitals</Typography>
         {risk && (
@@ -119,11 +119,11 @@ export default function PatientVitalsForm({ onSubmit }) {
         disabled={filled < 2}
         sx={{
           py:'10px', borderRadius:'9px', border:'none',
-          background: filled >= 2 ? G : 'rgba(142,182,155,0.12)',
+          background: filled >= 2 ? G : 'rgba(37,99,235,0.10)',
           color: filled >= 2 ? BG : DIM,
           fontWeight:800, fontSize:'12.5px',
-          '&:hover':{ background: filled >= 2 ? '#7AA887' : 'rgba(142,182,155,0.12)' },
-          '&:disabled':{ color:DIM, background:'rgba(142,182,155,0.12)' },
+          '&:hover':{ background: filled >= 2 ? '#7AA887' : 'rgba(37,99,235,0.10)' },
+          '&:disabled':{ color:DIM, background:'rgba(37,99,235,0.10)' },
           transition:'all 0.2s',
         }}
       >

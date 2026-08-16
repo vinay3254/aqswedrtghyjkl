@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography } from '@mui/material';
 
-const G     = '#8EB69B';
-const TEXT  = '#DAF1DE';
-const DIM   = 'rgba(218,241,222,0.50)';
-const FAINT = 'rgba(218,241,222,0.28)';
-const BRD   = 'rgba(142,182,155,0.10)';
+const G     = '#2563EB';
+const TEXT  = '#0F172A';
+const DIM   = '#475569';
+const FAINT = '#94A3B8';
+const BRD   = '#E2E8F0';
 const RED   = '#E25C50';
 const AMBER = '#E3A94F';
 
@@ -35,14 +35,14 @@ function HospitalRow({ h, expanded, onToggle }) {
       sx={{
         p:'11px 12px', borderRadius:'11px', mb:'7px', cursor:'pointer',
         background:'rgba(142,182,155,0.05)',
-        border:`1px solid ${expanded ? 'rgba(142,182,155,0.22)' : BRD}`,
+        border:`1px solid ${expanded ? '#E2E8F0' : BRD}`,
         transition:'all 0.15s',
         '&:hover':{ background:'rgba(142,182,155,0.09)' },
       }}
     >
       <Box sx={{ display:'flex', alignItems:'center', gap:'8px', mb: expanded ? '10px' : 0 }}>
         {/* Cross icon */}
-        <Box sx={{ width:26, height:26, borderRadius:'7px', background:'rgba(142,182,155,0.10)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+        <Box sx={{ width:26, height:26, borderRadius:'7px', background:'#E2E8F0', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
           <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
             <path d="M8 2.5v11M2.5 8h11" stroke={color} strokeWidth="2.5" strokeLinecap="round"/>
           </svg>
@@ -64,7 +64,7 @@ function HospitalRow({ h, expanded, onToggle }) {
       </Box>
 
       {/* Occupancy bar */}
-      <Box sx={{ height:3, borderRadius:2, background:'rgba(142,182,155,0.10)', overflow:'hidden', mb: expanded ? '10px' : 0 }}>
+      <Box sx={{ height:3, borderRadius:2, background:'#E2E8F0', overflow:'hidden', mb: expanded ? '10px' : 0 }}>
         <Box sx={{ height:'100%', borderRadius:2, background:color, width:`${occPct}%`, transition:'width 0.4s ease' }} />
       </Box>
 
@@ -76,7 +76,7 @@ function HospitalRow({ h, expanded, onToggle }) {
             { label:'ICU FREE', value: h.icu_available },
             { label:'BEDS FREE', value: h.beds_available },
           ].map(f=>(
-            <Box key={f.label} sx={{ background:'rgba(142,182,155,0.07)', borderRadius:'8px', p:'7px', textAlign:'center' }}>
+            <Box key={f.label} sx={{ background:'#F1F5F9', borderRadius:'8px', p:'7px', textAlign:'center' }}>
               <Typography sx={{ fontSize:'8.5px', color:FAINT, letterSpacing:'0.05em', mb:'2px' }}>{f.label}</Typography>
               <Typography sx={{ fontSize:'13px', fontWeight:800, color:TEXT }}>{f.value}</Typography>
             </Box>
@@ -107,7 +107,7 @@ export default function HospitalStatusPanel() {
   return (
     <Box sx={{ height:'100%', display:'flex', flexDirection:'column' }}>
       {/* Header */}
-      <Box sx={{ p:'14px 16px', borderBottom:'1px solid rgba(142,182,155,0.10)' }}>
+      <Box sx={{ p:'14px 16px', borderBottom:'1px solid #E2E8F0' }}>
         <Box sx={{ display:'flex', alignItems:'center', justifyContent:'space-between', mb:'8px' }}>
           <Typography sx={{ fontSize:'13.5px', fontWeight:700, color:TEXT }}>Hospitals</Typography>
           <Box sx={{ display:'flex', alignItems:'center', gap:'5px' }}>
@@ -116,15 +116,15 @@ export default function HospitalStatusPanel() {
           </Box>
         </Box>
         <Box sx={{ display:'flex', gap:'8px' }}>
-          <Box sx={{ flex:1, background:'rgba(142,182,155,0.07)', borderRadius:'8px', p:'7px', textAlign:'center' }}>
+          <Box sx={{ flex:1, background:'#F1F5F9', borderRadius:'8px', p:'7px', textAlign:'center' }}>
             <Typography sx={{ fontSize:'8.5px', color:DIM, letterSpacing:'0.05em', mb:'2px' }}>ACCEPTING</Typography>
             <Typography sx={{ fontSize:'15px', fontWeight:800, color:G }}>{available}</Typography>
           </Box>
-          <Box sx={{ flex:1, background:'rgba(142,182,155,0.07)', borderRadius:'8px', p:'7px', textAlign:'center' }}>
+          <Box sx={{ flex:1, background:'#F1F5F9', borderRadius:'8px', p:'7px', textAlign:'center' }}>
             <Typography sx={{ fontSize:'8.5px', color:DIM, letterSpacing:'0.05em', mb:'2px' }}>TOTAL BEDS</Typography>
             <Typography sx={{ fontSize:'15px', fontWeight:800, color:TEXT }}>{hospitals.reduce((s,h)=>s+h.beds_available,0)}</Typography>
           </Box>
-          <Box sx={{ flex:1, background:'rgba(142,182,155,0.07)', borderRadius:'8px', p:'7px', textAlign:'center' }}>
+          <Box sx={{ flex:1, background:'#F1F5F9', borderRadius:'8px', p:'7px', textAlign:'center' }}>
             <Typography sx={{ fontSize:'8.5px', color:DIM, letterSpacing:'0.05em', mb:'2px' }}>ICU FREE</Typography>
             <Typography sx={{ fontSize:'15px', fontWeight:800, color:TEXT }}>{hospitals.reduce((s,h)=>s+h.icu_available,0)}</Typography>
           </Box>

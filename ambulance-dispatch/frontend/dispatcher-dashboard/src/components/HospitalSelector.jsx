@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 
-const G     = '#8EB69B';
-const TEXT  = '#DAF1DE';
-const DIM   = 'rgba(218,241,222,0.50)';
-const FAINT = 'rgba(218,241,222,0.28)';
-const BRD   = 'rgba(142,182,155,0.10)';
-const BRD2  = 'rgba(142,182,155,0.22)';
+const G     = '#2563EB';
+const TEXT  = '#0F172A';
+const DIM   = '#475569';
+const FAINT = '#94A3B8';
+const BRD   = '#E2E8F0';
+const BRD2  = '#E2E8F0';
 const RED   = '#E25C50';
 const AMBER = '#E3A94F';
-const BG    = '#051F20';
-const SURF2 = '#163832';
+const BG    = '#F8FAFC';
+const SURF2 = '#F1F5F9';
 
 const MOCK_HOSPITALS = [
   { id:'H1', name:'AIIMS Delhi',             beds_available:12, icu_available:3,  er_wait_min:8,  distance_km:1.8, lat:28.5672, lng:77.2100 },
@@ -34,7 +34,7 @@ export default function HospitalSelector({ incidentType, onSelect }) {
   if (confirmed && selected) {
     const h = MOCK_HOSPITALS.find(x => x.id === selected);
     return (
-      <Box sx={{ p:'13px', borderRadius:'13px', background:'rgba(142,182,155,0.10)', border:`1px solid ${G}`, mb:'14px', animation:'fadeUp 0.3s ease' }}>
+      <Box sx={{ p:'13px', borderRadius:'13px', background:'#E2E8F0', border:`1px solid ${G}`, mb:'14px', animation:'fadeUp 0.3s ease' }}>
         <Typography sx={{ fontSize:'11.5px', fontWeight:700, color:G, mb:'4px' }}>✓ Destination Set</Typography>
         <Typography sx={{ fontSize:'12.5px', fontWeight:800, color:TEXT }}>{h.name}</Typography>
         <Typography sx={{ fontSize:'10.5px', color:DIM, mt:'3px' }}>{h.distance_km} km · ETA {Math.ceil(h.distance_km * 2.5)} min</Typography>
@@ -43,7 +43,7 @@ export default function HospitalSelector({ incidentType, onSelect }) {
   }
 
   return (
-    <Box sx={{ p:'14px', borderRadius:'14px', background:'linear-gradient(160deg,rgba(142,182,155,0.08),rgba(0,0,0,0.2))', border:`1px solid ${BRD2}`, mb:'14px', animation:'fadeUp 0.2s ease' }}>
+    <Box sx={{ p:'14px', borderRadius:'14px', background:'linear-gradient(160deg,#F1F5F9,rgba(0,0,0,0.2))', border:`1px solid ${BRD2}`, mb:'14px', animation:'fadeUp 0.2s ease' }}>
       <Typography sx={{ fontSize:'13.5px', fontWeight:800, color:TEXT, mb:'4px' }}>Select Hospital</Typography>
       <Typography sx={{ fontSize:'10.5px', color:DIM, mb:'12px' }}>
         {incidentType ? `Optimal for: ${incidentType}` : 'Select destination hospital'}
@@ -101,11 +101,11 @@ export default function HospitalSelector({ incidentType, onSelect }) {
         onClick={() => { setConfirmed(true); onSelect?.(MOCK_HOSPITALS.find(h=>h.id===selected)); }}
         sx={{
           mt:'4px', py:'11px', borderRadius:'10px', border:'none',
-          background: selected ? G : 'rgba(142,182,155,0.10)',
+          background: selected ? G : '#E2E8F0',
           color: selected ? BG : DIM,
           fontWeight:800, fontSize:'13px',
-          '&:hover':{ background: selected ? '#7AA887' : 'rgba(142,182,155,0.10)' },
-          '&:disabled':{ color:DIM, background:'rgba(142,182,155,0.10)' },
+          '&:hover':{ background: selected ? '#7AA887' : '#E2E8F0' },
+          '&:disabled':{ color:DIM, background:'#E2E8F0' },
         }}
       >
         {selected ? `Confirm: ${MOCK_HOSPITALS.find(h=>h.id===selected)?.name}` : 'Select a hospital'}

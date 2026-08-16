@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import { aiChat } from "../api/apiClient";
 
 const ACCEPT = "image/jpeg,image/png,image/gif,image/webp";
@@ -13,14 +13,31 @@ const LANGUAGES = [
 
 function renderMarkdown(text) {
   return text.split("\n").map((line, i) => {
-    const parts = line.split(/(\*\*[^*]+\*\*)/);
+    const parts = line.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g);
     return (
       <span key={i}>
-        {parts.map((part, j) =>
-          part.startsWith("**") && part.endsWith("**")
-            ? <strong key={j} className="font-semibold text-slate-800">{part.slice(2, -2)}</strong>
-            : part
-        )}
+        {parts.map((part, j) => {
+          if (part.startsWith("**") && part.endsWith("**")) {
+            return <strong key={j} className="font-semibold text-slate-800">{part.slice(2, -2)}</strong>;
+          }
+          if (part.startsWith("[") && part.includes("](") && part.endsWith(")")) {
+            const match = part.match(/\[([^\]]+)\]\(([^)]+)\)/);
+            if (match) {
+              return (
+                <a 
+                  key={j} 
+                  href={match[2]} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-blue-600 hover:text-blue-800 hover:underline font-medium break-all"
+                >
+                  {match[1]}
+                </a>
+              );
+            }
+          }
+          return part;
+        })}
         <br />
       </span>
     );
@@ -35,9 +52,26 @@ export default function AskAIPage() {
   const [dragOver, setDragOver]     = useState(false);
   const [error, setError]           = useState(null);
   const [language, setLanguage]     = useState("en");
+  const [userLocation, setUserLocation] = useState(null);
   const inputRef                    = useRef();
   const fileInputRef                = useRef();
   const bottomRef                   = useRef();
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+        },
+        (err) => {
+          console.error("Error getting geolocation:", err.message);
+        }
+      );
+    }
+  }, []);
 
   const scrollBottom = () =>
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
@@ -77,7 +111,7 @@ export default function AskAIPage() {
     scrollBottom();
 
     try {
-      const data = await aiChat(image.base64, image.mediaType, history, question, language);
+      const data = await aiChat(image.base64, image.mediaType, history, question, language, userLocation);
       setMessages([...next, { role: "assistant", content: data.reply }]);
       setInput("");
       scrollBottom();
@@ -87,7 +121,7 @@ export default function AskAIPage() {
     } finally {
       setLoading(false);
     }
-  }, [image, messages]);
+  }, [image, messages, userLocation]);
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey && !loading) {

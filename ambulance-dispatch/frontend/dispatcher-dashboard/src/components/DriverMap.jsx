@@ -16,9 +16,9 @@ const makeAmbulanceIcon = (heading = 0) => L.divIcon({
         <rect x="12" y="20" width="10" height="3" rx="1" fill="white"/>
         <rect x="15.5" y="17" width="3" height="10" rx="1" fill="white"/>
         <!-- wheels -->
-        <circle cx="11" cy="33" r="4" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+        <circle cx="11" cy="33" r="4" fill="#FFFFFF" stroke="#475569" stroke-width="1.5"/>
         <circle cx="11" cy="33" r="1.5" fill="#64748b"/>
-        <circle cx="31" cy="33" r="4" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+        <circle cx="31" cy="33" r="4" fill="#FFFFFF" stroke="#475569" stroke-width="1.5"/>
         <circle cx="31" cy="33" r="1.5" fill="#64748b"/>
         <!-- lights -->
         <rect x="4" y="14" width="5" height="3" rx="1" fill="#ef4444"
@@ -83,8 +83,8 @@ export default function DriverMap({ driverPos, incident, missionStatus, hospital
     const map = L.map(mapRef.current, { zoomControl: false, attributionControl: false })
       .setView([driverPos.lat, driverPos.lng], 15);
 
-    // Dark navigation tiles
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    // Light navigation tiles
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
     }).addTo(map);
 

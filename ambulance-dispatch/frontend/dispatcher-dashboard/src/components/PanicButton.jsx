@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 
-const G     = '#8EB69B';
-const TEXT  = '#DAF1DE';
-const DIM   = 'rgba(218,241,222,0.50)';
-const FAINT = 'rgba(218,241,222,0.28)';
-const BRD   = 'rgba(142,182,155,0.10)';
+const G     = '#2563EB';
+const TEXT  = '#0F172A';
+const DIM   = '#475569';
+const FAINT = '#94A3B8';
+const BRD   = '#E2E8F0';
 const RED   = '#E25C50';
 const AMBER = '#E3A94F';
-const BG    = '#051F20';
+const BG    = '#F8FAFC';
 
 export default function PanicButton({ driverPos, callSign, onPanic }) {
   const [phase, setPhase]       = useState('idle'); // idle | confirm | sent | cooldown

@@ -1,15 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 
-const BG    = '#051F20';
-const SURF  = '#0B2B26';
-const SURF2 = '#163832';
-const G     = '#8EB69B';
-const TEXT  = '#DAF1DE';
-const DIM   = 'rgba(218,241,222,0.50)';
-const FAINT = 'rgba(218,241,222,0.28)';
-const BRD   = 'rgba(142,182,155,0.10)';
-const BRD2  = 'rgba(142,182,155,0.22)';
+const BG    = '#F8FAFC';
+const SURF  = '#FFFFFF';
+const SURF2 = '#F1F5F9';
+const G     = '#2563EB';
+const TEXT  = '#0F172A';
+const DIM   = '#475569';
+const FAINT = '#94A3B8';
+const BRD   = '#E2E8F0';
+const BRD2  = '#E2E8F0';
 const RED   = '#E25C50';
 const AMBER = '#E3A94F';
 
@@ -25,10 +25,10 @@ const PRESETS = [
 ];
 
 const CAT_COLORS = {
-  ops:      { color:G,     bg:'rgba(142,182,155,0.12)' },
+  ops:      { color:G,     bg:'rgba(37,99,235,0.10)' },
   route:    { color:AMBER, bg:'rgba(227,169,79,0.12)' },
-  info:     { color:TEXT,  bg:'rgba(142,182,155,0.07)' },
-  hospital: { color:G,     bg:'rgba(142,182,155,0.10)' },
+  info:     { color:TEXT,  bg:'#F1F5F9' },
+  hospital: { color:G,     bg:'#E2E8F0' },
   critical: { color:RED,   bg:'rgba(226,92,80,0.14)' },
 };
 
@@ -94,7 +94,7 @@ export default function QuickCommsPanel({ ambulances }) {
             <Box key={u} onClick={()=>setUnit(u)} sx={{
               px:'9px', py:'4px', borderRadius:'7px', cursor:'pointer', fontSize:'10.5px', fontWeight:700,
               color: unit===u ? BG : DIM,
-              background: unit===u ? G : 'rgba(142,182,155,0.07)',
+              background: unit===u ? G : '#F1F5F9',
               border:`1px solid ${unit===u ? G : BRD}`,
               transition:'all 0.15s',
             }}>
@@ -169,10 +169,10 @@ export default function QuickCommsPanel({ ambulances }) {
           onClick={() => send(selected!==null ? PRESETS[selected].text : custom)}
           sx={{
             py:'10px', borderRadius:'9px', border:'none',
-            background: sending ? 'rgba(142,182,155,0.12)' : G,
+            background: sending ? 'rgba(37,99,235,0.10)' : G,
             color: sending ? DIM : BG,
             fontWeight:800, fontSize:'12.5px',
-            '&:disabled':{ color:DIM, background:'rgba(142,182,155,0.10)' },
+            '&:disabled':{ color:DIM, background:'#E2E8F0' },
             '&:hover':{ background:'#7AA887' },
             transition:'all 0.2s',
           }}

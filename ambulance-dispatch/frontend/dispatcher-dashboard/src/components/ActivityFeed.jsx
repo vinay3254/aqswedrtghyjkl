@@ -2,21 +2,21 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Box, Typography } from '@mui/material';
 import { dispatchBroadcast, DISPATCH_EVENTS } from '../services/dispatchBroadcast';
 
-const G     = '#8EB69B';
-const TEXT  = '#DAF1DE';
-const DIM   = 'rgba(218,241,222,0.50)';
-const FAINT = 'rgba(218,241,222,0.28)';
-const BRD   = 'rgba(142,182,155,0.10)';
+const G     = '#2563EB';
+const TEXT  = '#0F172A';
+const DIM   = '#475569';
+const FAINT = '#94A3B8';
+const BRD   = '#E2E8F0';
 const RED   = '#E25C50';
 const AMBER = '#E3A94F';
-const BG    = '#051F20';
+const BG    = '#F8FAFC';
 
 const ICON_MAP = {
   SOS:         { symbol:'!', color:RED,   bg:'rgba(226,92,80,0.15)' },
-  DISPATCH:    { symbol:'→', color:G,     bg:'rgba(142,182,155,0.12)' },
+  DISPATCH:    { symbol:'→', color:G,     bg:'rgba(37,99,235,0.10)' },
   STATUS:      { symbol:'↑', color:AMBER, bg:'rgba(227,169,79,0.12)' },
-  RESOLVED:    { symbol:'✓', color:G,     bg:'rgba(142,182,155,0.12)' },
-  AMBULANCE:   { symbol:'🚑', color:G,    bg:'rgba(142,182,155,0.08)' },
+  RESOLVED:    { symbol:'✓', color:G,     bg:'rgba(37,99,235,0.10)' },
+  AMBULANCE:   { symbol:'🚑', color:G,    bg:'#F1F5F9' },
   SYSTEM:      { symbol:'·', color:FAINT, bg:'rgba(142,182,155,0.06)' },
 };
 

@@ -4,9 +4,9 @@ import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material';
 import { DEMO_AMBULANCES } from '../data/demoAmbulances';
 
 /* ── Evergreen tokens ── */
-const G     = '#8EB69B';
-const TEXT  = '#DAF1DE';
-const DIM   = 'rgba(218,241,222,0.45)';
+const G     = '#2563EB';
+const TEXT  = '#0F172A';
+const DIM = '#64748B';
 const SURF  = 'rgba(142,182,155,0.06)';
 const BRD   = 'rgba(142,182,155,0.09)';
 const RED   = '#E25C50';
@@ -50,7 +50,7 @@ function AmbulanceCard({ amb, onSelect, selected, livePos }) {
         background: selected ? 'rgba(142,182,155,0.11)' : SURF,
         border: `1px solid ${selected ? 'rgba(142,182,155,0.35)' : BRD}`,
         transition: 'all 0.15s',
-        '&:hover': { background: 'rgba(142,182,155,0.09)', borderColor: 'rgba(142,182,155,0.22)' },
+        '&:hover': { background: 'rgba(142,182,155,0.09)', borderColor: '#E2E8F0' },
       }}
     >
       {/* Moving pulse dot */}
@@ -65,7 +65,7 @@ function AmbulanceCard({ amb, onSelect, selected, livePos }) {
       {/* Header row */}
       <Box sx={{ display:'flex', alignItems:'center', gap:'8px', mb:'5px' }}>
         {/* Cross icon */}
-        <Box sx={{ width:28, height:28, borderRadius:'8px', background:'rgba(142,182,155,0.10)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+        <Box sx={{ width:28, height:28, borderRadius:'8px', background:'#E2E8F0', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
             <path d="M8 3v10M3 8h10" stroke={G} strokeWidth="2.2" strokeLinecap="round"/>
           </svg>
@@ -179,7 +179,7 @@ export default function LiveTrackingPanel({ ambulances: ext = [], onAmbulanceSel
   return (
     <Box sx={{ height:'100%', display:'flex', flexDirection:'column' }}>
       {/* Panel header */}
-      <Box sx={{ p:'16px', borderBottom:`1px solid rgba(142,182,155,0.10)` }}>
+      <Box sx={{ p:'16px', borderBottom:`1px solid #E2E8F0` }}>
         <Box sx={{ display:'flex', alignItems:'center', justifyContent:'space-between', mb:'12px' }}>
           <Typography sx={{ fontSize:'13.5px', fontWeight:700, color:TEXT }}>Live Fleet</Typography>
           <Box sx={{ display:'flex', alignItems:'center', gap:'5px' }}>
@@ -190,7 +190,7 @@ export default function LiveTrackingPanel({ ambulances: ext = [], onAmbulanceSel
         {/* Fleet mini stats */}
         <Box sx={{ display:'flex', gap:'8px' }}>
           {[{label:'Total',value:display.length,color:TEXT},{label:'Available',value:available,color:G},{label:'Active',value:active,color:'#5BB8F5'}].map(item=>(
-            <Box key={item.label} sx={{ flex:1, background:'rgba(0,0,0,0.25)', borderRadius:'9px', p:'8px', textAlign:'center' }}>
+            <Box key={item.label} sx={{ flex:1, background:'rgba(0,0,0,0.03)', borderRadius:'9px', p:'8px', textAlign:'center' }}>
               <Typography sx={{ fontSize:17, fontWeight:800, color:item.color, lineHeight:1 }}>{item.value}</Typography>
               <Typography sx={{ fontSize:'10px', color:DIM }}>{item.label}</Typography>
             </Box>

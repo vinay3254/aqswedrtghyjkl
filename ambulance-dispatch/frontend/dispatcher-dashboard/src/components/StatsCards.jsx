@@ -1,13 +1,13 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 
-const G = '#8EB69B';
-const TEXT = '#DAF1DE';
-const DIM  = 'rgba(218,241,222,0.45)';
+const G = '#2563EB';
+const TEXT = '#0F172A';
+const DIM = '#64748B';
 const RED  = '#E25C50';
 const AMB  = '#E3A94F';
-const GLASS_BG  = 'rgba(5,31,32,0.78)';
-const GLASS_BRD = 'rgba(142,182,155,0.16)';
+const GLASS_BG = '#FFFFFF';
+const GLASS_BRD = '#E2E8F0';
 
 function StatCard({ label, value, sub, subColor }) {
   return (

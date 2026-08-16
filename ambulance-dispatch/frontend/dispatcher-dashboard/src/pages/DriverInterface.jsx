@@ -10,20 +10,20 @@ import QuickRadioPanel from '../components/QuickRadioPanel';
 import PanicButton from '../components/PanicButton';
 
 /* ── Evergreen tokens ── */
-const BG      = '#051F20';
-const SURFACE = '#0B2B26';
-const SURF2   = '#163832';
-const G       = '#8EB69B';
-const TEXT    = '#DAF1DE';
-const DIM     = 'rgba(218,241,222,0.50)';
-const FAINT   = 'rgba(218,241,222,0.30)';
-const BORDER  = 'rgba(142,182,155,0.10)';
-const BORDER2 = 'rgba(142,182,155,0.20)';
+const BG      = '#F8FAFC';
+const SURFACE = '#FFFFFF';
+const SURF2   = '#F1F5F9';
+const G       = '#2563EB';
+const TEXT    = '#0F172A';
+const DIM     = '#475569';
+const FAINT   = '#94A3B8';
+const BORDER  = '#E2E8F0';
+const BORDER2 = '#E2E8F0';
 const RED     = '#E25C50';
 const AMBER   = '#E3A94F';
 
 const SEV_COLOR = { CRITICAL:RED, HIGH:AMBER, MEDIUM:G, LOW:G };
-const SEV_BG    = { CRITICAL:'rgba(226,92,80,0.16)', HIGH:'rgba(227,169,79,0.16)', MEDIUM:'rgba(142,182,155,0.16)', LOW:'rgba(142,182,155,0.16)' };
+const SEV_BG    = { CRITICAL:'rgba(226,92,80,0.16)', HIGH:'rgba(227,169,79,0.16)', MEDIUM:'#E2E8F0', LOW:'#E2E8F0' };
 
 const MOCK_DRIVER = {
   id:'DRV-001', name:'Rajesh Kumar', callSign:'Alpha-1',
@@ -91,7 +91,7 @@ function ActiveMission({ incident, status, onStatusUpdate }) {
   const idx = STATUS_FLOW.indexOf(status);
 
   return (
-    <Box sx={{ padding:'14px', borderRadius:'14px', background:'linear-gradient(160deg, rgba(142,182,155,0.12), rgba(0,0,0,0.3))', border:'1px solid rgba(142,182,155,0.28)', marginBottom:'14px' }}>
+    <Box sx={{ padding:'14px', borderRadius:'14px', background:'#FFFFFF', border:'1px solid #E2E8F0', boxShadow:'0 2px 8px rgba(0,0,0,0.04)', marginBottom:'14px' }}>
       {/* Mission header */}
       <Box sx={{ display:'flex', alignItems:'center', gap:'10px', mb:'12px' }}>
         <Box sx={{ flex:1 }}>
@@ -129,7 +129,7 @@ function ActiveMission({ incident, status, onStatusUpdate }) {
               <Box sx={{
                 width:24, height:24, borderRadius:'50%',
                 background: done ? G : active ? 'rgba(142,182,155,0.15)' : 'rgba(142,182,155,0.06)',
-                border:`1.5px solid ${done ? G : active ? G : 'rgba(142,182,155,0.25)'}`,
+                border:`1.5px solid ${done ? G : active ? G : '#CBD5E1'}`,
                 color: done ? BG : active ? G : FAINT,
                 display:'flex', alignItems:'center', justifyContent:'center',
                 fontSize:'10.5px', fontWeight:700, transition:'all 0.3s',
@@ -250,7 +250,7 @@ export default function DriverInterface() {
   return (
     <Box sx={{
       minHeight: '100vh',
-      background: '#04060a',
+      background: '#F1F5F9',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -262,7 +262,7 @@ export default function DriverInterface() {
         maxWidth: { xs: '100%', sm: '380px' },
         height: { xs: '100vh', sm: '780px' },
         borderRadius: { xs: 0, sm: '20px' },
-        border: { xs: 'none', sm: '1px solid rgba(142,182,155,0.16)' },
+        border: { xs: 'none', sm: '1px solid #E2E8F0' },
         boxShadow: { xs: 'none', sm: '0 40px 100px rgba(0,0,0,0.55)' },
         background: BG,
         overflow: 'hidden',
@@ -366,7 +366,7 @@ export default function DriverInterface() {
                 incidentPos={
                   missionStatus === 'EN_ROUTE'
                     ? { lat: activeIncident.location_lat || 12.9784, lng: activeIncident.location_lng || 77.6408 }
-                    : selectedHospital || { lat: 28.5672, lng: 77.2100 }
+                    : selectedHospital || { lat: 12.9550, lng: 77.6445 }
                 }
                 speed={speed}
               />
@@ -436,7 +436,7 @@ export default function DriverInterface() {
                       padding:'13px', borderRadius:'13px', marginBottom:'10px', cursor:'pointer',
                       background:'rgba(142,182,155,0.055)', border:`1px solid ${BORDER}`,
                       transition:'all 0.15s',
-                      '&:hover':{ background:'rgba(142,182,155,0.10)' },
+                      '&:hover':{ background:'#E2E8F0' },
                     }}
                   >
                     <Box sx={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'5px' }}>
@@ -494,7 +494,7 @@ export default function DriverInterface() {
 
         {/* ══ FIXED BOTTOM ACTION FOOTER BAR ══ */}
         {alertIncident && (
-          <Box sx={{ position:'absolute', bottom:0, left:0, right:0, padding:'14px 16px', background:'rgba(5,31,32,0.96)', backdropFilter:'blur(10px)', borderTop:`1px solid ${BORDER2}`, display:'flex', gap:'10px', zIndex:10 }}>
+          <Box sx={{ position:'absolute', bottom:0, left:0, right:0, padding:'14px 16px', background:'#FFFFFF', backdropFilter:'blur(10px)', borderTop:`1px solid ${BORDER2}`, display:'flex', gap:'10px', zIndex:10 }}>
             <Button onClick={() => setAlertIncident(null)} sx={{ flex:1, padding:'13px', borderRadius:'11px', border:`1px solid ${RED}`, background:'rgba(226,92,80,0.12)', color:RED, fontWeight:700, fontSize:'13px', '&:hover':{ background:'rgba(226,92,80,0.20)' } }}>
               Decline
             </Button>
@@ -505,7 +505,7 @@ export default function DriverInterface() {
         )}
 
         {activeIncident && !alertIncident && !isComplete && (
-          <Box sx={{ position:'absolute', bottom:0, left:0, right:0, padding:'14px 16px', background:'rgba(5,31,32,0.96)', backdropFilter:'blur(10px)', borderTop:`1px solid ${BORDER2}`, zIndex:10 }}>
+          <Box sx={{ position:'absolute', bottom:0, left:0, right:0, padding:'14px 16px', background:'#FFFFFF', backdropFilter:'blur(10px)', borderTop:`1px solid ${BORDER2}`, zIndex:10 }}>
             {nextAction && (
               <Button fullWidth onClick={() => handleStatusUpdate(nextAction.next)} sx={{ width:'100%', padding:'14px', borderRadius:'11px', border:'none', background:G, color:BG, fontWeight:800, fontSize:'13.5px', marginBottom:'8px', '&:hover':{ background:'#7AA887' } }}>
                 {nextAction.label}

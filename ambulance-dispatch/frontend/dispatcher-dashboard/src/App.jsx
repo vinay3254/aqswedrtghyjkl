@@ -3,20 +3,23 @@ import { HashRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import DashboardPage from './pages/DashboardPage';
 import DriverInterface from './pages/DriverInterface';
+import InsightsPage from './pages/InsightsPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import MobileFleetPage from './pages/MobileFleetPage';
 
-/* ── Evergreen dark theme ── */
+/* ── Light theme ── */
 const theme = createTheme({
   palette: {
-    mode: 'dark',
-    primary:    { main: '#8EB69B' },
-    secondary:  { main: '#8EB69B' },
-    success:    { main: '#8EB69B' },
+    mode: 'light',
+    primary:    { main: '#2563EB' },
+    secondary:  { main: '#2563EB' },
+    success:    { main: '#2563EB' },
     warning:    { main: '#E3A94F' },
     error:      { main: '#E25C50' },
-    info:       { main: '#8EB69B' },
-    background: { default: '#051F20', paper: '#0B2B26' },
-    text:       { primary: '#DAF1DE', secondary: 'rgba(218,241,222,0.55)' },
-    divider:    'rgba(142,182,155,0.10)',
+    info:       { main: '#2563EB' },
+    background: { default: '#F8FAFC', paper: '#FFFFFF' },
+    text:       { primary: '#0F172A', secondary: '#475569' },
+    divider:    '#E2E8F0',
   },
   typography: {
     fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
@@ -42,6 +45,9 @@ export default function App() {
       <HashRouter>
         <Routes>
           <Route path="/driver" element={<DriverInterface />} />
+          <Route path="/insights" element={<InsightsPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/mobile" element={<MobileFleetPage />} />
           <Route path="*" element={<DashboardPage user={DEFAULT_USER} onLogout={() => {}} />} />
         </Routes>
       </HashRouter>

@@ -413,7 +413,7 @@ export default function DispatchPage() {
     <div className="min-h-[calc(100vh-56px)] bg-slate-50">
 
       {/* ARIA Console Header */}
-      <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between flex-wrap gap-3">
+      <div className="bg-white border-b border-slate-200 text-slate-800 px-6 py-4 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-red-600 flex items-center justify-center">
             <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -422,21 +422,21 @@ export default function DispatchPage() {
             </svg>
           </div>
           <div>
-            <p className="font-bold text-white text-base tracking-wide">ARIA</p>
-            <p className="text-xs text-slate-400">Automated Response & Intelligence Agent · Ambulance Dispatch</p>
+            <p className="font-bold text-slate-800 text-base tracking-wide">ARIA</p>
+            <p className="text-xs text-slate-500">Automated Response & Intelligence Agent · Ambulance Dispatch</p>
           </div>
           <div className="flex items-center gap-1.5 ml-4">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs text-emerald-400 font-semibold">ONLINE</span>
+            <span className="text-xs text-emerald-600 font-semibold">ONLINE</span>
           </div>
         </div>
-        <div className="flex items-center gap-3 text-xs text-slate-400">
+        <div className="flex items-center gap-3 text-xs text-slate-500">
           <span>{ambulances.filter((a) => a.status === "available").length} units available</span>
           <span>·</span>
           <span>{history.filter((d) => d.status === "active").length} active dispatches</span>
           {(ambulances.length === 0 || hospitals.length === 0) && (
             <button onClick={handleSeed}
-              className="ml-2 bg-slate-700 hover:bg-slate-600 text-white text-xs px-3 py-1.5 rounded-lg transition-colors font-semibold">
+              className="ml-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3 py-1.5 rounded-lg transition-colors font-semibold border border-slate-200">
               Load Demo Data
             </button>
           )}
@@ -565,10 +565,10 @@ export default function DispatchPage() {
           {/* ── Center: ARIA Response ── */}
           <div className="space-y-4">
             {dispatching && (
-              <div className="bg-slate-900 rounded-xl p-8 text-center space-y-3">
-                <div className="w-12 h-12 border-4 border-slate-700 border-t-red-500 rounded-full animate-spin mx-auto" />
-                <p className="text-white font-bold">ARIA is processing the emergency…</p>
-                <p className="text-slate-400 text-sm">Analyzing conditions · Selecting unit · Allocating hospital</p>
+              <div className="bg-white border border-slate-200 rounded-xl p-8 text-center space-y-3">
+                <div className="w-12 h-12 border-4 border-slate-200 border-t-red-500 rounded-full animate-spin mx-auto" />
+                <p className="text-slate-800 font-bold">ARIA is processing the emergency…</p>
+                <p className="text-slate-500 text-sm">Analyzing conditions · Selecting unit · Allocating hospital</p>
               </div>
             )}
 

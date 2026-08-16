@@ -2,15 +2,15 @@ import React, { useState } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import { Close } from '@mui/icons-material';
 
-const BG    = '#051F20';
-const SURF  = '#0B2B26';
-const SURF2 = '#163832';
-const G     = '#8EB69B';
-const TEXT  = '#DAF1DE';
-const DIM   = 'rgba(218,241,222,0.50)';
-const FAINT = 'rgba(218,241,222,0.28)';
-const BRD   = 'rgba(142,182,155,0.10)';
-const BRD2  = 'rgba(142,182,155,0.22)';
+const BG    = '#F8FAFC';
+const SURF  = '#FFFFFF';
+const SURF2 = '#F1F5F9';
+const G     = '#2563EB';
+const TEXT  = '#0F172A';
+const DIM   = '#475569';
+const FAINT = '#94A3B8';
+const BRD   = '#E2E8F0';
+const BRD2  = '#E2E8F0';
 const RED   = '#E25C50';
 const AMBER = '#E3A94F';
 
@@ -105,11 +105,11 @@ export default function ShiftReportModal({ open, onClose, stats, incidents, ambu
           <Box sx={{ display:'flex', alignItems:'center', gap:'8px' }}>
             <Button
               onClick={handleExport}
-              sx={{ px:'14px', py:'7px', borderRadius:'9px', border:`1px solid ${BRD2}`, color: exported ? G : TEXT, fontSize:'12px', fontWeight:600, '&:hover':{ background:'rgba(142,182,155,0.08)' }, transition:'color 0.2s' }}
+              sx={{ px:'14px', py:'7px', borderRadius:'9px', border:`1px solid ${BRD2}`, color: exported ? G : TEXT, fontSize:'12px', fontWeight:600, '&:hover':{ background:'#F1F5F9' }, transition:'color 0.2s' }}
             >
               {exported ? '✓ Exported' : 'Export'}
             </Button>
-            <Box onClick={onClose} sx={{ width:30, height:30, borderRadius:'8px', background:'rgba(142,182,155,0.08)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', '&:hover':{ background:'rgba(142,182,155,0.14)' } }}>
+            <Box onClick={onClose} sx={{ width:30, height:30, borderRadius:'8px', background:'#F1F5F9', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', '&:hover':{ background:'rgba(142,182,155,0.14)' } }}>
               <Close sx={{ fontSize:15, color:DIM }} />
             </Box>
           </Box>
@@ -156,7 +156,7 @@ export default function ShiftReportModal({ open, onClose, stats, incidents, ambu
                   <Typography sx={{ fontSize:'12px', fontWeight:700, color:TEXT }}>{b.count}</Typography>
                 </Box>
               </Box>
-              <Box sx={{ height:3, borderRadius:2, background:'rgba(142,182,155,0.10)' }}>
+              <Box sx={{ height:3, borderRadius:2, background:'#E2E8F0' }}>
                 <Box sx={{ height:'100%', borderRadius:2, background:SEV_COLOR[b.sev], width:`${(b.count/report.totalIncidents)*100}%`, transition:'width 0.5s ease' }} />
               </Box>
             </Box>

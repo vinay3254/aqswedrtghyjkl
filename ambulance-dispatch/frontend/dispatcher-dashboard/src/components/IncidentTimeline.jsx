@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography } from '@mui/material';
 import { Close } from '@mui/icons-material';
 
-const BG    = '#051F20';
-const SURF  = '#0B2B26';
-const SURF2 = '#163832';
-const G     = '#8EB69B';
-const TEXT  = '#DAF1DE';
-const DIM   = 'rgba(218,241,222,0.50)';
-const FAINT = 'rgba(218,241,222,0.28)';
-const BRD   = 'rgba(142,182,155,0.10)';
-const BRD2  = 'rgba(142,182,155,0.22)';
+const BG    = '#F8FAFC';
+const SURF  = '#FFFFFF';
+const SURF2 = '#F1F5F9';
+const G     = '#2563EB';
+const TEXT  = '#0F172A';
+const DIM   = '#475569';
+const FAINT = '#94A3B8';
+const BRD   = '#E2E8F0';
+const BRD2  = '#E2E8F0';
 const RED   = '#E25C50';
 const AMBER = '#E3A94F';
 
@@ -18,15 +18,15 @@ const STATUS_META = {
   CREATED:      { label:'Incident Created',    icon:'!',  color:RED,   bg:'rgba(226,92,80,0.16)' },
   ACKNOWLEDGED: { label:'Acknowledged',        icon:'✓',  color:AMBER, bg:'rgba(227,169,79,0.14)' },
   DISPATCHED:   { label:'Unit Dispatched',     icon:'→',  color:G,     bg:'rgba(142,182,155,0.14)' },
-  EN_ROUTE:     { label:'En Route to Scene',   icon:'🚑', color:G,     bg:'rgba(142,182,155,0.10)' },
-  ON_SCENE:     { label:'Arrived On Scene',    icon:'📍', color:G,     bg:'rgba(142,182,155,0.10)' },
-  TRANSPORTING: { label:'Patient Transported', icon:'🏥', color:G,     bg:'rgba(142,182,155,0.10)' },
+  EN_ROUTE:     { label:'En Route to Scene',   icon:'🚑', color:G,     bg:'#E2E8F0' },
+  ON_SCENE:     { label:'Arrived On Scene',    icon:'📍', color:G,     bg:'#E2E8F0' },
+  TRANSPORTING: { label:'Patient Transported', icon:'🏥', color:G,     bg:'#E2E8F0' },
   RESOLVED:     { label:'Incident Resolved',   icon:'★',  color:G,     bg:'rgba(142,182,155,0.14)' },
   CANCELLED:    { label:'Cancelled',           icon:'✕',  color:FAINT, bg:'rgba(142,182,155,0.06)' },
 };
 
 const SEV_COLOR = { CRITICAL:RED, HIGH:AMBER, MEDIUM:G, LOW:G };
-const SEV_BG    = { CRITICAL:'rgba(226,92,80,0.14)', HIGH:'rgba(227,169,79,0.14)', MEDIUM:'rgba(142,182,155,0.14)', LOW:'rgba(142,182,155,0.10)' };
+const SEV_BG    = { CRITICAL:'rgba(226,92,80,0.14)', HIGH:'rgba(227,169,79,0.14)', MEDIUM:'rgba(142,182,155,0.14)', LOW:'#E2E8F0' };
 
 function buildTimeline(incident) {
   if (!incident) return [];
@@ -106,7 +106,7 @@ export default function IncidentTimeline({ incident, onClose }) {
             <Box sx={{ fontSize:'9.5px', fontWeight:700, px:'8px', py:'2px', borderRadius:'6px', color:SEV_COLOR[sev], background:SEV_BG[sev] }}>
               {sev}
             </Box>
-            <Box onClick={onClose} sx={{ width:26, height:26, borderRadius:'7px', background:'rgba(142,182,155,0.08)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', '&:hover':{ background:'rgba(142,182,155,0.15)' } }}>
+            <Box onClick={onClose} sx={{ width:26, height:26, borderRadius:'7px', background:'#F1F5F9', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', '&:hover':{ background:'rgba(142,182,155,0.15)' } }}>
               <Close sx={{ fontSize:13, color:DIM }} />
             </Box>
           </Box>
@@ -148,7 +148,7 @@ export default function IncidentTimeline({ incident, onClose }) {
               <Box sx={{ display:'flex', flexDirection:'column', alignItems:'center', width:24, flexShrink:0 }}>
                 <Box sx={{
                   width:24, height:24, borderRadius:'50%', flexShrink:0,
-                  background: isLast ? m.bg : 'rgba(142,182,155,0.08)',
+                  background: isLast ? m.bg : '#F1F5F9',
                   border:`1.5px solid ${isLast ? m.color : 'rgba(142,182,155,0.18)'}`,
                   display:'flex', alignItems:'center', justifyContent:'center',
                   fontSize:'10px', color: isLast ? m.color : FAINT,
@@ -157,7 +157,7 @@ export default function IncidentTimeline({ incident, onClose }) {
                 }}>
                   {m.icon}
                 </Box>
-                {!isLast && <Box sx={{ width:1.5, flex:1, background:'rgba(142,182,155,0.12)', my:'3px' }} />}
+                {!isLast && <Box sx={{ width:1.5, flex:1, background:'rgba(37,99,235,0.10)', my:'3px' }} />}
               </Box>
 
               {/* Content */}
