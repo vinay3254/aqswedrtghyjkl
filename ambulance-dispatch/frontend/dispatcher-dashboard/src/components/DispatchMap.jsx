@@ -3,8 +3,33 @@ import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Box } from '@mui/material';
 
-// Free, Keyless CARTO Voyager GL Vector Style (Google Maps-like vector street design)
-const VECTOR_STYLE_URL = 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json';
+// CARTO Voyager High-DPI Style (Google Maps aesthetic, instant keyless load)
+const CARTO_VOYAGER_STYLE = {
+  version: 8,
+  sources: {
+    'carto-voyager': {
+      type: 'raster',
+      tiles: [
+        'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+        'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+        'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+        'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+      ],
+      tileSize: 256,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    },
+  },
+  layers: [
+    {
+      id: 'carto-voyager-layer',
+      type: 'raster',
+      source: 'carto-voyager',
+      minzoom: 0,
+      maxzoom: 22,
+    },
+  ],
+};
+
 const BENGALURU_LNG_LAT = [77.5946, 12.9716]; // [lng, lat] GeoJSON standard
 
 export default function DispatchMap({
@@ -28,7 +53,7 @@ export default function DispatchMap({
 
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
-      style: VECTOR_STYLE_URL,
+      style: CARTO_VOYAGER_STYLE,
       center: BENGALURU_LNG_LAT,
       zoom: 12,
       pitch: 0,
