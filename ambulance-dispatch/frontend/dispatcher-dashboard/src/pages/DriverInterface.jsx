@@ -170,7 +170,7 @@ export default function DriverInterface() {
   const [vitalsSubmitted, setVitalsSubmitted] = useState(false);
   const [selectedHospital, setSelectedHospital] = useState(null);
 
-  const [gpsMode, setGpsMode]                 = useState('simulated'); // 'simulated' | 'live_device'
+  const [gpsMode, setGpsMode]                 = useState('live_device'); // 'live_device' (default) | 'simulated'
   const [isBackgrounded, setIsBackgrounded]   = useState(false);
   const [routeInfo, setRouteInfo]             = useState({ distanceKm: '0.0', etaMins: 0 });
 
@@ -187,7 +187,15 @@ export default function DriverInterface() {
 
   /* ── Real Mobile Geolocation watchPosition() ── */
   useEffect(() => {
-    if (gpsMode !== 'live_device' || !navigator.geolocation) return;
+    if (gpsMode !== 'live_device') return;
+
+    if (!navigator.geolocation) {
+      setToast({ msg: '⚠️ Geolocation is not supported by your browser. Falling back to Simulation Mode.', sev: 'warning' });
+      setGpsMode('simulated');
+      return;
+    }
+
+    console.log('[Driver GPS] Requesting live device geolocation watchPosition()...');
 
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
@@ -195,6 +203,8 @@ export default function DriverInterface() {
         driverPosRef.current = coords;
         setDriverPos(coords);
         if (pos.coords.speed != null) setSpeed(Math.round(pos.coords.speed * 3.6));
+
+        console.log('[Driver GPS] Live Device GPS ping received:', coords, 'Accuracy:', Math.round(pos.coords.accuracy), 'm');
 
         // Push live GPS update to backend / broadcast
         dispatchBroadcast.send(DISPATCH_EVENTS.AMBULANCE_LOCATION, {
@@ -208,11 +218,12 @@ export default function DriverInterface() {
         });
       },
       (err) => {
-        console.warn('Geolocation watch error:', err);
-        setToast({ msg: `GPS permission/signal error (${err.message}), switched to smooth route mode`, sev: 'warning' });
+        console.warn('[Driver GPS] Geolocation watch error:', err);
+        const reason = err.code === 1 ? 'Location permission denied' : err.code === 2 ? 'Location position unavailable' : 'Location request timed out';
+        setToast({ msg: `⚠️ ${reason}. Switched to Smooth Simulation Mode. Click badge to retry.`, sev: 'warning' });
         setGpsMode('simulated');
       },
-      { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
+      { enableHighAccuracy: true, maximumAge: 2000, timeout: 8000 }
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
