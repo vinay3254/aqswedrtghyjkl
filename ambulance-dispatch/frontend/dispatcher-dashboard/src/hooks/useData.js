@@ -4,11 +4,11 @@ import socketService from '../services/socket';
 
 /* ── Mock fallback data (used when backend is offline) ───────── */
 const MOCK_AMBULANCES = [
-  { id: 'AMB-001', call_sign: 'Alpha-1',   vehicle_number: 'KA-01-A-0001', type: 'ALS', status: 'EN_ROUTE',     latitude: 12.9716, longitude: 77.5946, driver: 'Rajesh Kumar', speed: 58,  battery: 87, signal: 4, destination: 'Indiranagar Incident', eta: '4 min' },
-  { id: 'AMB-002', call_sign: 'Bravo-2',   vehicle_number: 'KA-01-B-0002', type: 'BLS', status: 'AVAILABLE',    latitude: 12.9352, longitude: 77.6245, driver: 'Suresh Patel',  speed: 0,   battery: 100,signal: 5, destination: null, eta: null },
-  { id: 'AMB-003', call_sign: 'Charlie-3', vehicle_number: 'KA-01-C-0003', type: 'ALS', status: 'TRANSPORTING', latitude: 13.0459, longitude: 77.5967, driver: 'Priya Singh',   speed: 42,  battery: 62, signal: 3, destination: 'Manipal Hospital', eta: '7 min' },
-  { id: 'AMB-004', call_sign: 'Delta-4',   vehicle_number: 'KA-01-D-0004', type: 'BLS', status: 'ON_SCENE',     latitude: 12.9698, longitude: 77.7200, driver: 'Amit Sharma',   speed: 0,   battery: 45, signal: 4, destination: 'Whitefield Incident', eta: 'On scene' },
-  { id: 'AMB-005', call_sign: 'Echo-5',    vehicle_number: 'KA-01-E-0005', type: 'ALS', status: 'AVAILABLE',    latitude: 12.9308, longitude: 77.5838, driver: 'Neha Verma',    speed: 0,   battery: 95, signal: 5, destination: null, eta: null },
+  { id: 'AMB-001', call_sign: 'Alpha-1',   vehicle_number: 'KA-01-A-0001', type: 'ALS', status: 'AVAILABLE',    latitude: 12.9716, longitude: 77.5946, driver: 'Rajesh Kumar', speed: 0,  battery: 87, signal: 4, destination: null, eta: null },
+  { id: 'AMB-002', call_sign: 'Bravo-2',   vehicle_number: 'KA-01-B-0002', type: 'BLS', status: 'AVAILABLE',    latitude: 12.9352, longitude: 77.6245, driver: 'Suresh Patel',  speed: 0,  battery: 100,signal: 5, destination: null, eta: null },
+  { id: 'AMB-003', call_sign: 'Charlie-3', vehicle_number: 'KA-01-C-0003', type: 'ALS', status: 'AVAILABLE',    latitude: 13.0359, longitude: 77.5967, driver: 'Priya Singh',   speed: 0,  battery: 62, signal: 3, destination: null, eta: null },
+  { id: 'AMB-004', call_sign: 'Delta-4',   vehicle_number: 'KA-01-D-0004', type: 'BLS', status: 'AVAILABLE',    latitude: 12.9698, longitude: 77.7200, driver: 'Amit Sharma',   speed: 0,  battery: 45, signal: 4, destination: null, eta: null },
+  { id: 'AMB-005', call_sign: 'Echo-5',    vehicle_number: 'KA-01-E-0005', type: 'ALS', status: 'AVAILABLE',    latitude: 12.9308, longitude: 77.5838, driver: 'Neha Verma',    speed: 0,  battery: 95, signal: 5, destination: null, eta: null },
 ];
 
 const MOCK_HOSPITALS = [
@@ -19,62 +19,42 @@ const MOCK_HOSPITALS = [
 
 const MOCK_INCIDENTS = [
   {
-    id: 'INC-001', incident_type: 'Cardiac Arrest', severity: 'CRITICAL', status: 'REPORTED',
+    id: 'INC-001', incident_type: 'Cardiac Arrest', severity: 'CRITICAL', status: 'PENDING',
     location_address: 'Indiranagar, Bangalore', location_lat: 12.9784, location_lng: 77.6408,
     caller_name: 'Rahul Sharma', caller_phone: '+91 98765 43210',
-    description: 'Patient unconscious, not breathing. CPR in progress.', patients_count: 1,
+    description: 'Patient unconscious, severe chest pain. Immediate ALS required.', patients_count: 1,
     is_sos: false, created_at: new Date(Date.now() - 3 * 60000).toISOString(),
   },
   {
-    id: 'INC-002', incident_type: 'Road Accident', severity: 'HIGH', status: 'REPORTED',
+    id: 'INC-002', incident_type: 'Road Accident', severity: 'HIGH', status: 'PENDING',
     location_address: 'Outer Ring Road, Bellandur, Bangalore', location_lat: 12.9263, location_lng: 77.6761,
-    caller_name: 'Police Control', caller_phone: '+91 100',
-    description: 'Multi-vehicle collision, 3 injured, one trapped.', patients_count: 3,
+    caller_name: 'Traffic Police Patrol', caller_phone: '+91 100',
+    description: 'Multi-vehicle collision, 3 injured, trauma bay needed.', patients_count: 3,
     is_sos: false, created_at: new Date(Date.now() - 7 * 60000).toISOString(),
   },
   {
-    id: 'INC-003', incident_type: 'Fire Emergency', severity: 'HIGH', status: 'REPORTED',
+    id: 'INC-003', incident_type: 'Fire Emergency', severity: 'HIGH', status: 'PENDING',
     location_address: 'Koramangala 5th Block, Bangalore', location_lat: 12.9352, location_lng: 77.6245,
-    caller_name: 'Fire Brigade', caller_phone: '+91 101',
-    description: 'Building fire, 2 persons with smoke inhalation.', patients_count: 2,
+    caller_name: 'Fire Control', caller_phone: '+91 101',
+    description: 'Commercial complex fire, smoke inhalation.', patients_count: 2,
     is_sos: false, created_at: new Date(Date.now() - 12 * 60000).toISOString(),
   },
 ];
 
 const MOCK_STATS = {
   active_incidents: 3,
-  available_ambulances: 2,
+  available_ambulances: 5,
   total_ambulances: 5,
   hospitals_in_network: 3,
-  avg_response_time_minutes: 8.5,
+  avg_response_time_minutes: 7.9,
   incidents_today: 3,
   response_time_improvement: 23,
-};
-
-/* ── Live GPS simulation for mock ambulances ─────────────────── */
-// Each moving ambulance gets a fixed heading so it moves in a clear direction
-const HEADINGS = {
-  'AMB-001': { dlat:  0.0007, dlng:  0.0005 }, // heading NE toward Indiranagar
-  'AMB-003': { dlat: -0.0008, dlng:  0.0004 }, // heading S toward Manipal Hospital
 };
 
 let livePositions = {};
 MOCK_AMBULANCES.forEach(a => {
   livePositions[a.id] = { lat: a.latitude, lng: a.longitude };
 });
-
-setInterval(() => {
-  MOCK_AMBULANCES.forEach(a => {
-    if (['EN_ROUTE', 'TRANSPORTING'].includes(a.status)) {
-      const h = HEADINGS[a.id] || { dlat: 0.0005, dlng: 0.0005 };
-      // Add small random jitter on top of directional movement
-      livePositions[a.id] = {
-        lat: livePositions[a.id].lat + h.dlat + (Math.random() - 0.5) * 0.0002,
-        lng: livePositions[a.id].lng + h.dlng + (Math.random() - 0.5) * 0.0002,
-      };
-    }
-  });
-}, 1500);
 
 /* ── Hooks ───────────────────────────────────────────────────── */
 

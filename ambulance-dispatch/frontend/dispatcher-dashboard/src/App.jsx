@@ -6,6 +6,7 @@ import DriverInterface from './pages/DriverInterface';
 import InsightsPage from './pages/InsightsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import MobileFleetPage from './pages/MobileFleetPage';
+import CallerVoicePortalPage from './pages/CallerVoicePortalPage';
 
 /* ── Light theme ── */
 const theme = createTheme({
@@ -45,6 +46,7 @@ export default function App() {
       <HashRouter>
         <Routes>
           <Route path="/driver" element={<DriverInterface />} />
+          <Route path="/caller" element={<CallerVoicePortalPage />} />
           <Route path="/insights" element={<InsightsPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/mobile" element={<MobileFleetPage />} />

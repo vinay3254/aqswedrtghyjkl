@@ -158,8 +158,8 @@ export default function AnalyticsPage() {
                 </Box>
                 <Chip label="SLA THRESHOLD: 8.0 MINS" size="small" sx={{ bgcolor: 'rgba(37,99,235,0.1)', color: G, fontWeight: 700, fontSize: 10 }} />
               </Box>
-              <Box sx={{ width: '100%', height: 260 }}>
-                <ResponsiveContainer>
+              <Box sx={{ width: '100%', height: 260, minHeight: 260, minWidth: 0 }}>
+                <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={SLA_HOURLY} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
                     <XAxis dataKey="hour" stroke="#94A3B8" fontSize={11} tickLine={false} />
                     <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} domain={[0, 12]} />
@@ -179,8 +179,8 @@ export default function AnalyticsPage() {
             <CardContent sx={{ p: 3 }}>
               <Typography sx={{ fontWeight: 800, fontSize: 15, color: TEXT }}>Emergency Volume Breakdown</Typography>
               <Typography sx={{ fontSize: 11.5, color: DIM, mb: 1.5 }}>Distribution by clinical category</Typography>
-              <Box sx={{ width: '100%', height: 200 }}>
-                <ResponsiveContainer>
+              <Box sx={{ width: '100%', height: 200, minHeight: 200, minWidth: 0 }}>
+                <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={CATEGORY_DATA} innerRadius={50} outerRadius={75} paddingAngle={4} dataKey="value">
                       {CATEGORY_DATA.map((entry, index) => (

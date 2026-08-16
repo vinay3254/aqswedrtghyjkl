@@ -13,6 +13,7 @@ export default function TopNav() {
 
   const navItems = [
     { label: 'Live Command', path: '/' },
+    { label: 'Caller Portal 🎙️', path: '/caller' },
     { label: 'AI Insights', path: '/insights' },
     { label: 'Analytics & SLAs', path: '/analytics' },
     { label: 'Fleet Telemetry', path: '/mobile' },
