@@ -7,7 +7,7 @@ import {
 } from '@mui/material';
 import {
   Warning, Close, MyLocation, Phone, Person,
-  LocalHospital, CheckCircle
+  LocalHospital, CheckCircle, GpsFixed, ShareLocation
 } from '@mui/icons-material';
 
 const INCIDENT_TYPES = [
@@ -39,8 +39,8 @@ export default function SOSAlertModal({ open, onClose, onSOSCreated }) {
     incidentType: '',
     severity: 'CRITICAL',
     locationAddress: '',
-    locationLat: '12.9716',
-    locationLng: '77.5946',
+    locationLat: '',
+    locationLng: '',
     callerName: '',
     callerPhone: '',
     description: '',
@@ -48,8 +48,90 @@ export default function SOSAlertModal({ open, onClose, onSOSCreated }) {
   });
   const [errors, setErrors] = useState({});
   const [gettingLocation, setGettingLocation] = useState(false);
-  const [locationStatus, setLocationStatus] = useState('');
+  const [locationStatus, setLocationStatus] = useState(''); // 'fetching' | 'gps' | 'ip' | ''
 
+  // ── Reverse Geocoding Helper ──
+  const reverseGeocode = async (lat, lng) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`,
+        { headers: { 'Accept-Language': 'en' } }
+      );
+      const data = await res.json();
+      const a = data.address || {};
+
+      const road          = a.road || a.pedestrian || a.footway || a.path || '';
+      const building      = a.building || a.amenity || a.shop || a.tourism || '';
+      const neighbourhood = a.neighbourhood || a.suburb || a.quarter || a.residential || '';
+      const city          = a.city || a.town || a.village || a.municipality || a.county || 'Bengaluru';
+      const state         = a.state || '';
+
+      const parts = [building, road, neighbourhood, city, state]
+        .map(s => s.trim())
+        .filter(Boolean);
+
+      const unique = parts.filter((v, i) => v !== parts[i - 1]);
+      return unique.length > 0 ? unique.join(', ') : `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    } catch {
+      return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    }
+  };
+
+  // ── IP-based fallback ──
+  const getLocationByIP = async () => {
+    try {
+      const res = await fetch('https://ipapi.co/json/');
+      const data = await res.json();
+      if (data.latitude && data.longitude) {
+        return { lat: parseFloat(data.latitude), lng: parseFloat(data.longitude) };
+      }
+    } catch { /* silent */ }
+    return { lat: 12.9716, lng: 77.5946 }; // Bengaluru central fallback
+  };
+
+  // ── Live Geolocation Acquisition ──
+  const handleGetLocation = () => {
+    setGettingLocation(true);
+    setLocationStatus('fetching');
+
+    const applyIPFallback = async () => {
+      const { lat, lng } = await getLocationByIP();
+      const address = await reverseGeocode(lat, lng);
+      setForm(f => ({
+        ...f,
+        locationLat: lat.toFixed(5),
+        locationLng: lng.toFixed(5),
+        locationAddress: address,
+      }));
+      setGettingLocation(false);
+      setLocationStatus('ip');
+    };
+
+    if (!navigator.geolocation) {
+      applyIPFallback();
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const address = await reverseGeocode(lat, lng);
+        setForm(f => ({
+          ...f,
+          locationLat: lat.toFixed(5),
+          locationLng: lng.toFixed(5),
+          locationAddress: address,
+        }));
+        setGettingLocation(false);
+        setLocationStatus('gps');
+      },
+      () => applyIPFallback(),
+      { timeout: 8000, maximumAge: 0, enableHighAccuracy: true }
+    );
+  };
+
+  // ── Auto-acquire live location when modal opens ──
   useEffect(() => {
     if (open) {
       setStep(1);
@@ -57,15 +139,16 @@ export default function SOSAlertModal({ open, onClose, onSOSCreated }) {
       setForm({
         incidentType: 'Cardiac Arrest',
         severity: 'CRITICAL',
-        locationAddress: 'Palace Grounds, Jayamahal, Bengaluru',
-        locationLat: '12.9982',
-        locationLng: '77.5921',
-        callerName: 'Security Control',
+        locationAddress: '',
+        locationLat: '',
+        locationLng: '',
+        callerName: 'Dispatch Command',
         callerPhone: '+91 98450 11223',
-        description: 'Critical emergency SOS triggered via command portal',
+        description: 'Emergency live location SOS broadcast',
         patientsCount: 1,
       });
       setErrors({});
+      handleGetLocation();
     }
   }, [open]);
 
@@ -86,7 +169,7 @@ export default function SOSAlertModal({ open, onClose, onSOSCreated }) {
             lngVal = 77.5946;
           }
 
-          // Robust check for accidental [lng, lat] coordinate inversion
+          // Protect against coordinate inversion
           if (latVal > 50 && lngVal < 50) {
             const temp = latVal;
             latVal = lngVal;
@@ -98,27 +181,28 @@ export default function SOSAlertModal({ open, onClose, onSOSCreated }) {
             incident_type: form.incidentType || 'SOS Emergency',
             severity: form.severity || 'CRITICAL',
             status: 'PENDING',
-            location_address: form.locationAddress || 'Bengaluru',
+            location_address: form.locationAddress || 'Live GPS Location',
             location_lat: latVal,
             location_lng: lngVal,
             latitude: latVal,
             longitude: lngVal,
             caller_name: form.callerName || 'Emergency Caller',
             caller_phone: form.callerPhone || '+91 98765 43210',
-            description: form.description || 'Emergency SOS broadcast',
+            description: form.description || 'Live GPS SOS Alert',
             patients_count: form.patientsCount || 1,
             created_at: new Date().toISOString(),
             is_sos: true,
+            is_live_gps: locationStatus === 'gps',
           };
 
-          console.log('[SOS Alert] Created Incident Object with Validated Coordinates:', newIncident);
+          console.log('[SOS Alert] Created Incident Object with Live Location:', newIncident);
           onSOSCreated?.(newIncident);
           setStep(3);
         }
       }, 35);
       return () => clearInterval(timer);
     }
-  }, [step, form, onSOSCreated]);
+  }, [step, form, onSOSCreated, locationStatus]);
 
   const validate = () => {
     const e = {};
@@ -134,6 +218,7 @@ export default function SOSAlertModal({ open, onClose, onSOSCreated }) {
   };
 
   const handleSelectLandmark = (lm) => {
+    setLocationStatus('preset');
     setForm(f => ({
       ...f,
       locationAddress: lm.name,
@@ -181,7 +266,7 @@ export default function SOSAlertModal({ open, onClose, onSOSCreated }) {
             🚨 Broadcast Emergency SOS Alert
           </Typography>
           <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '11px' }}>
-            Dispatches nearest ambulance unit & creates high-priority map incident
+            Auto-detects live GPS location & dispatches nearest ambulance
           </Typography>
         </Box>
         {step === 1 && (
@@ -248,10 +333,106 @@ export default function SOSAlertModal({ open, onClose, onSOSCreated }) {
                 </Box>
               </Grid>
 
-              {/* Bengaluru Quick Landmark Presets */}
+              <Grid item xs={12}>
+                <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
+              </Grid>
+
+              {/* ── Live GPS Location Sharing Input Field ── */}
+              <Grid item xs={12}>
+                <Typography variant="caption" sx={{ color: '#94A3B8', mb: 0.5, display: 'block', fontWeight: 700 }}>
+                  Live Incident Location
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <TextField
+                    fullWidth label="Location / Address" size="small"
+                    value={gettingLocation ? '' : form.locationAddress}
+                    onChange={e => setForm(f => ({ ...f, locationAddress: e.target.value }))}
+                    error={!!errors.locationAddress}
+                    helperText={errors.locationAddress}
+                    placeholder={gettingLocation ? '📡 Acquiring your live GPS coordinates…' : 'Street, Landmark, City...'}
+                    disabled={gettingLocation}
+                    InputLabelProps={{ sx: { color: '#94A3B8' } }}
+                    InputProps={{
+                      sx: {
+                        color: 'white',
+                        '& fieldset': {
+                          borderColor: gettingLocation
+                            ? '#3B82F6'
+                            : locationStatus === 'gps'
+                            ? '#10B981'
+                            : locationStatus === 'ip'
+                            ? '#F59E0B'
+                            : '#334155',
+                        },
+                        '& input::placeholder': { color: gettingLocation ? '#60A5FA' : undefined },
+                      },
+                      startAdornment: gettingLocation ? (
+                        <MyLocation sx={{
+                          color: '#60A5FA', mr: 1, fontSize: 18,
+                          animation: 'spin 1.2s linear infinite',
+                          '@keyframes spin': { '0%': { transform: 'rotate(0deg)' }, '100%': { transform: 'rotate(360deg)' } }
+                        }} />
+                      ) : locationStatus === 'gps' ? (
+                        <GpsFixed sx={{ color: '#10B981', mr: 1, fontSize: 18 }} />
+                      ) : locationStatus === 'ip' ? (
+                        <MyLocation sx={{ color: '#F59E0B', mr: 1, fontSize: 18 }} />
+                      ) : null,
+                    }}
+                  />
+                  <Button
+                    variant="contained" size="small" onClick={handleGetLocation}
+                    disabled={gettingLocation}
+                    title="Re-acquire Live GPS Location"
+                    startIcon={<ShareLocation />}
+                    sx={{
+                      bgcolor: '#2563EB', color: 'white', fontWeight: 700, px: 2, minWidth: 140,
+                      textTransform: 'none', fontSize: '11.5px',
+                      '&:hover': { bgcolor: '#1D4ED8' }
+                    }}
+                  >
+                    {gettingLocation ? 'Locating...' : 'Share Live GPS'}
+                  </Button>
+                </Box>
+
+                {/* Location Status Feedback Badges */}
+                {locationStatus === 'gps' && !gettingLocation && (
+                  <Typography variant="caption" sx={{ color: '#10B981', mt: 0.6, display: 'flex', alignItems: 'center', gap: 0.5, fontWeight: 700 }}>
+                    📍 Live Device GPS Locked — Coordinates accurate to ~10m
+                  </Typography>
+                )}
+                {locationStatus === 'ip' && !gettingLocation && (
+                  <Typography variant="caption" sx={{ color: '#F59E0B', mt: 0.6, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    📶 Located via Network IP (Allow browser location for exact GPS pin)
+                  </Typography>
+                )}
+              </Grid>
+
+              {/* Coordinates */}
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth label="Latitude" size="small"
+                  value={form.locationLat}
+                  onChange={e => setForm(f => ({ ...f, locationLat: e.target.value }))}
+                  placeholder="12.9716"
+                  InputLabelProps={{ sx: { color: '#94A3B8' } }}
+                  InputProps={{ sx: { color: 'white', '& fieldset': { borderColor: '#334155' } } }}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth label="Longitude" size="small"
+                  value={form.locationLng}
+                  onChange={e => setForm(f => ({ ...f, locationLng: e.target.value }))}
+                  placeholder="77.5946"
+                  InputLabelProps={{ sx: { color: '#94A3B8' } }}
+                  InputProps={{ sx: { color: 'white', '& fieldset': { borderColor: '#334155' } } }}
+                />
+              </Grid>
+
+              {/* Landmark Presets */}
               <Grid item xs={12}>
                 <Typography variant="caption" sx={{ color: '#94A3B8', mb: 0.8, display: 'block', fontWeight: 700 }}>
-                  Quick Bengaluru Landmarks:
+                  Or Choose Landmark Preset:
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 0.8, flexWrap: 'wrap' }}>
                   {BENGALURU_QUICK_LANDMARKS.map(lm => (
@@ -274,39 +455,6 @@ export default function SOSAlertModal({ open, onClose, onSOSCreated }) {
                 </Box>
               </Grid>
 
-              {/* Location Address */}
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth label="Location Address" size="small"
-                  value={form.locationAddress}
-                  onChange={e => setForm(f => ({ ...f, locationAddress: e.target.value }))}
-                  error={!!errors.locationAddress}
-                  helperText={errors.locationAddress}
-                  InputLabelProps={{ sx: { color: '#94A3B8' } }}
-                  InputProps={{ sx: { color: 'white', '& fieldset': { borderColor: '#334155' } } }}
-                />
-              </Grid>
-
-              {/* Latitude and Longitude */}
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth label="Latitude (e.g. 12.9716)" size="small"
-                  value={form.locationLat}
-                  onChange={e => setForm(f => ({ ...f, locationLat: e.target.value }))}
-                  InputLabelProps={{ sx: { color: '#94A3B8' } }}
-                  InputProps={{ sx: { color: 'white', '& fieldset': { borderColor: '#334155' } } }}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth label="Longitude (e.g. 77.5946)" size="small"
-                  value={form.locationLng}
-                  onChange={e => setForm(f => ({ ...f, locationLng: e.target.value }))}
-                  InputLabelProps={{ sx: { color: '#94A3B8' } }}
-                  InputProps={{ sx: { color: 'white', '& fieldset': { borderColor: '#334155' } } }}
-                />
-              </Grid>
-
               {/* Caller Info */}
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -314,7 +462,10 @@ export default function SOSAlertModal({ open, onClose, onSOSCreated }) {
                   value={form.callerName}
                   onChange={e => setForm(f => ({ ...f, callerName: e.target.value }))}
                   InputLabelProps={{ sx: { color: '#94A3B8' } }}
-                  InputProps={{ sx: { color: 'white', '& fieldset': { borderColor: '#334155' } } }}
+                  InputProps={{
+                    sx: { color: 'white', '& fieldset': { borderColor: '#334155' } },
+                    startAdornment: <Person sx={{ color: 'rgba(255,255,255,0.4)', mr: 1, fontSize: 18 }} />
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -325,7 +476,10 @@ export default function SOSAlertModal({ open, onClose, onSOSCreated }) {
                   error={!!errors.callerPhone}
                   helperText={errors.callerPhone}
                   InputLabelProps={{ sx: { color: '#94A3B8' } }}
-                  InputProps={{ sx: { color: 'white', '& fieldset': { borderColor: '#334155' } } }}
+                  InputProps={{
+                    sx: { color: 'white', '& fieldset': { borderColor: '#334155' } },
+                    startAdornment: <Phone sx={{ color: 'rgba(255,255,255,0.4)', mr: 1, fontSize: 18 }} />
+                  }}
                 />
               </Grid>
             </Grid>
