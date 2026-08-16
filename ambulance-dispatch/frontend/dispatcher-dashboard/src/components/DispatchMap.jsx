@@ -1,9 +1,11 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Box, Chip, Typography, IconButton } from '@mui/material';
+import { Box, Typography, IconButton } from '@mui/material';
 import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
 import CloseIcon from '@mui/icons-material/Close';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import NearMeIcon from '@mui/icons-material/NearMe';
 
 // CARTO Voyager High-DPI Style (Google Maps-like vector street design, road hierarchy, POIs)
 const CARTO_VOYAGER_STYLE = {
@@ -49,6 +51,22 @@ export function toLngLat(coord) {
   return null;
 }
 
+/* ── Great-Circle Haversine Distance (in meters) ── */
+export function calculateDistanceMeters(coord1, coord2) {
+  if (!coord1 || !coord2) return 0;
+  const R = 6371e3;
+  const φ1 = (coord1[1] * Math.PI) / 180;
+  const φ2 = (coord2[1] * Math.PI) / 180;
+  const Δφ = ((coord2[1] - coord1[1]) * Math.PI) / 180;
+  const Δλ = ((coord2[0] - coord1[0]) * Math.PI) / 180;
+
+  const a =
+    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 /* ── Geographic Heading / Bearing Calculator ── */
 export function calculateBearing(coord1, coord2) {
   if (!coord1 || !coord2) return 0;
@@ -87,7 +105,6 @@ function createAmbulanceDomElement(amb) {
     : '#10B981';
 
   const callsign = amb.call_sign || amb.vehicle_number || amb.id || 'AMB';
-  const speed = amb.speed ? `${amb.speed} km/h` : '';
 
   const inner = document.createElement('div');
   inner.style.display = 'flex';
@@ -96,13 +113,13 @@ function createAmbulanceDomElement(amb) {
   inner.style.pointerEvents = 'auto';
 
   inner.innerHTML = `
-    <!-- Callsign Badge -->
-    <div style="
-      background:#0F172A;color:#FFFFFF;padding:2px 7px;border-radius:12px;
-      font-size:10px;font-weight:800;white-space:nowrap;box-shadow:0 3px 8px rgba(0,0,0,0.3);
+    <!-- Dynamic Live Status & Callsign Badge -->
+    <div class="amb-live-badge" style="
+      background:#0F172A;color:#FFFFFF;padding:2.5px 8px;border-radius:12px;
+      font-size:10px;font-weight:800;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,0.35);
       margin-bottom:-4px;z-index:10;border:1.5px solid #FFFFFF;letter-spacing:0.3px;font-family:'Inter',sans-serif;
     ">
-      ${callsign} ${isStale ? '⚠️ OFFLINE' : (speed ? `• ${speed}` : '')}
+      ${callsign} ${isStale ? '⚠️ OFFLINE' : (moving ? '• EN ROUTE' : '• STANDBY')}
     </div>
 
     <!-- Google Pin Circle with Drop-Shadow & Rotatable Vehicle Icon -->
@@ -248,8 +265,10 @@ export default function DispatchMap({
   const activeRoutesRef = useRef(new Set());
   const [mapReady, setMapReady] = useState(false);
 
-  // Opt-in vehicle tracking / camera auto-follow state
+  // Opt-in vehicle tracking / live telemetry HUD state
   const [followedUnitId, setFollowedUnitId] = useState(null);
+  const [liveTelemetry, setLiveTelemetry] = useState({ distanceKm: '0.0', etaMinutes: 0, speed: 40 });
+
   const unitWaypointsRef = useRef(new Map()); // ambId -> [[lng, lat], ...]
   const unitProgressRef = useRef(new Map());  // ambId -> { index: 0, fraction: 0 }
   const animationFrameRef = useRef(null);
@@ -438,7 +457,7 @@ export default function DispatchMap({
     });
   }, [hospitals, mapReady]);
 
-  /* ── Multi-Unit Route Management & 60fps Interpolated Waypoints Storage ── */
+  /* ── Multi-Unit Route Management with Dual-Segment Traveled / Remaining Layers ── */
   useEffect(() => {
     if (!mapInstanceRef.current || !mapReady) return;
     const map = mapInstanceRef.current;
@@ -451,6 +470,7 @@ export default function DispatchMap({
     activeRoutesRef.current.forEach(ambId => {
       if (!activeIds.has(ambId)) {
         if (map.isStyleLoaded()) {
+          if (map.getLayer(`route-traveled-${ambId}`)) map.removeLayer(`route-traveled-${ambId}`);
           if (map.getLayer(`route-line-${ambId}`)) map.removeLayer(`route-line-${ambId}`);
           if (map.getLayer(`route-casing-${ambId}`)) map.removeLayer(`route-casing-${ambId}`);
           if (map.getSource(`route-source-${ambId}`)) map.removeSource(`route-source-${ambId}`);
@@ -483,6 +503,7 @@ export default function DispatchMap({
       const sourceId = `route-source-${amb.id}`;
       const casingLayerId = `route-casing-${amb.id}`;
       const lineLayerId = `route-line-${amb.id}`;
+      const traveledLayerId = `route-traveled-${amb.id}`;
       const theme = ROUTE_THEMES[amb.id] || { core: '#2563EB', casing: '#1E40AF' };
 
       const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${ambCoord[0]},${ambCoord[1]};${incCoord[0]},${incCoord[1]}?overview=full&geometries=geojson`;
@@ -499,14 +520,21 @@ export default function DispatchMap({
             unitProgressRef.current.set(amb.id, { index: 0, fraction: 0 });
           }
 
+          // Initial FeatureCollection with remaining route
           const geojsonData = {
-            type: 'Feature',
-            properties: {
-              ambulanceId: amb.id,
-              distance: route.distance,
-              duration: route.duration,
-            },
-            geometry: route.geometry,
+            type: 'FeatureCollection',
+            features: [
+              {
+                type: 'Feature',
+                properties: { segment: 'remaining', ambulanceId: amb.id },
+                geometry: { type: 'LineString', coordinates: coords },
+              },
+              {
+                type: 'Feature',
+                properties: { segment: 'traveled', ambulanceId: amb.id },
+                geometry: { type: 'LineString', coordinates: [coords[0], coords[0]] },
+              },
+            ],
           };
 
           const renderUnitRoute = () => {
@@ -520,29 +548,50 @@ export default function DispatchMap({
                 });
               }
 
+              // 1. Traveled Faded Path Layer (behind moving vehicle)
+              if (!map.getLayer(traveledLayerId)) {
+                map.addLayer({
+                  id: traveledLayerId,
+                  type: 'line',
+                  source: sourceId,
+                  filter: ['==', ['get', 'segment'], 'traveled'],
+                  layout: { 'line-join': 'round', 'line-cap': 'round' },
+                  paint: {
+                    'line-color': '#94A3B8',
+                    'line-width': 4.5,
+                    'line-dasharray': [2, 2],
+                    'line-opacity': 0.65,
+                  },
+                });
+              }
+
+              // 2. Remaining Path Outer Casing
               if (!map.getLayer(casingLayerId)) {
                 map.addLayer({
                   id: casingLayerId,
                   type: 'line',
                   source: sourceId,
+                  filter: ['==', ['get', 'segment'], 'remaining'],
                   layout: { 'line-join': 'round', 'line-cap': 'round' },
                   paint: {
                     'line-color': theme.casing,
-                    'line-width': 8,
+                    'line-width': 8.5,
                     'line-opacity': 0.75,
                   },
                 });
               }
 
+              // 3. Remaining Path Core Glowing Navigation Line
               if (!map.getLayer(lineLayerId)) {
                 map.addLayer({
                   id: lineLayerId,
                   type: 'line',
                   source: sourceId,
+                  filter: ['==', ['get', 'segment'], 'remaining'],
                   layout: { 'line-join': 'round', 'line-cap': 'round' },
                   paint: {
                     'line-color': theme.core,
-                    'line-width': 5,
+                    'line-width': 5.5,
                     'line-opacity': 1.0,
                   },
                 });
@@ -566,16 +615,17 @@ export default function DispatchMap({
     });
   }, [ambulances, incidents, mapReady]);
 
-  /* ── Step 4: 60fps RequestAnimationFrame Smooth Position & Heading Interpolation Loop ── */
+  /* ── Step 5: 60fps Position Interpolation, Dynamic Route Splitting & Live ETA Calculator ── */
   useEffect(() => {
     let lastTime = performance.now();
+    let frameCount = 0;
 
     const animateVehicles = (now) => {
       const dt = (now - lastTime) / 1000;
       lastTime = now;
+      frameCount++;
 
-      // Speed in waypoints progression per second
-      const SPEED_FACTOR = 0.8;
+      const SPEED_FACTOR = 0.85;
 
       unitWaypointsRef.current.forEach((waypoints, ambId) => {
         if (!waypoints || waypoints.length < 2) return;
@@ -590,7 +640,7 @@ export default function DispatchMap({
           prog.fraction -= 1;
           prog.index++;
           if (prog.index >= waypoints.length - 1) {
-            prog.index = 0; // Loop back or smoothly navigate
+            prog.index = 0; // Loop navigation seamlessly
           }
         }
         unitProgressRef.current.set(ambId, prog);
@@ -598,15 +648,15 @@ export default function DispatchMap({
         const pA = waypoints[prog.index];
         const pB = waypoints[Math.min(prog.index + 1, waypoints.length - 1)];
 
-        // Smooth sub-segment interpolation
+        // Smooth sub-segment position
         const currentLng = pA[0] + (pB[0] - pA[0]) * prog.fraction;
         const currentLat = pA[1] + (pB[1] - pA[1]) * prog.fraction;
         const currentLngLat = [currentLng, currentLat];
 
-        // 1. Move marker smoothly
+        // 1. Move vehicle marker
         marker.setLngLat(currentLngLat);
 
-        // 2. Rotate vehicle icon to match heading
+        // 2. Rotate vehicle icon based on forward heading
         const heading = calculateBearing(pA, pB);
         const el = marker.getElement();
         if (el) {
@@ -616,7 +666,59 @@ export default function DispatchMap({
           }
         }
 
-        // 3. Opt-in Camera Auto-Follow (smoothly keeps active unit centered)
+        // 3. Traveled vs. Remaining Dynamic Polyline Slicing (updated smoothly every 3 frames)
+        if (frameCount % 3 === 0 && mapInstanceRef.current) {
+          const traveledCoords = [...waypoints.slice(0, prog.index + 1), currentLngLat];
+          const remainingCoords = [currentLngLat, ...waypoints.slice(prog.index + 1)];
+
+          const source = mapInstanceRef.current.getSource(`route-source-${ambId}`);
+          if (source) {
+            source.setData({
+              type: 'FeatureCollection',
+              features: [
+                {
+                  type: 'Feature',
+                  properties: { segment: 'traveled', ambulanceId: ambId },
+                  geometry: { type: 'LineString', coordinates: traveledCoords },
+                },
+                {
+                  type: 'Feature',
+                  properties: { segment: 'remaining', ambulanceId: ambId },
+                  geometry: { type: 'LineString', coordinates: remainingCoords.length > 1 ? remainingCoords : [currentLngLat, currentLngLat] },
+                },
+              ],
+            });
+          }
+
+          // 4. Live Dynamic Remaining Distance & ETA Calculation
+          let remainingMeters = 0;
+          for (let k = 0; k < remainingCoords.length - 1; k++) {
+            remainingMeters += calculateDistanceMeters(remainingCoords[k], remainingCoords[k + 1]);
+          }
+          const remainingKm = (remainingMeters / 1000).toFixed(1);
+          const remainingMinutes = Math.max(1, Math.ceil((remainingMeters / 1000) / (38 / 60))); // 38 km/h urban average speed
+
+          // Update marker DOM pill live
+          if (el) {
+            const badge = el.querySelector('.amb-live-badge');
+            if (badge) {
+              const ambObj = ambulances.find(a => a.id === ambId);
+              const callsign = ambObj?.call_sign || ambId;
+              badge.innerHTML = `${callsign} • ${remainingKm} km (${remainingMinutes}m)`;
+            }
+          }
+
+          // If this unit is currently followed, update HUD telemetry state
+          if (followedUnitId === ambId) {
+            setLiveTelemetry({
+              distanceKm: remainingKm,
+              etaMinutes: remainingMinutes,
+              speed: 42,
+            });
+          }
+        }
+
+        // 5. Opt-in Camera Auto-Follow
         if (followedUnitId === ambId && mapInstanceRef.current) {
           mapInstanceRef.current.easeTo({
             center: currentLngLat,
@@ -634,7 +736,7 @@ export default function DispatchMap({
     return () => {
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [followedUnitId]);
+  }, [followedUnitId, ambulances]);
 
   return (
     <Box
@@ -661,7 +763,7 @@ export default function DispatchMap({
         }}
       />
 
-      {/* Floating Opt-In Camera Follow HUD Indicator */}
+      {/* Floating Live Telemetry & Auto-Follow HUD Indicator */}
       {followedUnitId && (
         <Box
           sx={{
@@ -669,27 +771,48 @@ export default function DispatchMap({
             top: 14,
             left: 14,
             zIndex: 1000,
-            background: 'rgba(15, 23, 42, 0.88)',
-            backdropFilter: 'blur(8px)',
+            background: 'rgba(15, 23, 42, 0.92)',
+            backdropFilter: 'blur(10px)',
             color: '#FFFFFF',
-            borderRadius: '10px',
-            px: '12px',
-            py: '6px',
+            borderRadius: '12px',
+            px: '14px',
+            py: '8px',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
-            border: '1px solid rgba(255,255,255,0.15)',
+            gap: '12px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+            border: '1px solid rgba(255,255,255,0.18)',
           }}
         >
-          <CenterFocusStrongIcon sx={{ fontSize: 18, color: '#38BDF8', animation: 'pulse-slow 2s infinite' }} />
-          <Typography sx={{ fontSize: '12px', fontWeight: 700, fontFamily: 'Inter, sans-serif' }}>
-            Auto-Following Unit: <span style={{ color: '#38BDF8' }}>{followedUnitId === 'AMB-001' ? 'Alpha-1' : followedUnitId === 'AMB-002' ? 'Bravo-2' : followedUnitId}</span>
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <CenterFocusStrongIcon sx={{ fontSize: 18, color: '#38BDF8', animation: 'pulse-slow 2s infinite' }} />
+            <Typography sx={{ fontSize: '12px', fontWeight: 800, fontFamily: 'Inter, sans-serif' }}>
+              Tracking: <span style={{ color: '#38BDF8' }}>{followedUnitId === 'AMB-001' ? 'Alpha-1' : followedUnitId === 'AMB-002' ? 'Bravo-2' : followedUnitId}</span>
+            </Typography>
+          </Box>
+
+          <Box sx={{ width: '1px', height: '18px', bgcolor: 'rgba(255,255,255,0.2)' }} />
+
+          {/* Live Remaining Distance */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <NearMeIcon sx={{ fontSize: 15, color: '#10B981' }} />
+            <Typography sx={{ fontSize: '11.5px', fontWeight: 700, fontFamily: 'Inter, sans-serif' }}>
+              {liveTelemetry.distanceKm} km rem.
+            </Typography>
+          </Box>
+
+          {/* Live Dynamic ETA */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <AccessTimeIcon sx={{ fontSize: 15, color: '#F59E0B' }} />
+            <Typography sx={{ fontSize: '11.5px', fontWeight: 700, fontFamily: 'Inter, sans-serif' }}>
+              ETA {liveTelemetry.etaMinutes} min
+            </Typography>
+          </Box>
+
           <IconButton
             size="small"
             onClick={() => setFollowedUnitId(null)}
-            sx={{ color: '#94A3B8', p: '2px', '&:hover': { color: '#FFFFFF', bgcolor: 'rgba(255,255,255,0.1)' } }}
+            sx={{ color: '#94A3B8', p: '2px', ml: '4px', '&:hover': { color: '#FFFFFF', bgcolor: 'rgba(255,255,255,0.15)' } }}
           >
             <CloseIcon sx={{ fontSize: 16 }} />
           </IconButton>
