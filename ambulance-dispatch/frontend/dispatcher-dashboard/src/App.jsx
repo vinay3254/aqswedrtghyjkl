@@ -1,6 +1,9 @@
-import React, { useMemo } from 'react';
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import React from 'react';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import DriverInterface from './pages/DriverInterface';
 import InsightsPage from './pages/InsightsPage';
@@ -34,25 +37,82 @@ const theme = createTheme({
   },
 });
 
-const DEFAULT_USER = {
-  id: 'dispatcher-1', name: 'Dispatcher',
-  role: 'DISPATCHER', email: 'dispatcher@medicluster.com',
-};
+function DashboardWithAuth() {
+  const { user, profile, signOut } = useAuth();
+  const currentUser = {
+    id: user?.id || 'dispatcher-1',
+    name: profile?.full_name || 'CAD Operator',
+    role: profile?.role || 'DISPATCHER',
+    email: user?.email || 'dispatcher@medicluster.com',
+  };
+
+  return <DashboardPage user={currentUser} onLogout={signOut} />;
+}
 
 export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <HashRouter>
-        <Routes>
-          <Route path="/driver" element={<DriverInterface />} />
-          <Route path="/caller" element={<CallerVoicePortalPage />} />
-          <Route path="/insights" element={<InsightsPage />} />
-          <Route path="/analytics" element={<AnalyticsPage />} />
-          <Route path="/mobile" element={<MobileFleetPage />} />
-          <Route path="*" element={<DashboardPage user={DEFAULT_USER} onLogout={() => {}} />} />
-        </Routes>
-      </HashRouter>
+      <AuthProvider>
+        <HashRouter>
+          <Routes>
+            {/* Public Auth Route */}
+            <Route path="/login" element={<LoginPage />} />
+
+            {/* Protected Driver View */}
+            <Route
+              path="/driver"
+              element={
+                <ProtectedRoute allowedRoles={['DRIVER', 'DISPATCHER', 'ADMIN']}>
+                  <DriverInterface />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Public Utility Routes */}
+            <Route path="/caller" element={<CallerVoicePortalPage />} />
+
+            {/* Protected Dispatcher & Admin Routes */}
+            <Route
+              path="/insights"
+              element={
+                <ProtectedRoute allowedRoles={['DISPATCHER', 'ADMIN']}>
+                  <InsightsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <ProtectedRoute allowedRoles={['DISPATCHER', 'ADMIN']}>
+                  <AnalyticsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/mobile"
+              element={
+                <ProtectedRoute allowedRoles={['DISPATCHER', 'ADMIN']}>
+                  <MobileFleetPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Default Protected Command Center */}
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute allowedRoles={['DISPATCHER', 'ADMIN']}>
+                  <DashboardWithAuth />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Catch-all fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </HashRouter>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

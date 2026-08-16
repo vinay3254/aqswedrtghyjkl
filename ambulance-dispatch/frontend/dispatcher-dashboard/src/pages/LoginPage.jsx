@@ -1,165 +1,260 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import {
-  Box, Paper, TextField, Button, Typography, Alert, Container, Divider, Chip
+  Box, Card, Typography, TextField, Button, Alert,
+  Divider, Chip, InputAdornment, IconButton, CircularProgress
 } from '@mui/material';
-import { Warning, Shield } from '@mui/icons-material';
-import { authApi } from '../services/api';
+import {
+  LocalHospital, Visibility, VisibilityOff, Lock,
+  Email, Badge, Security, DirectionsCar, Radio
+} from '@mui/icons-material';
 
 const DEMO_ACCOUNTS = [
-  { role: 'Dispatcher', email: 'dispatcher@demo.com', password: 'demo123', name: 'Control Room A' },
-  { role: 'Supervisor', email: 'supervisor@demo.com', password: 'demo123', name: 'Supervisor' },
+  {
+    label: 'Dispatcher / CAD Operator',
+    email: 'dispatcher@cad.emergency.in',
+    role: 'DISPATCHER',
+    desc: 'Full Command Center, AI dispatching, live fleet overview',
+    badgeColor: '#38BDF8',
+    icon: <Radio sx={{ fontSize: 16 }} />
+  },
+  {
+    label: 'Driver: Alpha-1 (ALS)',
+    email: 'driver.alpha1@cad.emergency.in',
+    role: 'DRIVER',
+    desc: 'Locked to Alpha-1 vehicle · Mission status & turn-by-turn HUD',
+    badgeColor: '#10B981',
+    icon: <DirectionsCar sx={{ fontSize: 16 }} />
+  },
+  {
+    label: 'Driver: Charlie-3 (ALS)',
+    email: 'driver.charlie3@cad.emergency.in',
+    role: 'DRIVER',
+    desc: 'Locked to Charlie-3 vehicle · Patient vitals & hospital selector',
+    badgeColor: '#A855F7',
+    icon: <DirectionsCar sx={{ fontSize: 16 }} />
+  },
 ];
 
-export default function LoginPage({ onLogin }) {
+export default function LoginPage() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [password, setPassword] = useState('Emergency@123');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(null);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+  const { signInWithEmail } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-    // Demo bypass — works without backend
-    const demo = DEMO_ACCOUNTS.find(a => a.email === email && a.password === password);
-    if (demo) {
-      const user = { id: `DEMO-${demo.role}`, name: demo.name, role: demo.role, email: demo.email };
-      localStorage.setItem('authToken', 'demo-token-' + Date.now());
-      localStorage.setItem('user', JSON.stringify(user));
-      onLogin(user);
-      setLoading(false);
+  const from = location.state?.from?.pathname || '/';
+
+  const handleLogin = async (e) => {
+    if (e) e.preventDefault();
+    if (!email || !password) {
+      setErrorMsg('Please enter both email and password.');
       return;
     }
 
+    setErrorMsg(null);
+    setIsSubmitting(true);
+
     try {
-      const response = await authApi.login(email, password);
-      const { token, user } = response.data.data;
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      onLogin(user);
+      const res = await signInWithEmail(email.trim(), password);
+      console.log('[LoginPage] Sign in successful:', res);
+
+      // Determine appropriate redirect destination
+      if (email.includes('driver') || res.user?.user_metadata?.role === 'DRIVER') {
+        navigate('/driver', { replace: true });
+      } else {
+        navigate(from === '/login' ? '/' : from, { replace: true });
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Use demo credentials below.');
+      console.error('[LoginPage] Authentication failed:', err);
+      setErrorMsg(err.message || 'Invalid email or password. Check credentials.');
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const handleDemoLogin = (account) => {
-    setEmail(account.email);
-    setPassword(account.password);
+  const handleSelectDemo = (demo) => {
+    setEmail(demo.email);
+    setPassword('Emergency@123');
+    setErrorMsg(null);
   };
 
   return (
     <Box sx={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'linear-gradient(160deg, #0d0d1a 0%, #0f1629 60%, #0d1117 100%)',
-      position: 'relative', overflow: 'hidden',
+      minHeight: '100vh',
+      bgcolor: '#0B1329',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      p: 2,
+      backgroundImage: 'radial-gradient(ellipse at 50% 20%, rgba(37,99,235,0.15), transparent 70%)',
     }}>
-      {/* Background glow */}
-      <Box sx={{
-        position: 'absolute', top: '30%', left: '50%', transform: 'translateX(-50%)',
-        width: 400, height: 400, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(220,38,38,0.08) 0%, transparent 70%)',
-        pointerEvents: 'none',
-      }} />
-
-      <Container maxWidth="xs">
-        {/* Logo / header */}
+      <Card sx={{
+        maxWidth: 480,
+        width: '100%',
+        bgcolor: '#0F172A',
+        border: '1.5px solid #1E293B',
+        borderRadius: '20px',
+        boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
+        p: { xs: 3, sm: 4 },
+        color: 'white',
+      }}>
+        {/* Brand Header */}
         <Box sx={{ textAlign: 'center', mb: 3 }}>
           <Box sx={{
-            width: 72, height: 72, borderRadius: '50%', mx: 'auto', mb: 2,
-            background: 'linear-gradient(135deg, #dc2626, #991b1b)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 32,
-            boxShadow: '0 0 32px rgba(220,38,38,0.4)',
+            width: 52,
+            height: 52,
+            borderRadius: '14px',
+            bgcolor: 'rgba(37,99,235,0.15)',
+            border: '1.5px solid rgba(56,189,248,0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            mx: 'auto',
+            mb: 1.5,
           }}>
-            🚑
+            <LocalHospital sx={{ color: '#38BDF8', fontSize: 32 }} />
           </Box>
-          <Typography variant="h5" sx={{ color: 'white', fontWeight: 800, letterSpacing: -0.5 }}>
-            Dispatch Command
+          <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.02em', color: 'white', fontFamily: 'Inter, sans-serif' }}>
+            CAD Emergency System
           </Typography>
-          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)', mt: 0.5 }}>
-            Emergency Medical Services Control Center
+          <Typography variant="caption" sx={{ color: '#94A3B8', fontSize: '12px' }}>
+            Supabase Multi-User Authentication Portal
           </Typography>
         </Box>
 
-        <Paper sx={{
-          p: 3, borderRadius: 3,
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          backdropFilter: 'blur(16px)',
-        }}>
-          {error && (
-            <Alert severity="error" sx={{ mb: 2, bgcolor: 'rgba(239,68,68,0.1)', color: '#fca5a5',
-              border: '1px solid rgba(239,68,68,0.3)', '& .MuiAlert-icon': { color: '#ef4444' } }}>
-              {error}
-            </Alert>
-          )}
+        {errorMsg && (
+          <Alert severity="error" sx={{ mb: 2.5, bgcolor: 'rgba(239,68,68,0.15)', color: '#FCA5A5', border: '1px solid #EF4444', fontSize: '12px' }}>
+            {errorMsg}
+          </Alert>
+        )}
 
-          <form onSubmit={handleSubmit}>
-            <TextField
-              fullWidth label="Email" type="email"
-              value={email} onChange={e => setEmail(e.target.value)}
-              margin="normal" required autoFocus
-              InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.5)' } }}
-              InputProps={{ sx: { color: 'white', '& fieldset': { borderColor: 'rgba(255,255,255,0.15)' },
-                '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.3)' } } }}
-            />
-            <TextField
-              fullWidth label="Password" type="password"
-              value={password} onChange={e => setPassword(e.target.value)}
-              margin="normal" required
-              InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.5)' } }}
-              InputProps={{ sx: { color: 'white', '& fieldset': { borderColor: 'rgba(255,255,255,0.15)' },
-                '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.3)' } } }}
-            />
-            <Button
-              type="submit" fullWidth variant="contained" size="large" disabled={loading}
+        {/* Credentials Form */}
+        <Box component="form" onSubmit={handleLogin} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <TextField
+            fullWidth
+            size="small"
+            label="Email Address"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="operator@cad.emergency.in"
+            InputLabelProps={{ sx: { color: '#94A3B8', fontSize: '13px' } }}
+            InputProps={{
+              sx: { color: 'white', '& fieldset': { borderColor: '#334155' } },
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Email sx={{ color: '#64748B', fontSize: 18 }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          <TextField
+            fullWidth
+            size="small"
+            label="Password"
+            type={showPassword ? 'text' : 'password'}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            InputLabelProps={{ sx: { color: '#94A3B8', fontSize: '13px' } }}
+            InputProps={{
+              sx: { color: 'white', '& fieldset': { borderColor: '#334155' } },
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Lock sx={{ color: '#64748B', fontSize: 18 }} />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: '#64748B' }}>
+                    {showPassword ? <VisibilityOff sx={{ fontSize: 18 }} /> : <Visibility sx={{ fontSize: 18 }} />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={isSubmitting}
+            sx={{
+              mt: 1,
+              py: 1.2,
+              bgcolor: '#2563EB',
+              color: 'white',
+              fontWeight: 700,
+              fontSize: '14px',
+              textTransform: 'none',
+              borderRadius: '10px',
+              '&:hover': { bgcolor: '#1D4ED8' },
+            }}
+          >
+            {isSubmitting ? <CircularProgress size={22} sx={{ color: 'white' }} /> : 'Authenticate & Enter CAD'}
+          </Button>
+        </Box>
+
+        <Divider sx={{ my: 3, borderColor: '#1E293B', '&::before, &::after': { borderColor: '#1E293B' } }}>
+          <Typography variant="caption" sx={{ color: '#64748B', px: 1, fontWeight: 600 }}>
+            OR SIGN IN AS DEMO ROLE
+          </Typography>
+        </Divider>
+
+        {/* Demo Fast Access Role Selector */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.2 }}>
+          {DEMO_ACCOUNTS.map((demo) => (
+            <Box
+              key={demo.email}
+              onClick={() => handleSelectDemo(demo)}
               sx={{
-                mt: 2.5, mb: 1.5, py: 1.5,
-                background: 'linear-gradient(90deg, #dc2626, #b91c1c)',
-                color: 'white', fontWeight: 700, fontSize: '1rem',
-                '&:hover': { background: 'linear-gradient(90deg, #b91c1c, #991b1b)' },
-                '&:disabled': { opacity: 0.6 },
+                p: 1.4,
+                borderRadius: '10px',
+                bgcolor: email === demo.email ? 'rgba(37,99,235,0.15)' : '#1E293B',
+                border: `1.5px solid ${email === demo.email ? '#38BDF8' : '#334155'}`,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease-in-out',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.06)', borderColor: '#64748B' },
               }}
             >
-              {loading ? 'Signing in...' : '🔐 Sign In'}
-            </Button>
-          </form>
-
-          <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)', my: 2 }}>
-            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.3)' }}>
-              DEMO ACCESS
-            </Typography>
-          </Divider>
-
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {DEMO_ACCOUNTS.map(acc => (
-              <Button
-                key={acc.role}
-                fullWidth variant="outlined" size="small"
-                onClick={() => handleDemoLogin(acc)}
-                startIcon={<Shield fontSize="small" />}
-                sx={{
-                  borderColor: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)',
-                  justifyContent: 'flex-start', px: 2,
-                  '&:hover': { borderColor: '#3b82f6', color: 'white', bgcolor: 'rgba(59,130,246,0.08)' },
-                }}
-              >
-                {acc.role}: {acc.email}
-                <Chip label="demo" size="small"
-                  sx={{ ml: 'auto', height: 16, fontSize: '0.6rem', bgcolor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }} />
-              </Button>
-            ))}
-          </Box>
-
-          <Typography variant="caption" sx={{ display: 'block', textAlign: 'center', mt: 2,
-            color: 'rgba(255,255,255,0.25)' }}>
-            Password for demo accounts: <strong style={{ color: 'rgba(255,255,255,0.4)' }}>demo123</strong>
-          </Typography>
-        </Paper>
-      </Container>
+              <Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.2 }}>
+                  <Chip
+                    icon={demo.icon}
+                    label={demo.role}
+                    size="small"
+                    sx={{
+                      height: 20,
+                      fontSize: '9.5px',
+                      fontWeight: 800,
+                      bgcolor: 'rgba(255,255,255,0.08)',
+                      color: demo.badgeColor,
+                      '& .MuiChip-icon': { color: demo.badgeColor },
+                    }}
+                  />
+                  <Typography sx={{ fontSize: '13px', fontWeight: 700, color: 'white' }}>
+                    {demo.label}
+                  </Typography>
+                </Box>
+                <Typography sx={{ fontSize: '10.5px', color: '#94A3B8' }}>
+                  {demo.desc}
+                </Typography>
+              </Box>
+              <Typography sx={{ fontSize: '11px', color: '#38BDF8', fontWeight: 700 }}>
+                Select ➔
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      </Card>
     </Box>
   );
 }

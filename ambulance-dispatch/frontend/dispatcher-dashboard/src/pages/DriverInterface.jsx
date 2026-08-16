@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Typography, Button, LinearProgress, Snackbar, Alert, Chip } from '@mui/material';
+import { Box, Typography, Button, LinearProgress, Snackbar, Alert, Chip, IconButton } from '@mui/material';
+import { Logout } from '@mui/icons-material';
+import { useAuth } from '../context/AuthContext';
 import { dispatchBroadcast, DISPATCH_EVENTS } from '../services/dispatchBroadcast';
 import DriverMap from '../components/DriverMap';
 import PatientVitalsForm from '../components/PatientVitalsForm';
@@ -156,6 +158,10 @@ function ActiveMission({ incident, status, onStatusUpdate }) {
 
 /* ══ Main ══ */
 export default function DriverInterface() {
+  const { profile, assignedAmbulance, signOut } = useAuth();
+  const driverName = profile?.full_name || MOCK_DRIVER.name;
+  const driverCallSign = assignedAmbulance?.call_sign || MOCK_DRIVER.callSign;
+
   const [alertIncident, setAlertIncident]     = useState(null);
   const [activeIncident, setActiveIncident]   = useState(null);
   const [missionStatus, setMissionStatus]     = useState('EN_ROUTE');
@@ -163,8 +169,8 @@ export default function DriverInterface() {
   const [time, setTime]                       = useState(new Date());
   const [incidentQueue, setIncidentQueue]     = useState(PENDING_INCIDENTS);
   const [toast, setToast]                     = useState(null);
-  const [driverPos, setDriverPos]             = useState({ lat:MOCK_DRIVER.latitude, lng:MOCK_DRIVER.longitude });
-  const driverPosRef = useRef({ lat:MOCK_DRIVER.latitude, lng:MOCK_DRIVER.longitude });
+  const [driverPos, setDriverPos]             = useState({ lat: assignedAmbulance?.latitude || MOCK_DRIVER.latitude, lng: assignedAmbulance?.longitude || MOCK_DRIVER.longitude });
+  const driverPosRef = useRef({ lat: assignedAmbulance?.latitude || MOCK_DRIVER.latitude, lng: assignedAmbulance?.longitude || MOCK_DRIVER.longitude });
   const [activeTab, setActiveTab]             = useState('mission'); // 'mission' | 'checklist'
   const [checklistPhase, setChecklistPhase]   = useState('PRE_DEPARTURE');
   const [vitalsSubmitted, setVitalsSubmitted] = useState(false);
@@ -424,7 +430,7 @@ export default function DriverInterface() {
           </Box>
           <Box sx={{ flex:1 }}>
             <Typography sx={{ fontSize:'12.5px', fontWeight:800, color:TEXT, lineHeight:1.2 }}>
-              {MOCK_DRIVER.callSign} · {MOCK_DRIVER.name}
+              {driverCallSign} · {driverName}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: '2px' }}>
               <Chip
@@ -440,11 +446,16 @@ export default function DriverInterface() {
               )}
             </Box>
           </Box>
-          <Box sx={{ display:'flex', alignItems:'center', gap:'5px' }}>
-            <Box sx={{ width:6, height:6, borderRadius:'50%', background:G, animation:'blinkDot 2s infinite' }} />
-            <Typography sx={{ fontSize:'9.5px', fontWeight:700, color:G }}>
-              {isBackgrounded ? 'BG' : 'LIVE'}
-            </Typography>
+          <Box sx={{ display:'flex', alignItems:'center', gap:'8px' }}>
+            <Box sx={{ display:'flex', alignItems:'center', gap:'4px' }}>
+              <Box sx={{ width:6, height:6, borderRadius:'50%', background:G, animation:'blinkDot 2s infinite' }} />
+              <Typography sx={{ fontSize:'9.5px', fontWeight:700, color:G }}>
+                {isBackgrounded ? 'BG' : 'LIVE'}
+              </Typography>
+            </Box>
+            <IconButton onClick={signOut} size="small" title="Sign out" sx={{ color: DIM, p: '4px', '&:hover': { color: RED, bgcolor: 'rgba(239,68,68,0.1)' } }}>
+              <Logout sx={{ fontSize: 16 }} />
+            </IconButton>
           </Box>
         </Box>
 
