@@ -195,11 +195,52 @@ export default function DashboardPage({ user, onLogout }) {
   };
 
   const handleSOSCreated = useCallback((inc) => {
-    setSosIncidents(prev => [inc, ...prev]);
-    setSnackbar({ message:`SOS Alert: ${inc.incident_type}`, severity:'error' });
+    console.log('[SOS Alert] handleSOSCreated triggered with new incident:', inc);
+
+    // 1. Add new SOS incident to active incidents state so it renders on the Map
+    setSosIncidents(prev => [inc, ...prev.filter(i => i.id !== inc.id)]);
+
+    // 2. Select an available ambulance to dispatch to this SOS incident
+    const availableAmb = ambulances.find(a => a.status === 'AVAILABLE' || !a.assigned_incident_id) || ambulances[2] || ambulances[0];
+
+    if (availableAmb) {
+      const dispatchedAmb = {
+        ...availableAmb,
+        status: 'EN_ROUTE',
+        assigned_incident_id: inc.id,
+      };
+
+      console.log('[SOS Alert] Auto-dispatched ambulance for SOS:', dispatchedAmb.call_sign || dispatchedAmb.id, 'to Incident:', inc.id);
+
+      setFleetAmbulances(prev => {
+        const base = prev.length > 0 ? prev : ambulances;
+        return base.map(a => a.id === dispatchedAmb.id ? dispatchedAmb : a);
+      });
+
+      const assignmentPayload = {
+        ambulance: dispatchedAmb,
+        incident: inc,
+        id: inc.id,
+        incident_type: inc.incident_type,
+        severity: inc.severity,
+        location_address: inc.location_address,
+        location_lat: inc.location_lat,
+        location_lng: inc.location_lng,
+        distance: '2.8 km',
+        eta: '5 min',
+        _isAssignment: true,
+        _isSOS: true,
+      };
+
+      console.log('[SOS Alert] Emitting INCIDENT_ASSIGNED payload:', assignmentPayload);
+      setActiveAssignment(assignmentPayload);
+      dispatchBroadcast.send(DISPATCH_EVENTS.INCIDENT_ASSIGNED, assignmentPayload);
+    }
+
+    setSnackbar({ message: `🚨 SOS Dispatched: ${inc.incident_type} (Unit: ${availableAmb?.call_sign || 'Charlie-3'})`, severity: 'error' });
     setSosModalOpen(false);
     dispatchBroadcast.send(DISPATCH_EVENTS.SOS_CREATED, inc);
-  }, []);
+  }, [ambulances]);
 
   const activeCount  = incidents.filter(i=>!['RESOLVED','CANCELLED'].includes(i.status)).length;
   const pendingCount = incidents.filter(i=>i.status==='PENDING').length;
