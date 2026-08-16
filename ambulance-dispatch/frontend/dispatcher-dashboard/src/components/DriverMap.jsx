@@ -80,12 +80,18 @@ export default function DriverMap({ driverPos, incident, missionStatus, hospital
   useEffect(() => {
     if (mapInstanceRef.current) return;
 
-    const map = L.map(mapRef.current, { zoomControl: false, attributionControl: false })
-      .setView([driverPos.lat, driverPos.lng], 15);
+    const map = L.map(mapRef.current, {
+      zoomControl: false,
+      attributionControl: false,
+      zoomSnap: 0.5,
+      zoomDelta: 0.5,
+      wheelPxPerZoomLevel: 120,
+    }).setView([driverPos.lat, driverPos.lng], 15);
 
-    // Light navigation tiles
+    // Google Maps-style CARTO Voyager tiles
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
+      subdomains: 'abcd',
     }).addTo(map);
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);

@@ -170,14 +170,60 @@ export default function DriverInterface() {
   const [vitalsSubmitted, setVitalsSubmitted] = useState(false);
   const [selectedHospital, setSelectedHospital] = useState(null);
 
-  /* Clock */
-  useEffect(() => { const t = setInterval(()=>setTime(new Date()),1000); return ()=>clearInterval(t); }, []);
+  const [gpsMode, setGpsMode]                 = useState('simulated'); // 'simulated' | 'live_device'
+  const [isBackgrounded, setIsBackgrounded]   = useState(false);
+  const [routeInfo, setRouteInfo]             = useState({ distanceKm: '0.0', etaMins: 0 });
 
-  /* ── Turn-by-Turn Smooth Road Navigation (No Jitter) ── */
+  /* Clock & Visibility */
+  useEffect(() => {
+    const t = setInterval(()=>setTime(new Date()),1000);
+    const handleVis = () => setIsBackgrounded(document.hidden);
+    document.addEventListener('visibilitychange', handleVis);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener('visibilitychange', handleVis);
+    };
+  }, []);
+
+  /* ── Real Mobile Geolocation watchPosition() ── */
+  useEffect(() => {
+    if (gpsMode !== 'live_device' || !navigator.geolocation) return;
+
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        driverPosRef.current = coords;
+        setDriverPos(coords);
+        if (pos.coords.speed != null) setSpeed(Math.round(pos.coords.speed * 3.6));
+
+        // Push live GPS update to backend / broadcast
+        dispatchBroadcast.send(DISPATCH_EVENTS.AMBULANCE_LOCATION, {
+          ambulance_id: 'AMB-001',
+          latitude: coords.lat,
+          longitude: coords.lng,
+          speed: pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : 45,
+          heading: pos.coords.heading || 0,
+          last_ping: Date.now(),
+          is_device_gps: true,
+        });
+      },
+      (err) => {
+        console.warn('Geolocation watch error:', err);
+        setToast({ msg: `GPS permission/signal error (${err.message}), switched to smooth route mode`, sev: 'warning' });
+        setGpsMode('simulated');
+      },
+      { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [gpsMode]);
+
+  /* ── Turn-by-Turn Smooth Road Navigation (Simulated Mode) ── */
   const waypointsRef = useRef([]);
   const waypointIndexRef = useRef(0);
 
   useEffect(() => {
+    if (gpsMode === 'live_device') return;
     if (!activeIncident || !['EN_ROUTE', 'TRANSPORTING'].includes(missionStatus)) {
       waypointsRef.current = [];
       waypointIndexRef.current = 0;
@@ -198,8 +244,13 @@ export default function DriverInterface() {
         const data = await res.json();
         if (!alive) return;
         if (data.routes?.[0]?.geometry?.coordinates?.length > 1) {
-          waypointsRef.current = data.routes[0].geometry.coordinates.map(([lng, lat]) => ({ lat, lng }));
+          const coords = data.routes[0].geometry.coordinates.map(([lng, lat]) => ({ lat, lng }));
+          waypointsRef.current = coords;
           waypointIndexRef.current = 0;
+          setRouteInfo({
+            distanceKm: (data.routes[0].distance / 1000).toFixed(1),
+            etaMins: Math.ceil(data.routes[0].duration / 60),
+          });
         } else {
           // Fallback smooth steps
           const steps = 25;
@@ -238,12 +289,21 @@ export default function DriverInterface() {
         driverPosRef.current = next;
         setDriverPos({ ...next });
 
+        // Update remaining distance/ETA countdown
+        const remainingWps = wps.length - 1 - waypointIndexRef.current;
+        const fraction = remainingWps / wps.length;
+        setRouteInfo(prev => ({
+          distanceKm: (parseFloat(prev.distanceKm || 3.0) * fraction).toFixed(1),
+          etaMins: Math.max(1, Math.ceil((prev.etaMins || 6) * fraction)),
+        }));
+
         // Broadcast live location to Dispatch Command Center & other responders
         dispatchBroadcast.send(DISPATCH_EVENTS.AMBULANCE_LOCATION, {
           ambulance_id: 'AMB-001',
           latitude: next.lat,
           longitude: next.lng,
           speed: 52,
+          last_ping: Date.now(),
         });
       } else {
         // Arrived at destination
@@ -263,7 +323,7 @@ export default function DriverInterface() {
       alive = false;
       clearInterval(iv);
     };
-  }, [activeIncident, missionStatus, selectedHospital]);
+  }, [activeIncident, missionStatus, selectedHospital, gpsMode]);
 
   /* Speed simulation */
   useEffect(() => {
@@ -348,25 +408,37 @@ export default function DriverInterface() {
 
         {/* ══ HEADER ══ */}
         <Box sx={{
-          flexShrink:0, padding:'12px 16px',
+          flexShrink:0, padding:'10px 14px',
           display:'flex', alignItems:'center', gap:'10px',
           background:SURFACE, borderBottom:`1px solid ${BORDER}`,
         }}>
           {/* Cross icon */}
-          <Box sx={{ width:28, height:28, borderRadius:'8px', background:'rgba(142,182,155,0.14)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <Box sx={{ width:28, height:28, borderRadius:'8px', background:'rgba(37,99,235,0.1)', display:'flex', alignItems:'center', justifyContent:'center' }}>
             <CrossIcon size={12} color={G} />
           </Box>
           <Box sx={{ flex:1 }}>
-            <Typography sx={{ fontSize:'13px', fontWeight:800, color:TEXT, lineHeight:1.2 }}>
+            <Typography sx={{ fontSize:'12.5px', fontWeight:800, color:TEXT, lineHeight:1.2 }}>
               {MOCK_DRIVER.callSign} · {MOCK_DRIVER.name}
             </Typography>
-            <Typography sx={{ fontSize:'10px', color:DIM }}>
-              {MOCK_DRIVER.vehicle} · {MOCK_DRIVER.type}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: '2px' }}>
+              <Chip
+                label={gpsMode === 'live_device' ? '🛰️ DEVICE GPS' : '🗺️ SIM ROUTE'}
+                size="small"
+                onClick={() => setGpsMode(gpsMode === 'live_device' ? 'simulated' : 'live_device')}
+                sx={{ height: 18, fontSize: '9px', fontWeight: 800, cursor: 'pointer', bgcolor: gpsMode === 'live_device' ? 'rgba(16,185,129,0.15)' : '#F1F5F9', color: gpsMode === 'live_device' ? '#10B981' : DIM }}
+              />
+              {activeIncident && (
+                <Typography sx={{ fontSize:'10px', color:G, fontWeight: 700 }}>
+                  ETA: {routeInfo.etaMins}m ({routeInfo.distanceKm} km)
+                </Typography>
+              )}
+            </Box>
           </Box>
           <Box sx={{ display:'flex', alignItems:'center', gap:'5px' }}>
             <Box sx={{ width:6, height:6, borderRadius:'50%', background:G, animation:'blinkDot 2s infinite' }} />
-            <Typography sx={{ fontSize:'9.5px', fontWeight:700, color:G }}>LIVE</Typography>
+            <Typography sx={{ fontSize:'9.5px', fontWeight:700, color:G }}>
+              {isBackgrounded ? 'BG' : 'LIVE'}
+            </Typography>
           </Box>
         </Box>
 

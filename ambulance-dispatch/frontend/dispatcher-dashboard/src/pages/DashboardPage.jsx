@@ -23,7 +23,8 @@ import { incidentsApi } from '../services/api';
 import { dispatchBroadcast, DISPATCH_EVENTS } from '../services/dispatchBroadcast';
 import { useNavigate } from 'react-router-dom';
 import GreenCorridorModal from '../components/GreenCorridorModal';
-import { Traffic } from '@mui/icons-material';
+import VoiceAssistantModal from '../components/VoiceAssistantModal';
+import { Traffic, Mic } from '@mui/icons-material';
 
 /* ── Evergreen tokens ── */
 const BG      = '#F8FAFC';
@@ -90,6 +91,7 @@ export default function DashboardPage({ user, onLogout }) {
   const [autoDispatchResult, setAutoDispatchResult]   = useState(null);
   const [fleetAmbulances, setFleetAmbulances]       = useState([]);
   const [greenCorridorOpen, setGreenCorridorOpen]   = useState(false);
+  const [voiceModalOpen, setVoiceModalOpen]         = useState(false);
   const navigate = useNavigate();
 
   // Ensure only one right-panel open at a time
@@ -257,6 +259,18 @@ export default function DashboardPage({ user, onLogout }) {
         {/* Weather widget — compact in header */}
         <WeatherWidget compact />
         <Box sx={{ flex:1 }} />
+
+        {/* AI Voice Assistant Trigger */}
+        <Button
+          onClick={() => setVoiceModalOpen(true)}
+          startIcon={<Mic sx={{ fontSize: 14 }} />}
+          sx={{
+            px:'10px', py:'6px', borderRadius:'8px', border:`1px solid ${G}`, color: G, bgcolor: 'rgba(37,99,235,0.06)', fontWeight:700, fontSize:'11px', flexShrink:0,
+            textTransform: 'none', '&:hover':{ background:'rgba(37,99,235,0.12)' }
+          }}
+        >
+          AI Voice Command
+        </Button>
 
         {/* Green Corridor Trigger */}
         <Button
@@ -681,6 +695,16 @@ export default function DashboardPage({ user, onLogout }) {
       <AssignmentWizard open={wizardOpen} onClose={()=>setWizardOpen(false)} incident={selectedIncident} onAssignmentCreated={handleAssignmentCreated} />
       <ShiftReportModal open={shiftReportOpen} onClose={()=>setShiftReportOpen(false)} stats={stats} incidents={incidents} ambulances={ambulances} />
       <GreenCorridorModal open={greenCorridorOpen} onClose={()=>setGreenCorridorOpen(false)} assignment={activeAssignment} />
+      <VoiceAssistantModal
+        open={voiceModalOpen}
+        onClose={() => setVoiceModalOpen(false)}
+        onAutoDispatch={handleAutoDispatch}
+        onAcknowledge={handleAcknowledge}
+        onActivateGreenCorridor={() => { setGreenCorridorOpen(true); setSnackbar({ message: 'Green Corridor activated via voice command', severity: 'info' }); }}
+        onFilterChange={(f) => { setTabValue(f === 'pending' ? 1 : 0); }}
+        incidents={incidents}
+        ambulances={ambulances}
+      />
 
       {/* ══ Snackbar ══ */}
       <Snackbar open={!!snackbar} autoHideDuration={5000} onClose={()=>setSnackbar(null)} anchorOrigin={{vertical:'bottom',horizontal:'right'}}>
