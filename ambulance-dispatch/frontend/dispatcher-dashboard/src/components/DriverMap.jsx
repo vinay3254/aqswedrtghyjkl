@@ -162,7 +162,8 @@ export default function DriverMap({ driverPos, incident, missionStatus, hospital
     if (['EN_ROUTE', 'TRANSPORTING'].includes(missionStatus)) {
       mapInstanceRef.current.easeTo({
         center: currentLngLat,
-        bearing: heading,
+        bearing: 0,
+        pitch: 0,
         duration: 800,
         easing: (t) => t,
       });

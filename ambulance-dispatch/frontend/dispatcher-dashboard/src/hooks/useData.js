@@ -145,14 +145,31 @@ export function useAmbulances() {
       ));
     };
 
+    const handleIncidentAssigned = (data) => {
+      if (!data || !data.ambulance) return;
+      console.log('[useAmbulances] INCIDENT_ASSIGNED received for unit:', data.ambulance.call_sign || data.ambulance.id);
+      setAmbulances(prev => prev.map(a =>
+        a.id === data.ambulance.id
+          ? {
+              ...a,
+              status: 'EN_ROUTE',
+              assigned_incident_id: data.incident?.id || data.id,
+              destination: data.location_address || data.incident?.location_address || 'Emergency Scene',
+            }
+          : a
+      ));
+    };
+
     socketService.on('ambulance:location', handleLocationUpdate);
     socketService.on('ambulance:status', handleStatusUpdate);
     dispatchBroadcast.on(DISPATCH_EVENTS.AMBULANCE_LOCATION, handleBroadcastLocation);
+    dispatchBroadcast.on(DISPATCH_EVENTS.INCIDENT_ASSIGNED, handleIncidentAssigned);
 
     return () => {
       socketService.off('ambulance:location', handleLocationUpdate);
       socketService.off('ambulance:status', handleStatusUpdate);
       dispatchBroadcast.off(DISPATCH_EVENTS.AMBULANCE_LOCATION, handleBroadcastLocation);
+      dispatchBroadcast.off(DISPATCH_EVENTS.INCIDENT_ASSIGNED, handleIncidentAssigned);
     };
   }, [fetchAmbulances]);
 

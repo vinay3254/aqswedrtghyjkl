@@ -229,15 +229,15 @@ export default function DriverInterface() {
     return () => navigator.geolocation.clearWatch(watchId);
   }, [gpsMode]);
 
-  /* ── Turn-by-Turn Smooth Road Navigation (Simulated Mode) ── */
+  /* ── Turn-by-Turn Road Route & Live ETA Calculation ── */
   const waypointsRef = useRef([]);
   const waypointIndexRef = useRef(0);
 
   useEffect(() => {
-    if (gpsMode === 'live_device') return;
     if (!activeIncident || !['EN_ROUTE', 'TRANSPORTING'].includes(missionStatus)) {
       waypointsRef.current = [];
       waypointIndexRef.current = 0;
+      setRouteInfo({ distanceKm: '0.0', etaMins: 0 });
       return;
     }
 
@@ -258,36 +258,31 @@ export default function DriverInterface() {
           const coords = data.routes[0].geometry.coordinates.map(([lng, lat]) => ({ lat, lng }));
           waypointsRef.current = coords;
           waypointIndexRef.current = 0;
-          setRouteInfo({
-            distanceKm: (data.routes[0].distance / 1000).toFixed(1),
-            etaMins: Math.ceil(data.routes[0].duration / 60),
-          });
+          const dist = (data.routes[0].distance / 1000).toFixed(1);
+          const eta = Math.ceil(data.routes[0].duration / 60);
+          setRouteInfo({ distanceKm: dist, etaMins: eta });
         } else {
-          // Fallback smooth steps
-          const steps = 25;
-          const pts = [];
-          for (let i = 0; i <= steps; i++) {
-            pts.push({
-              lat: from[0] + (to[0] - from[0]) * (i / steps),
-              lng: from[1] + (to[1] - from[1]) * (i / steps),
-            });
-          }
-          waypointsRef.current = pts;
-          waypointIndexRef.current = 0;
+          // Haversine fallback
+          const R = 6371;
+          const dLat = (to[0] - from[0]) * Math.PI / 180;
+          const dLng = (to[1] - from[1]) * Math.PI / 180;
+          const a = Math.sin(dLat/2)**2 + Math.cos(from[0]*Math.PI/180)*Math.cos(to[0]*Math.PI/180)*Math.sin(dLng/2)**2;
+          const dKm = (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(1);
+          const eta = Math.max(1, Math.ceil(dKm / (40 / 60)));
+          setRouteInfo({ distanceKm: dKm, etaMins: eta });
         }
       } catch {
-        const steps = 25;
-        const pts = [];
-        for (let i = 0; i <= steps; i++) {
-          pts.push({
-            lat: from[0] + (to[0] - from[0]) * (i / steps),
-            lng: from[1] + (to[1] - from[1]) * (i / steps),
-          });
-        }
-        waypointsRef.current = pts;
-        waypointIndexRef.current = 0;
+        const R = 6371;
+        const dLat = (to[0] - from[0]) * Math.PI / 180;
+        const dLng = (to[1] - from[1]) * Math.PI / 180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(from[0]*Math.PI/180)*Math.cos(to[0]*Math.PI/180)*Math.sin(dLng/2)**2;
+        const dKm = (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(1);
+        const eta = Math.max(1, Math.ceil(dKm / (40 / 60)));
+        setRouteInfo({ distanceKm: dKm, etaMins: eta });
       }
     })();
+
+    if (gpsMode === 'live_device') return;
 
     // Advance smoothly along the road waypoints
     const iv = setInterval(() => {

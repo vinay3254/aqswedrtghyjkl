@@ -195,52 +195,75 @@ export default function DashboardPage({ user, onLogout }) {
   };
 
   const handleSOSCreated = useCallback((inc) => {
-    console.log('[SOS Alert] handleSOSCreated triggered with new incident:', inc);
+    console.log('[SOS Pipeline Step 1] Incident Created & Validated:', inc);
 
     // 1. Add new SOS incident to active incidents state so it renders on the Map
     setSosIncidents(prev => [inc, ...prev.filter(i => i.id !== inc.id)]);
 
-    // 2. Select an available ambulance to dispatch to this SOS incident
-    const availableAmb = ambulances.find(a => a.status === 'AVAILABLE' || !a.assigned_incident_id) || ambulances[2] || ambulances[0];
+    const iLat = Number(inc.location_lat) || 12.9982;
+    const iLng = Number(inc.location_lng) || 77.5921;
 
-    if (availableAmb) {
-      const dispatchedAmb = {
-        ...availableAmb,
-        status: 'EN_ROUTE',
-        assigned_incident_id: inc.id,
-      };
-
-      console.log('[SOS Alert] Auto-dispatched ambulance for SOS:', dispatchedAmb.call_sign || dispatchedAmb.id, 'to Incident:', inc.id);
-
-      setFleetAmbulances(prev => {
-        const base = prev.length > 0 ? prev : ambulances;
-        return base.map(a => a.id === dispatchedAmb.id ? dispatchedAmb : a);
-      });
-
-      const assignmentPayload = {
-        ambulance: dispatchedAmb,
-        incident: inc,
-        id: inc.id,
-        incident_type: inc.incident_type,
-        severity: inc.severity,
-        location_address: inc.location_address,
-        location_lat: inc.location_lat,
-        location_lng: inc.location_lng,
-        distance: '2.8 km',
-        eta: '5 min',
-        _isAssignment: true,
-        _isSOS: true,
-      };
-
-      console.log('[SOS Alert] Emitting INCIDENT_ASSIGNED payload:', assignmentPayload);
-      setActiveAssignment(assignmentPayload);
-      dispatchBroadcast.send(DISPATCH_EVENTS.INCIDENT_ASSIGNED, assignmentPayload);
+    function hav(lat1, lon1, lat2, lon2) {
+      const R = 6371, dLat = (lat2-lat1)*Math.PI/180, dLon = (lon2-lon1)*Math.PI/180;
+      const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     }
 
-    setSnackbar({ message: `🚨 SOS Dispatched: ${inc.incident_type} (Unit: ${availableAmb?.call_sign || 'Charlie-3'})`, severity: 'error' });
-    setSosModalOpen(false);
+    const currentFleet = fleetAmbulances.length > 0 ? fleetAmbulances : ambulances;
+    const availAmbs = currentFleet.filter(a => a.status === 'AVAILABLE' || !a.assigned_incident_id);
+
+    console.log('[SOS Pipeline Step 2] Searching Nearest Available Unit. Candidate pool:', currentFleet.map(a => `${a.call_sign || a.id}: ${a.status}`));
+
+    const availableAmb = availAmbs.length > 0
+      ? availAmbs.reduce((b, a) => {
+          const d = hav(Number(a.latitude) || 12.9716, Number(a.longitude) || 77.5946, iLat, iLng);
+          return d < b.dist ? { amb: a, dist: d } : b;
+        }, { amb: availAmbs[0], dist: Infinity }).amb
+      : currentFleet[2] || currentFleet[0];
+
+    const ambDist = hav(Number(availableAmb.latitude) || 12.9716, Number(availableAmb.longitude) || 77.5946, iLat, iLng);
+    const ambDistKm = ambDist.toFixed(1);
+    const etaMins = Math.max(1, Math.ceil(ambDist / (40 / 60)));
+
+    console.log('[SOS Pipeline Step 3] Best Unit Selected:', availableAmb.call_sign || availableAmb.id, '| Road Distance:', ambDistKm, 'km | ETA:', etaMins, 'min');
+
+    const dispatchedAmb = {
+      ...availableAmb,
+      status: 'EN_ROUTE',
+      assigned_incident_id: inc.id,
+      destination: inc.location_address,
+      eta: etaMins,
+    };
+
+    setFleetAmbulances(prev => {
+      const base = prev.length > 0 ? prev : ambulances;
+      return base.map(a => a.id === dispatchedAmb.id ? dispatchedAmb : a);
+    });
+
+    const assignmentPayload = {
+      ambulance: dispatchedAmb,
+      incident: inc,
+      id: inc.id,
+      incident_type: inc.incident_type,
+      severity: inc.severity,
+      location_address: inc.location_address,
+      location_lat: iLat,
+      location_lng: iLng,
+      distance: `${ambDistKm} km`,
+      eta: `${etaMins} min`,
+      _isAssignment: true,
+      _isSOS: true,
+    };
+
+    console.log('[SOS Pipeline Step 4] Unit Status flipped to EN_ROUTE. Emitting INCIDENT_ASSIGNED to CAD and Driver View:', assignmentPayload);
+
+    setActiveAssignment(assignmentPayload);
+    dispatchBroadcast.send(DISPATCH_EVENTS.INCIDENT_ASSIGNED, assignmentPayload);
     dispatchBroadcast.send(DISPATCH_EVENTS.SOS_CREATED, inc);
-  }, [ambulances]);
+
+    setSnackbar({ message: `🚨 SOS Dispatched: ${inc.incident_type} (Unit: ${dispatchedAmb.call_sign})`, severity: 'error' });
+    setSosModalOpen(false);
+  }, [ambulances, fleetAmbulances]);
 
   const activeCount  = incidents.filter(i=>!['RESOLVED','CANCELLED'].includes(i.status)).length;
   const pendingCount = incidents.filter(i=>i.status==='PENDING').length;
