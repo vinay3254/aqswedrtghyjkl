@@ -402,6 +402,100 @@ export default function DispatchMap({
     });
   }, [hospitals, mapReady]);
 
+  /* ── Sub-step 2c (Single Test Route): Alpha-1 -> Palace Grounds via OSRM GeoJSON ── */
+  useEffect(() => {
+    if (!mapInstanceRef.current || !mapReady) return;
+    const map = mapInstanceRef.current;
+
+    const from = [77.5946, 12.9716]; // Alpha-1 (MG Road) [lng, lat]
+    const to = [77.5921, 12.9982];   // Palace Grounds Trauma Incident [lng, lat]
+    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${from[0]},${from[1]};${to[0]},${to[1]}?overview=full&geometries=geojson`;
+
+    console.log('[Sub-step 2c] Fetching single test route (Alpha-1 -> Palace Grounds):', osrmUrl);
+
+    fetch(osrmUrl)
+      .then(res => res.json())
+      .then(data => {
+        if (!data || !data.routes || !data.routes[0]) {
+          console.warn('[Sub-step 2c] No route returned by OSRM:', data);
+          return;
+        }
+
+        const route = data.routes[0];
+        const geojsonGeometry = route.geometry;
+        console.log('[Sub-step 2c] OSRM Route Fetched Successfully!', {
+          distanceKm: (route.distance / 1000).toFixed(2),
+          durationMins: Math.ceil(route.duration / 60),
+          waypointsCount: geojsonGeometry.coordinates.length,
+          firstCoord: geojsonGeometry.coordinates[0],
+          lastCoord: geojsonGeometry.coordinates[geojsonGeometry.coordinates.length - 1],
+        });
+
+        const geojsonData = {
+          type: 'Feature',
+          properties: {
+            name: 'Alpha-1 to Palace Grounds Test Route',
+            distance: route.distance,
+            duration: route.duration,
+          },
+          geometry: geojsonGeometry,
+        };
+
+        // If source exists, update data; else add source and layers
+        if (map.getSource('test-route-source')) {
+          map.getSource('test-route-source').setData(geojsonData);
+        } else {
+          map.addSource('test-route-source', {
+            type: 'geojson',
+            data: geojsonData,
+          });
+
+          // Outer glowing casing
+          map.addLayer({
+            id: 'test-route-casing',
+            type: 'line',
+            source: 'test-route-source',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+            },
+            paint: {
+              'line-color': '#1D4ED8',
+              'line-width': 8,
+              'line-opacity': 0.45,
+            },
+          });
+
+          // Inner high-contrast navigation line
+          map.addLayer({
+            id: 'test-route-line',
+            type: 'line',
+            source: 'test-route-source',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+            },
+            paint: {
+              'line-color': '#3B82F6',
+              'line-width': 5,
+              'line-opacity': 0.95,
+            },
+          });
+        }
+      })
+      .catch(err => {
+        console.error('[Sub-step 2c] OSRM route fetch error:', err);
+      });
+
+    return () => {
+      if (mapInstanceRef.current && map.isStyleLoaded()) {
+        if (map.getLayer('test-route-line')) map.removeLayer('test-route-line');
+        if (map.getLayer('test-route-casing')) map.removeLayer('test-route-casing');
+        if (map.getSource('test-route-source')) map.removeSource('test-route-source');
+      }
+    };
+  }, [mapReady]);
+
   return (
     <Box
       sx={{
