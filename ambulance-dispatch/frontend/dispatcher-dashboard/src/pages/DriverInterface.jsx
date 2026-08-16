@@ -173,28 +173,103 @@ export default function DriverInterface() {
   /* Clock */
   useEffect(() => { const t = setInterval(()=>setTime(new Date()),1000); return ()=>clearInterval(t); }, []);
 
-  /* GPS simulation */
+  /* ── Turn-by-Turn Smooth Road Navigation (No Jitter) ── */
+  const waypointsRef = useRef([]);
+  const waypointIndexRef = useRef(0);
+
   useEffect(() => {
-    if (!activeIncident || !['EN_ROUTE','TRANSPORTING'].includes(missionStatus)) return;
-    const target = missionStatus==='EN_ROUTE'
-      ? { lat:activeIncident.location_lat||19.0596, lng:activeIncident.location_lng||72.8295 }
-      : { lat:19.0728, lng:72.8826 };
-    const iv = setInterval(()=>{
-      const cur = driverPosRef.current;
-      const dlat = (target.lat-cur.lat)*0.06+(Math.random()-0.5)*0.0002;
-      const dlng = (target.lng-cur.lng)*0.06+(Math.random()-0.5)*0.0002;
-      const next = { lat:cur.lat+dlat, lng:cur.lng+dlng };
-      driverPosRef.current = next;
-      setDriverPos({...next});
-    }, 1500);
-    return ()=>clearInterval(iv);
-  }, [activeIncident, missionStatus]);
+    if (!activeIncident || !['EN_ROUTE', 'TRANSPORTING'].includes(missionStatus)) {
+      waypointsRef.current = [];
+      waypointIndexRef.current = 0;
+      return;
+    }
+
+    let alive = true;
+    const from = [driverPosRef.current.lat, driverPosRef.current.lng];
+    const to = missionStatus === 'EN_ROUTE'
+      ? [activeIncident.location_lat || 12.9784, activeIncident.location_lng || 77.6408]
+      : [selectedHospital?.latitude || 12.9550, selectedHospital?.longitude || 77.6445];
+
+    // Fetch road route coordinates from OSRM
+    (async () => {
+      try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${from[1]},${from[0]};${to[1]},${to[0]}?overview=full&geometries=geojson`;
+        const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+        const data = await res.json();
+        if (!alive) return;
+        if (data.routes?.[0]?.geometry?.coordinates?.length > 1) {
+          waypointsRef.current = data.routes[0].geometry.coordinates.map(([lng, lat]) => ({ lat, lng }));
+          waypointIndexRef.current = 0;
+        } else {
+          // Fallback smooth steps
+          const steps = 25;
+          const pts = [];
+          for (let i = 0; i <= steps; i++) {
+            pts.push({
+              lat: from[0] + (to[0] - from[0]) * (i / steps),
+              lng: from[1] + (to[1] - from[1]) * (i / steps),
+            });
+          }
+          waypointsRef.current = pts;
+          waypointIndexRef.current = 0;
+        }
+      } catch {
+        const steps = 25;
+        const pts = [];
+        for (let i = 0; i <= steps; i++) {
+          pts.push({
+            lat: from[0] + (to[0] - from[0]) * (i / steps),
+            lng: from[1] + (to[1] - from[1]) * (i / steps),
+          });
+        }
+        waypointsRef.current = pts;
+        waypointIndexRef.current = 0;
+      }
+    })();
+
+    // Advance smoothly along the road waypoints
+    const iv = setInterval(() => {
+      const wps = waypointsRef.current;
+      if (!wps || wps.length === 0) return;
+
+      if (waypointIndexRef.current < wps.length - 1) {
+        waypointIndexRef.current += 1;
+        const next = wps[waypointIndexRef.current];
+        driverPosRef.current = next;
+        setDriverPos({ ...next });
+
+        // Broadcast live location to Dispatch Command Center & other responders
+        dispatchBroadcast.send(DISPATCH_EVENTS.AMBULANCE_LOCATION, {
+          ambulance_id: 'AMB-001',
+          latitude: next.lat,
+          longitude: next.lng,
+          speed: 52,
+        });
+      } else {
+        // Arrived at destination
+        if (missionStatus === 'EN_ROUTE') {
+          setMissionStatus('ON_SCENE');
+          setChecklistPhase('ON_SCENE');
+          setToast({ msg: 'Ambulance arrived On Scene with patient!', sev: 'warning' });
+        } else if (missionStatus === 'TRANSPORTING') {
+          setMissionStatus('AT_HOSPITAL');
+          setChecklistPhase('HANDOVER');
+          setToast({ msg: 'Arrived at receiving hospital ER!', sev: 'success' });
+        }
+      }
+    }, 1200);
+
+    return () => {
+      alive = false;
+      clearInterval(iv);
+    };
+  }, [activeIncident, missionStatus, selectedHospital]);
 
   /* Speed simulation */
   useEffect(() => {
     if (!activeIncident) { setSpeed(0); return; }
     const t = setInterval(()=>{
-      setSpeed(['EN_ROUTE','TRANSPORTING'].includes(missionStatus) ? 45+Math.floor(Math.random()*35) : 0);
+      setSpeed(['EN_ROUTE','TRANSPORTING'].includes(missionStatus) ? 48+Math.floor(Math.random()*12) : 0);
     }, 1500);
     return ()=>clearInterval(t);
   }, [activeIncident, missionStatus]);

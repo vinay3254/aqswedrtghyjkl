@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { incidentsApi, ambulancesApi, hospitalsApi, analyticsApi } from '../services/api';
 import socketService from '../services/socket';
+import { dispatchBroadcast, DISPATCH_EVENTS } from '../services/dispatchBroadcast';
 
 /* ── Mock fallback data (used when backend is offline) ───────── */
 const MOCK_AMBULANCES = [
@@ -144,12 +145,24 @@ export function useAmbulances() {
         a.id === data.ambulance_id ? { ...a, status: data.status } : a
       ));
 
+    const handleBroadcastLocation = (data) => {
+      if (!data) return;
+      const targetId = data.ambulance_id || data.id;
+      setAmbulances(prev => prev.map(a =>
+        a.id === targetId || a.call_sign === 'Alpha-1' || a.id === 'AMB-001'
+          ? { ...a, latitude: data.latitude, longitude: data.longitude, speed: data.speed || a.speed }
+          : a
+      ));
+    };
+
     socketService.on('ambulance:location', handleLocationUpdate);
     socketService.on('ambulance:status', handleStatusUpdate);
+    dispatchBroadcast.on(DISPATCH_EVENTS.AMBULANCE_LOCATION, handleBroadcastLocation);
+
     return () => {
-      clearInterval(liveInterval);
       socketService.off('ambulance:location', handleLocationUpdate);
       socketService.off('ambulance:status', handleStatusUpdate);
+      dispatchBroadcast.off(DISPATCH_EVENTS.AMBULANCE_LOCATION, handleBroadcastLocation);
     };
   }, [fetchAmbulances]);
 
