@@ -50,13 +50,9 @@ export function toLngLat(coord) {
 
 /* ── DOM Element Creators for MapLibre Markers ── */
 function createAmbulanceDomElement(amb) {
-  const el = document.createElement('div');
-  el.className = 'maplibre-custom-marker maplibre-ambulance-marker';
-  el.style.cursor = 'pointer';
-  el.style.position = 'relative';
-  el.style.display = 'flex';
-  el.style.flexDirection = 'column';
-  el.style.alignItems = 'center';
+  const wrapper = document.createElement('div');
+  wrapper.className = 'maplibre-ambulance-wrapper';
+  wrapper.style.cursor = 'pointer';
 
   const status = amb.status || 'AVAILABLE';
   const moving = ['EN_ROUTE', 'TRANSPORTING'].includes(status);
@@ -75,7 +71,13 @@ function createAmbulanceDomElement(amb) {
   const callsign = amb.call_sign || amb.vehicle_number || amb.id || 'AMB';
   const speed = amb.speed ? `${amb.speed} km/h` : '';
 
-  el.innerHTML = `
+  const inner = document.createElement('div');
+  inner.style.display = 'flex';
+  inner.style.flexDirection = 'column';
+  inner.style.alignItems = 'center';
+  inner.style.pointerEvents = 'auto';
+
+  inner.innerHTML = `
     <!-- Callsign Badge -->
     <div style="
       background:#0F172A;color:#FFFFFF;padding:2px 7px;border-radius:12px;
@@ -109,23 +111,26 @@ function createAmbulanceDomElement(amb) {
       border-top:8px solid #FFFFFF;margin-top:-2px;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.2));
     "></div>
   `;
-  return el;
+  wrapper.appendChild(inner);
+  return wrapper;
 }
 
 function createIncidentDomElement(inc) {
-  const el = document.createElement('div');
-  el.className = 'maplibre-custom-marker maplibre-incident-marker';
-  el.style.cursor = 'pointer';
-  el.style.position = 'relative';
-  el.style.display = 'flex';
-  el.style.flexDirection = 'column';
-  el.style.alignItems = 'center';
+  const wrapper = document.createElement('div');
+  wrapper.className = 'maplibre-incident-wrapper';
+  wrapper.style.cursor = 'pointer';
 
   const sev = inc.severity || 'HIGH';
   const color = sev === 'CRITICAL' ? '#EF4444' : sev === 'HIGH' ? '#F97316' : '#F59E0B';
   const size = sev === 'CRITICAL' ? 42 : 36;
 
-  el.innerHTML = `
+  const inner = document.createElement('div');
+  inner.style.display = 'flex';
+  inner.style.flexDirection = 'column';
+  inner.style.alignItems = 'center';
+  inner.style.pointerEvents = 'auto';
+
+  inner.innerHTML = `
     <!-- Severity Banner -->
     <div style="
       background:${color};color:#FFFFFF;padding:2px 7px;border-radius:10px;
@@ -156,7 +161,8 @@ function createIncidentDomElement(inc) {
       border-top:8px solid #FFFFFF;margin-top:-2px;
     "></div>
   `;
-  return el;
+  wrapper.appendChild(inner);
+  return wrapper;
 }
 
 function createHospitalDomElement(h) {
@@ -278,6 +284,7 @@ export default function DispatchMap({
     incidents.forEach(inc => {
       const lngLat = toLngLat(inc);
       if (!lngLat) return;
+      console.log('[DispatchMap toLngLat trace]', 'Incident:', inc.id, 'Raw lat/lng:', [inc.location_lat, inc.location_lng], '-> Output [lng, lat]:', lngLat);
 
       const existing = markersRef.current.incidents.get(inc.id);
       if (existing) {
@@ -326,6 +333,7 @@ export default function DispatchMap({
     ambulances.forEach(amb => {
       const lngLat = toLngLat(amb);
       if (!lngLat) return;
+      console.log('[DispatchMap toLngLat trace]', 'Ambulance:', amb.id, 'Raw lat/lng:', [amb.latitude, amb.longitude], '-> Output [lng, lat]:', lngLat);
 
       const existing = markersRef.current.ambulances.get(amb.id);
       if (existing) {
