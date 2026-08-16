@@ -40,6 +40,13 @@ const MOCK_INCIDENTS = [
     description: 'Commercial complex fire, smoke inhalation.', patients_count: 2,
     is_sos: false, created_at: new Date(Date.now() - 12 * 60000).toISOString(),
   },
+  {
+    id: 'INC-004', incident_type: 'Trauma Incident', severity: 'CRITICAL', status: 'PENDING',
+    location_address: 'Palace Grounds, Jayamahal, Bengaluru', location_lat: 12.9982, location_lng: 77.5921,
+    caller_name: 'Palace Grounds Control', caller_phone: '+91 99001 22334',
+    description: 'Palace Grounds test verification landmark point.', patients_count: 1,
+    is_sos: false, created_at: new Date(Date.now() - 2 * 60000).toISOString(),
+  },
 ];
 
 const MOCK_STATS = {

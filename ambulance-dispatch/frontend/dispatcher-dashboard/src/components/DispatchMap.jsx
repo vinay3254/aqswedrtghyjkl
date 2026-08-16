@@ -216,7 +216,7 @@ export default function DispatchMap({
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef({ incidents: new Map(), ambulances: new Map(), hospitals: new Map() });
-  const mapLoadedRef = useRef(false);
+  const [mapReady, setMapReady] = React.useState(false);
 
   /* ── Initialize MapLibre GL Map ── */
   useEffect(() => {
@@ -238,7 +238,7 @@ export default function DispatchMap({
 
     map.on('load', () => {
       console.log('[MapLibre GL] Vector Base Map loaded successfully!');
-      mapLoadedRef.current = true;
+      setMapReady(true);
       map.resize();
     });
 
@@ -306,11 +306,11 @@ export default function DispatchMap({
         markersRef.current.incidents.set(inc.id, marker);
       }
     });
-  }, [incidents, onIncidentClick]);
+  }, [incidents, onIncidentClick, mapReady]);
 
   /* ── Sub-step 2b: Render Ambulance Markers with toLngLat() ── */
   useEffect(() => {
-    if (!mapInstanceRef.current) return;
+    if (!mapInstanceRef.current || !mapReady) return;
     const map = mapInstanceRef.current;
     const currentIds = new Set(ambulances.map(a => a.id));
 
@@ -351,11 +351,11 @@ export default function DispatchMap({
         markersRef.current.ambulances.set(amb.id, marker);
       }
     });
-  }, [ambulances, onAmbulanceClick]);
+  }, [ambulances, onAmbulanceClick, mapReady]);
 
   /* ── Sub-step 2b: Render Hospital Markers with toLngLat() ── */
   useEffect(() => {
-    if (!mapInstanceRef.current) return;
+    if (!mapInstanceRef.current || !mapReady) return;
     const map = mapInstanceRef.current;
     const currentIds = new Set(hospitals.map(h => h.id));
 
@@ -392,7 +392,7 @@ export default function DispatchMap({
         markersRef.current.hospitals.set(h.id, marker);
       }
     });
-  }, [hospitals]);
+  }, [hospitals, mapReady]);
 
   return (
     <Box
