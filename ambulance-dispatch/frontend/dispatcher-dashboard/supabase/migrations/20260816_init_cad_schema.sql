@@ -354,6 +354,7 @@ ALTER TABLE public.incidents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.incident_timeline_events ENABLE ROW LEVEL SECURITY;
 
 -- ── PROFILES POLICIES ──
+DROP POLICY IF EXISTS "profiles_select_policy" ON public.profiles;
 CREATE POLICY "profiles_select_policy"
 ON public.profiles FOR SELECT
 TO authenticated
@@ -362,6 +363,7 @@ USING (
   OR public.current_user_role() IN ('DISPATCHER', 'ADMIN')
 );
 
+DROP POLICY IF EXISTS "profiles_update_self_policy" ON public.profiles;
 CREATE POLICY "profiles_update_self_policy"
 ON public.profiles FOR UPDATE
 TO authenticated
@@ -381,17 +383,20 @@ CREATE OR REPLACE VIEW public.roster_public_view AS
 GRANT SELECT ON public.roster_public_view TO authenticated;
 
 -- ── HOSPITALS POLICIES ──
+DROP POLICY IF EXISTS "hospitals_select_policy" ON public.hospitals;
 CREATE POLICY "hospitals_select_policy"
 ON public.hospitals FOR SELECT
 TO authenticated
 USING (true);
 
+DROP POLICY IF EXISTS "hospitals_update_policy" ON public.hospitals;
 CREATE POLICY "hospitals_update_policy"
 ON public.hospitals FOR UPDATE
 TO authenticated
 USING (public.current_user_role() IN ('DISPATCHER', 'ADMIN'));
 
 -- ── AMBULANCES POLICIES ──
+DROP POLICY IF EXISTS "ambulances_select_policy" ON public.ambulances;
 CREATE POLICY "ambulances_select_policy"
 ON public.ambulances FOR SELECT
 TO authenticated
@@ -401,16 +406,19 @@ USING (
   OR status = 'AVAILABLE'
 );
 
+DROP POLICY IF EXISTS "ambulances_insert_policy" ON public.ambulances;
 CREATE POLICY "ambulances_insert_policy"
 ON public.ambulances FOR INSERT
 TO authenticated
 WITH CHECK (public.current_user_role() IN ('DISPATCHER', 'ADMIN'));
 
+DROP POLICY IF EXISTS "ambulances_delete_policy" ON public.ambulances;
 CREATE POLICY "ambulances_delete_policy"
 ON public.ambulances FOR DELETE
 TO authenticated
 USING (public.current_user_role() IN ('DISPATCHER', 'ADMIN'));
 
+DROP POLICY IF EXISTS "ambulances_update_policy" ON public.ambulances;
 CREATE POLICY "ambulances_update_policy"
 ON public.ambulances FOR UPDATE
 TO authenticated
@@ -424,6 +432,7 @@ WITH CHECK (
 );
 
 -- ── INCIDENTS POLICIES ──
+DROP POLICY IF EXISTS "incidents_select_policy" ON public.incidents;
 CREATE POLICY "incidents_select_policy"
 ON public.incidents FOR SELECT
 TO authenticated
@@ -432,11 +441,13 @@ USING (
   OR assigned_ambulance_id = public.current_driver_ambulance_id()
 );
 
+DROP POLICY IF EXISTS "incidents_insert_policy" ON public.incidents;
 CREATE POLICY "incidents_insert_policy"
 ON public.incidents FOR INSERT
 TO authenticated
 WITH CHECK (public.current_user_role() IN ('DISPATCHER', 'ADMIN'));
 
+DROP POLICY IF EXISTS "incidents_update_policy" ON public.incidents;
 CREATE POLICY "incidents_update_policy"
 ON public.incidents FOR UPDATE
 TO authenticated
@@ -450,6 +461,7 @@ WITH CHECK (
 );
 
 -- ── TIMELINE EVENTS POLICIES ──
+DROP POLICY IF EXISTS "timeline_select_policy" ON public.incident_timeline_events;
 CREATE POLICY "timeline_select_policy"
 ON public.incident_timeline_events FOR SELECT
 TO authenticated
@@ -458,6 +470,7 @@ USING (
   OR ambulance_id = public.current_driver_ambulance_id()
 );
 
+DROP POLICY IF EXISTS "timeline_insert_policy" ON public.incident_timeline_events;
 CREATE POLICY "timeline_insert_policy"
 ON public.incident_timeline_events FOR INSERT
 TO authenticated

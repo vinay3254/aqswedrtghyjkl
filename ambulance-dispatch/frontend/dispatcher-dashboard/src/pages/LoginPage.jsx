@@ -200,60 +200,64 @@ export default function LoginPage() {
           </Button>
         </Box>
 
-        <Divider sx={{ my: 3, borderColor: '#1E293B', '&::before, &::after': { borderColor: '#1E293B' } }}>
-          <Typography variant="caption" sx={{ color: '#64748B', px: 1, fontWeight: 600 }}>
-            OR SIGN IN AS DEMO ROLE
-          </Typography>
-        </Divider>
+        {/* Demo Fast Access Role Selector (Gated to DEV mode only) */}
+        {import.meta.env.DEV && (
+          <>
+            <Divider sx={{ my: 3, borderColor: '#1E293B', '&::before, &::after': { borderColor: '#1E293B' } }}>
+              <Typography variant="caption" sx={{ color: '#64748B', px: 1, fontWeight: 600 }}>
+                OR SIGN IN AS DEMO ROLE (DEV ONLY)
+              </Typography>
+            </Divider>
 
-        {/* Demo Fast Access Role Selector */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.2 }}>
-          {DEMO_ACCOUNTS.map((demo) => (
-            <Box
-              key={demo.email}
-              onClick={() => handleSelectDemo(demo)}
-              sx={{
-                p: 1.4,
-                borderRadius: '10px',
-                bgcolor: email === demo.email ? 'rgba(37,99,235,0.15)' : '#1E293B',
-                border: `1.5px solid ${email === demo.email ? '#38BDF8' : '#334155'}`,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease-in-out',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.06)', borderColor: '#64748B' },
-              }}
-            >
-              <Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.2 }}>
-                  <Chip
-                    icon={demo.icon}
-                    label={demo.role}
-                    size="small"
-                    sx={{
-                      height: 20,
-                      fontSize: '9.5px',
-                      fontWeight: 800,
-                      bgcolor: 'rgba(255,255,255,0.08)',
-                      color: demo.badgeColor,
-                      '& .MuiChip-icon': { color: demo.badgeColor },
-                    }}
-                  />
-                  <Typography sx={{ fontSize: '13px', fontWeight: 700, color: 'white' }}>
-                    {demo.label}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.2 }}>
+              {DEMO_ACCOUNTS.map((demo) => (
+                <Box
+                  key={demo.email}
+                  onClick={() => handleSelectDemo(demo)}
+                  sx={{
+                    p: 1.4,
+                    borderRadius: '10px',
+                    bgcolor: email === demo.email ? 'rgba(37,99,235,0.15)' : '#1E293B',
+                    border: `1.5px solid ${email === demo.email ? '#38BDF8' : '#334155'}`,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease-in-out',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.06)', borderColor: '#64748B' },
+                  }}
+                >
+                  <Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.2 }}>
+                      <Chip
+                        icon={demo.icon}
+                        label={demo.role}
+                        size="small"
+                        sx={{
+                          height: 20,
+                          fontSize: '9.5px',
+                          fontWeight: 800,
+                          bgcolor: 'rgba(255,255,255,0.08)',
+                          color: demo.badgeColor,
+                          '& .MuiChip-icon': { color: demo.badgeColor },
+                        }}
+                      />
+                      <Typography sx={{ fontSize: '13px', fontWeight: 700, color: 'white' }}>
+                        {demo.label}
+                      </Typography>
+                    </Box>
+                    <Typography sx={{ fontSize: '10.5px', color: '#94A3B8' }}>
+                      {demo.desc}
+                    </Typography>
+                  </Box>
+                  <Typography sx={{ fontSize: '11px', color: '#38BDF8', fontWeight: 700 }}>
+                    Select ➔
                   </Typography>
                 </Box>
-                <Typography sx={{ fontSize: '10.5px', color: '#94A3B8' }}>
-                  {demo.desc}
-                </Typography>
-              </Box>
-              <Typography sx={{ fontSize: '11px', color: '#38BDF8', fontWeight: 700 }}>
-                Select ➔
-              </Typography>
+              ))}
             </Box>
-          ))}
-        </Box>
+          </>
+        )}
       </Card>
     </Box>
   );
