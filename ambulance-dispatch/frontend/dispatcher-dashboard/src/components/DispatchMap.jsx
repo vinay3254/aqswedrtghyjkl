@@ -222,6 +222,7 @@ export default function DispatchMap({
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef({ incidents: new Map(), ambulances: new Map(), hospitals: new Map() });
+  const activeRoutesRef = useRef(new Set());
   const [mapReady, setMapReady] = React.useState(false);
 
   /* ── Initialize MapLibre GL Map ── */
@@ -402,107 +403,138 @@ export default function DispatchMap({
     });
   }, [hospitals, mapReady]);
 
-  /* ── Sub-step 2c (Single Test Route): Alpha-1 -> Palace Grounds via OSRM GeoJSON ── */
+  /* ── Generalized Multi-Unit Route Manager: Render distinct OSRM routes for all dispatched units ── */
   useEffect(() => {
     if (!mapInstanceRef.current || !mapReady) return;
     const map = mapInstanceRef.current;
 
-    const from = [77.5946, 12.9716]; // Alpha-1 (MG Road) [lng, lat]
-    const to = [77.5921, 12.9982];   // Palace Grounds Trauma Incident [lng, lat]
-    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${from[0]},${from[1]};${to[0]},${to[1]}?overview=full&geometries=geojson`;
+    // Filter dispatched / active ambulances
+    const activeAmbulances = ambulances.filter(
+      amb => ['EN_ROUTE', 'TRANSPORTING'].includes(amb.status) || amb.assigned_incident_id
+    );
 
-    console.log('[Sub-step 2c] Fetching single test route (Alpha-1 -> Palace Grounds)...');
+    const activeIds = new Set(activeAmbulances.map(a => a.id));
 
-    fetch(osrmUrl)
-      .then(res => res.json())
-      .then(data => {
-        if (!data || !data.routes || !data.routes[0]) {
-          console.warn('[Sub-step 2c] No route returned by OSRM:', data);
-          return;
-        }
-
-        const route = data.routes[0];
-        const geojsonData = {
-          type: 'Feature',
-          properties: {
-            name: 'Alpha-1 to Palace Grounds',
-            distance: route.distance,
-            duration: route.duration,
-          },
-          geometry: route.geometry,
-        };
-
-        const renderRoute = () => {
-          try {
-            // Source management
-            if (map.getSource('test-route-source')) {
-              map.getSource('test-route-source').setData(geojsonData);
-            } else {
-              map.addSource('test-route-source', {
-                type: 'geojson',
-                data: geojsonData,
-              });
-            }
-
-            // Outer casing
-            if (!map.getLayer('test-route-casing')) {
-              map.addLayer({
-                id: 'test-route-casing',
-                type: 'line',
-                source: 'test-route-source',
-                layout: {
-                  'line-join': 'round',
-                  'line-cap': 'round',
-                },
-                paint: {
-                  'line-color': '#1E40AF',
-                  'line-width': 9,
-                  'line-opacity': 0.8,
-                },
-              });
-            }
-
-            // Core visible navigation line
-            if (!map.getLayer('test-route-line')) {
-              map.addLayer({
-                id: 'test-route-line',
-                type: 'line',
-                source: 'test-route-source',
-                layout: {
-                  'line-join': 'round',
-                  'line-cap': 'round',
-                },
-                paint: {
-                  'line-color': '#2563EB',
-                  'line-width': 6,
-                  'line-opacity': 1.0,
-                },
-              });
-            }
-
-            // Verification checks
-            console.log('[Sub-step 2c Verification]', {
-              sourceFound: Boolean(map.getSource('test-route-source')),
-              casingLayerFound: Boolean(map.getLayer('test-route-casing')),
-              lineLayerFound: Boolean(map.getLayer('test-route-line')),
-              waypoints: geojsonData.geometry.coordinates.length,
-              distanceKm: (route.distance / 1000).toFixed(2),
-            });
-          } catch (e) {
-            console.error('[Sub-step 2c] Failed to add route layer:', e);
-          }
-        };
-
+    // Remove routes for units that are no longer active / dispatched
+    activeRoutesRef.current.forEach(ambId => {
+      if (!activeIds.has(ambId)) {
         if (map.isStyleLoaded()) {
-          renderRoute();
-        } else {
-          map.once('styledata', renderRoute);
+          if (map.getLayer(`route-line-${ambId}`)) map.removeLayer(`route-line-${ambId}`);
+          if (map.getLayer(`route-casing-${ambId}`)) map.removeLayer(`route-casing-${ambId}`);
+          if (map.getSource(`route-source-${ambId}`)) map.removeSource(`route-source-${ambId}`);
         }
-      })
-      .catch(err => {
-        console.error('[Sub-step 2c] OSRM fetch error:', err);
-      });
-  }, [mapReady]);
+        activeRoutesRef.current.delete(ambId);
+      }
+    });
+
+    if (activeAmbulances.length === 0) return;
+
+    // Color palette for distinct unit routes
+    const ROUTE_THEMES = {
+      'AMB-001': { core: '#2563EB', casing: '#1E40AF' }, // Alpha-1: Royal Blue
+      'AMB-002': { core: '#EA580C', casing: '#9A3412' }, // Bravo-2: Orange
+      'AMB-003': { core: '#9333EA', casing: '#581C87' }, // Charlie-3: Purple
+      'AMB-004': { core: '#06B6D4', casing: '#164E63' }, // Delta-4: Cyan
+      'AMB-005': { core: '#10B981', casing: '#064E3B' }, // Echo-5: Emerald
+    };
+
+    activeAmbulances.forEach(amb => {
+      const ambCoord = toLngLat(amb);
+      if (!ambCoord) return;
+
+      // Find matching incident
+      const targetIncident = incidents.find(i => i.id === amb.assigned_incident_id) || incidents[0];
+      if (!targetIncident) return;
+      const incCoord = toLngLat(targetIncident);
+      if (!incCoord) return;
+
+      const sourceId = `route-source-${amb.id}`;
+      const casingLayerId = `route-casing-${amb.id}`;
+      const lineLayerId = `route-line-${amb.id}`;
+      const theme = ROUTE_THEMES[amb.id] || { core: '#2563EB', casing: '#1E40AF' };
+
+      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${ambCoord[0]},${ambCoord[1]};${incCoord[0]},${incCoord[1]}?overview=full&geometries=geojson`;
+
+      fetch(osrmUrl)
+        .then(res => res.json())
+        .then(data => {
+          if (!data || !data.routes || !data.routes[0]) return;
+
+          const route = data.routes[0];
+          const geojsonData = {
+            type: 'Feature',
+            properties: {
+              ambulanceId: amb.id,
+              callsign: amb.call_sign,
+              distance: route.distance,
+              duration: route.duration,
+            },
+            geometry: route.geometry,
+          };
+
+          const renderUnitRoute = () => {
+            try {
+              if (map.getSource(sourceId)) {
+                map.getSource(sourceId).setData(geojsonData);
+              } else {
+                map.addSource(sourceId, {
+                  type: 'geojson',
+                  data: geojsonData,
+                });
+              }
+
+              if (!map.getLayer(casingLayerId)) {
+                map.addLayer({
+                  id: casingLayerId,
+                  type: 'line',
+                  source: sourceId,
+                  layout: { 'line-join': 'round', 'line-cap': 'round' },
+                  paint: {
+                    'line-color': theme.casing,
+                    'line-width': 8,
+                    'line-opacity': 0.75,
+                  },
+                });
+              }
+
+              if (!map.getLayer(lineLayerId)) {
+                map.addLayer({
+                  id: lineLayerId,
+                  type: 'line',
+                  source: sourceId,
+                  layout: { 'line-join': 'round', 'line-cap': 'round' },
+                  paint: {
+                    'line-color': theme.core,
+                    'line-width': 5,
+                    'line-opacity': 1.0,
+                  },
+                });
+              }
+
+              activeRoutesRef.current.add(amb.id);
+
+              console.log(`[Multi-Route] Rendered route for ${amb.call_sign || amb.id}:`, {
+                sourceId,
+                distanceKm: (route.distance / 1000).toFixed(2),
+                durationMins: Math.ceil(route.duration / 60),
+                waypoints: geojsonData.geometry.coordinates.length,
+              });
+            } catch (e) {
+              console.error(`[Multi-Route] Error adding layer for ${amb.id}:`, e);
+            }
+          };
+
+          if (map.isStyleLoaded()) {
+            renderUnitRoute();
+          } else {
+            map.once('styledata', renderUnitRoute);
+          }
+        })
+        .catch(err => {
+          console.error(`[Multi-Route] OSRM fetch error for ${amb.id}:`, err);
+        });
+    });
+  }, [ambulances, incidents, mapReady]);
 
   return (
     <Box

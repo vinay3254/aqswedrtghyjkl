@@ -5,11 +5,11 @@ import { dispatchBroadcast, DISPATCH_EVENTS } from '../services/dispatchBroadcas
 
 /* ── Mock fallback data (used when backend is offline) ───────── */
 const MOCK_AMBULANCES = [
-  { id: 'AMB-001', call_sign: 'Alpha-1',   vehicle_number: 'KA-01-A-0001', type: 'ALS', status: 'AVAILABLE',    latitude: 12.9716, longitude: 77.5946, driver: 'Rajesh Kumar', speed: 0,  battery: 87, signal: 4, destination: null, eta: null },
-  { id: 'AMB-002', call_sign: 'Bravo-2',   vehicle_number: 'KA-01-B-0002', type: 'BLS', status: 'AVAILABLE',    latitude: 12.9352, longitude: 77.6245, driver: 'Suresh Patel',  speed: 0,  battery: 100,signal: 5, destination: null, eta: null },
-  { id: 'AMB-003', call_sign: 'Charlie-3', vehicle_number: 'KA-01-C-0003', type: 'ALS', status: 'AVAILABLE',    latitude: 13.0359, longitude: 77.5967, driver: 'Priya Singh',   speed: 0,  battery: 62, signal: 3, destination: null, eta: null },
-  { id: 'AMB-004', call_sign: 'Delta-4',   vehicle_number: 'KA-01-D-0004', type: 'BLS', status: 'AVAILABLE',    latitude: 12.9698, longitude: 77.7200, driver: 'Amit Sharma',   speed: 0,  battery: 45, signal: 4, destination: null, eta: null },
-  { id: 'AMB-005', call_sign: 'Echo-5',    vehicle_number: 'KA-01-E-0005', type: 'ALS', status: 'AVAILABLE',    latitude: 12.9308, longitude: 77.5838, driver: 'Neha Verma',    speed: 0,  battery: 95, signal: 5, destination: null, eta: null },
+  { id: 'AMB-001', call_sign: 'Alpha-1',   vehicle_number: 'KA-01-A-0001', type: 'ALS', status: 'EN_ROUTE', assigned_incident_id: 'INC-004', latitude: 12.9716, longitude: 77.5946, driver: 'Rajesh Kumar', speed: 42, battery: 87, signal: 4, destination: 'Palace Grounds, Jayamahal', eta: 8 },
+  { id: 'AMB-002', call_sign: 'Bravo-2',   vehicle_number: 'KA-01-B-0002', type: 'BLS', status: 'EN_ROUTE', assigned_incident_id: 'INC-001', latitude: 12.9352, longitude: 77.6245, driver: 'Suresh Patel', speed: 38, battery: 100, signal: 5, destination: 'Indiranagar 100ft Road', eta: 11 },
+  { id: 'AMB-003', call_sign: 'Charlie-3', vehicle_number: 'KA-01-C-0003', type: 'ALS', status: 'AVAILABLE', assigned_incident_id: null, latitude: 13.0359, longitude: 77.5967, driver: 'Priya Singh', speed: 0, battery: 62, signal: 3, destination: null, eta: null },
+  { id: 'AMB-004', call_sign: 'Delta-4',   vehicle_number: 'KA-01-D-0004', type: 'BLS', status: 'AVAILABLE', assigned_incident_id: null, latitude: 12.9698, longitude: 77.7200, driver: 'Amit Sharma', speed: 0, battery: 45, signal: 4, destination: null, eta: null },
+  { id: 'AMB-005', call_sign: 'Echo-5',    vehicle_number: 'KA-01-E-0005', type: 'ALS', status: 'AVAILABLE', assigned_incident_id: null, latitude: 12.9308, longitude: 77.5838, driver: 'Neha Verma', speed: 0, battery: 95, signal: 5, destination: null, eta: null },
 ];
 
 const MOCK_HOSPITALS = [
