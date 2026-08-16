@@ -1,11 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Box, Typography, IconButton } from '@mui/material';
+import { Box, Typography, IconButton, Button } from '@mui/material';
 import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
 import CloseIcon from '@mui/icons-material/Close';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import NearMeIcon from '@mui/icons-material/NearMe';
+import AltRouteIcon from '@mui/icons-material/AltRoute';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 // CARTO Voyager High-DPI Style (Google Maps-like vector street design, road hierarchy, POIs)
 const CARTO_VOYAGER_STYLE = {
@@ -67,6 +69,44 @@ export function calculateDistanceMeters(coord1, coord2) {
   return R * c;
 }
 
+/* ── Distance from Point [lng, lat] to Line Segment (in meters) ── */
+export function pointToSegmentDistanceMeters(p, a, b) {
+  const latFactor = 111139;
+  const lngFactor = 111139 * Math.cos((p[1] * Math.PI) / 180);
+
+  const px = p[0] * lngFactor;
+  const py = p[1] * latFactor;
+  const ax = a[0] * lngFactor;
+  const ay = a[1] * latFactor;
+  const bx = b[0] * lngFactor;
+  const by = b[1] * latFactor;
+
+  const dx = bx - ax;
+  const dy = by - ay;
+  const lenSq = dx * dx + dy * dy;
+
+  if (lenSq === 0) return Math.hypot(px - ax, py - ay);
+
+  let t = ((px - ax) * dx + (py - ay) * dy) / lenSq;
+  t = Math.max(0, Math.min(1, t));
+
+  const projX = ax + t * dx;
+  const projY = ay + t * dy;
+
+  return Math.hypot(px - projX, py - projY);
+}
+
+/* ── Minimum Distance from Point to entire Polyline (in meters) ── */
+export function minDistanceToPolylineMeters(point, polyline) {
+  if (!point || !polyline || polyline.length < 2) return 0;
+  let minD = Infinity;
+  for (let i = 0; i < polyline.length - 1; i++) {
+    const d = pointToSegmentDistanceMeters(point, polyline[i], polyline[i + 1]);
+    if (d < minD) minD = d;
+  }
+  return minD;
+}
+
 /* ── Geographic Heading / Bearing Calculator ── */
 export function calculateBearing(coord1, coord2) {
   if (!coord1 || !coord2) return 0;
@@ -83,6 +123,15 @@ export function calculateBearing(coord1, coord2) {
   const brng = (Math.atan2(y, x) * 180) / Math.PI;
   return (brng + 360) % 360;
 }
+
+/* ── Color Themes ── */
+const ROUTE_THEMES = {
+  'AMB-001': { core: '#2563EB', casing: '#1E40AF', name: 'Alpha-1' }, // Royal Blue
+  'AMB-002': { core: '#EA580C', casing: '#9A3412', name: 'Bravo-2' }, // Safety Orange
+  'AMB-003': { core: '#9333EA', casing: '#581C87', name: 'Charlie-3' }, // Purple
+  'AMB-004': { core: '#06B6D4', casing: '#164E63', name: 'Delta-4' }, // Cyan
+  'AMB-005': { core: '#10B981', casing: '#064E3B', name: 'Echo-5' }, // Emerald
+};
 
 /* ── DOM Element Creators for MapLibre Markers ── */
 function createAmbulanceDomElement(amb) {
@@ -268,9 +317,12 @@ export default function DispatchMap({
   // Opt-in vehicle tracking / live telemetry HUD state
   const [followedUnitId, setFollowedUnitId] = useState(null);
   const [liveTelemetry, setLiveTelemetry] = useState({ distanceKm: '0.0', etaMinutes: 0, speed: 40 });
+  const [rerouteAlert, setRerouteAlert] = useState(null); // { unit: 'Alpha-1', deviationMeters: 340 }
 
   const unitWaypointsRef = useRef(new Map()); // ambId -> [[lng, lat], ...]
   const unitProgressRef = useRef(new Map());  // ambId -> { index: 0, fraction: 0 }
+  const rerouteCooldownRef = useRef(new Map()); // ambId -> lastRerouteTimestamp
+  const isReroutingRef = useRef(new Map());     // ambId -> boolean
   const animationFrameRef = useRef(null);
 
   // Sync external focus prop to followedUnitId
@@ -279,6 +331,87 @@ export default function DispatchMap({
       setFollowedUnitId(focusAmbulance.id);
     }
   }, [focusAmbulance]);
+
+  /* ── Dynamic Re-Routing Function (Re-queries OSRM on >200m Deviation) ── */
+  const triggerReroute = useCallback((ambId, currentLngLat, targetLngLat) => {
+    if (!mapInstanceRef.current || isReroutingRef.current.get(ambId)) return;
+
+    const now = Date.now();
+    const lastReroute = rerouteCooldownRef.current.get(ambId) || 0;
+    if (now - lastReroute < 6000) return; // 6-second cooldown to guard against rapid API loops
+
+    isReroutingRef.current.set(ambId, true);
+    rerouteCooldownRef.current.set(ambId, now);
+
+    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${currentLngLat[0]},${currentLngLat[1]};${targetLngLat[0]},${targetLngLat[1]}?overview=full&geometries=geojson`;
+
+    console.log(`[Deviation Re-Routing] Fetching new alternate route for ${ambId}...`, osrmUrl);
+
+    fetch(osrmUrl)
+      .then(res => res.json())
+      .then(data => {
+        if (!data || !data.routes || !data.routes[0]) return;
+
+        const newRoute = data.routes[0];
+        const newCoords = newRoute.geometry.coordinates;
+
+        // Smoothly update waypoints and reset progress without jitter
+        unitWaypointsRef.current.set(ambId, newCoords);
+        unitProgressRef.current.set(ambId, { index: 0, fraction: 0 });
+
+        const ambObj = ambulances.find(a => a.id === ambId);
+        const callsign = ambObj?.call_sign || ambId;
+
+        setRerouteAlert({
+          unit: callsign,
+          distanceKm: (newRoute.distance / 1000).toFixed(1),
+          etaMinutes: Math.ceil(newRoute.duration / 60),
+        });
+
+        // Auto-dismiss alert after 4.5 seconds
+        setTimeout(() => setRerouteAlert(null), 4500);
+
+        console.log(`[Deviation Re-Routing] Alternate route loaded for ${callsign}! Distance: ${(newRoute.distance / 1000).toFixed(2)} km`);
+      })
+      .catch(err => {
+        console.error(`[Deviation Re-Routing] Failed for ${ambId}:`, err);
+      })
+      .finally(() => {
+        isReroutingRef.current.set(ambId, false);
+      });
+  }, [ambulances]);
+
+  // Expose global console helper for manual deviation testing
+  useEffect(() => {
+    window.__simulateDetour = (ambId = 'AMB-001') => {
+      const waypoints = unitWaypointsRef.current.get(ambId);
+      const prog = unitProgressRef.current.get(ambId);
+      if (!waypoints || !prog) {
+        console.warn(`[Detour Test] Unit ${ambId} has no active waypoints.`);
+        return;
+      }
+
+      const pA = waypoints[prog.index];
+      // Nudge vehicle 350 meters off-course (approx ~0.003 degrees)
+      const detouredLngLat = [pA[0] + 0.0035, pA[1] + 0.0025];
+      console.log(`[Detour Test] Nudged ${ambId} 350m off-route to:`, detouredLngLat);
+
+      const marker = markersRef.current.ambulances.get(ambId);
+      if (marker) marker.setLngLat(detouredLngLat);
+
+      const amb = ambulances.find(a => a.id === ambId);
+      const targetInc = incidents.find(i => i.id === amb?.assigned_incident_id) || incidents[0];
+      const incCoord = toLngLat(targetInc);
+
+      if (incCoord) {
+        triggerReroute(ambId, detouredLngLat, incCoord);
+      }
+    };
+
+    return () => {
+      delete window.__simulateDetour;
+    };
+  }, [ambulances, incidents, triggerReroute]);
 
   /* ── Initialize MapLibre GL Map ── */
   useEffect(() => {
@@ -483,14 +616,6 @@ export default function DispatchMap({
 
     if (activeAmbulances.length === 0) return;
 
-    const ROUTE_THEMES = {
-      'AMB-001': { core: '#2563EB', casing: '#1E40AF' }, // Alpha-1: Royal Blue
-      'AMB-002': { core: '#EA580C', casing: '#9A3412' }, // Bravo-2: Orange
-      'AMB-003': { core: '#9333EA', casing: '#581C87' }, // Charlie-3: Purple
-      'AMB-004': { core: '#06B6D4', casing: '#164E63' }, // Delta-4: Cyan
-      'AMB-005': { core: '#10B981', casing: '#064E3B' }, // Echo-5: Emerald
-    };
-
     activeAmbulances.forEach(amb => {
       const ambCoord = toLngLat(amb);
       if (!ambCoord) return;
@@ -615,7 +740,7 @@ export default function DispatchMap({
     });
   }, [ambulances, incidents, mapReady]);
 
-  /* ── Step 5: 60fps Position Interpolation, Dynamic Route Splitting & Live ETA Calculator ── */
+  /* ── Step 5: 60fps Position Interpolation, Live Deviation Detection & Real-Time ETA ── */
   useEffect(() => {
     let lastTime = performance.now();
     let frameCount = 0;
@@ -666,7 +791,7 @@ export default function DispatchMap({
           }
         }
 
-        // 3. Traveled vs. Remaining Dynamic Polyline Slicing (updated smoothly every 3 frames)
+        // 3. Traveled vs. Remaining Dynamic Polyline Slicing & Deviation Check
         if (frameCount % 3 === 0 && mapInstanceRef.current) {
           const traveledCoords = [...waypoints.slice(0, prog.index + 1), currentLngLat];
           const remainingCoords = [currentLngLat, ...waypoints.slice(prog.index + 1)];
@@ -690,13 +815,24 @@ export default function DispatchMap({
             });
           }
 
-          // 4. Live Dynamic Remaining Distance & ETA Calculation
+          // 4. Deviation Detection Check (>200m off-route)
+          const offRouteMeters = minDistanceToPolylineMeters(currentLngLat, waypoints);
+          if (offRouteMeters > 200) {
+            const ambObj = ambulances.find(a => a.id === ambId);
+            const targetInc = incidents.find(i => i.id === ambObj?.assigned_incident_id) || incidents[0];
+            const incCoord = toLngLat(targetInc);
+            if (incCoord) {
+              triggerReroute(ambId, currentLngLat, incCoord);
+            }
+          }
+
+          // 5. Live Dynamic Remaining Distance & ETA Calculation
           let remainingMeters = 0;
           for (let k = 0; k < remainingCoords.length - 1; k++) {
             remainingMeters += calculateDistanceMeters(remainingCoords[k], remainingCoords[k + 1]);
           }
           const remainingKm = (remainingMeters / 1000).toFixed(1);
-          const remainingMinutes = Math.max(1, Math.ceil((remainingMeters / 1000) / (38 / 60))); // 38 km/h urban average speed
+          const remainingMinutes = Math.max(1, Math.ceil((remainingMeters / 1000) / (38 / 60)));
 
           // Update marker DOM pill live
           if (el) {
@@ -718,7 +854,7 @@ export default function DispatchMap({
           }
         }
 
-        // 5. Opt-in Camera Auto-Follow
+        // 6. Opt-in Camera Auto-Follow
         if (followedUnitId === ambId && mapInstanceRef.current) {
           mapInstanceRef.current.easeTo({
             center: currentLngLat,
@@ -736,7 +872,7 @@ export default function DispatchMap({
     return () => {
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [followedUnitId, ambulances]);
+  }, [followedUnitId, ambulances, incidents, triggerReroute]);
 
   return (
     <Box
@@ -762,6 +898,40 @@ export default function DispatchMap({
           height: '100%',
         }}
       />
+
+      {/* Dynamic Re-Route Notification Banner */}
+      {rerouteAlert && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 14,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1100,
+            background: '#1E293B',
+            color: '#FFFFFF',
+            borderRadius: '12px',
+            px: '18px',
+            py: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.35)',
+            border: '1.5px solid #F59E0B',
+            animation: 'slide-down 0.3s ease',
+          }}
+        >
+          <AltRouteIcon sx={{ color: '#F59E0B', fontSize: 22 }} />
+          <Box>
+            <Typography sx={{ fontSize: '12.5px', fontWeight: 800, fontFamily: 'Inter, sans-serif' }}>
+              🚨 Deviation Detected — Alternate Route Active
+            </Typography>
+            <Typography sx={{ fontSize: '11px', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>
+              {rerouteAlert.unit} re-routed to destination ({rerouteAlert.distanceKm} km • ETA {rerouteAlert.etaMinutes} min)
+            </Typography>
+          </Box>
+        </Box>
+      )}
 
       {/* Floating Live Telemetry & Auto-Follow HUD Indicator */}
       {followedUnitId && (
@@ -809,6 +979,29 @@ export default function DispatchMap({
             </Typography>
           </Box>
 
+          <Box sx={{ width: '1px', height: '18px', bgcolor: 'rgba(255,255,255,0.2)' }} />
+
+          {/* Manual Detour Simulation Test Button */}
+          <Button
+            size="small"
+            variant="contained"
+            onClick={() => window.__simulateDetour?.(followedUnitId)}
+            startIcon={<WarningAmberIcon sx={{ fontSize: 14 }} />}
+            sx={{
+              bgcolor: '#F59E0B',
+              color: '#0F172A',
+              fontSize: '10.5px',
+              fontWeight: 800,
+              textTransform: 'none',
+              px: '8px',
+              py: '2px',
+              minHeight: '26px',
+              '&:hover': { bgcolor: '#D97706' },
+            }}
+          >
+            Simulate Detour
+          </Button>
+
           <IconButton
             size="small"
             onClick={() => setFollowedUnitId(null)}
@@ -831,6 +1024,10 @@ export default function DispatchMap({
         @keyframes pulse-slow {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.6; transform: scale(1.1); }
+        }
+        @keyframes slide-down {
+          0% { opacity: 0; transform: translate(-50%, -20px); }
+          100% { opacity: 1; transform: translate(-50%, 0); }
         }
         .maplibregl-popup-content {
           border-radius: 12px !important;
