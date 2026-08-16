@@ -52,7 +52,11 @@ export default function CallerVoicePortalPage() {
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
-      recognition.lang = 'en-IN';
+      try {
+        recognition.lang = 'en-IN';
+      } catch {
+        recognition.lang = navigator.language || 'en-US';
+      }
 
       recognition.onresult = (event) => {
         let currentTranscript = '';
@@ -60,6 +64,17 @@ export default function CallerVoicePortalPage() {
           currentTranscript += event.results[i][0].transcript + ' ';
         }
         setTranscript(currentTranscript.trim());
+      };
+
+      recognition.onerror = (event) => {
+        console.warn('[CallerVoicePortal SpeechRecognition Error]:', event.error);
+        if (event.error === 'language-not-supported') {
+          recognition.lang = 'en-US';
+        }
+      };
+
+      recognition.onend = () => {
+        console.log('[CallerVoicePortal SpeechRecognition Ended]');
       };
 
       recognitionRef.current = recognition;

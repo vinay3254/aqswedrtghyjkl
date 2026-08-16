@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Box, Typography, Button, IconButton, Chip, TextField,
@@ -37,146 +37,228 @@ export default function VoiceAssistantModal({
     { role: 'assistant', text: 'Voice Assistant online. You can say: "Dispatch nearest ambulance", "Activate green corridor", "Show available units", or "Acknowledge all calls".', time: 'Ready' }
   ]);
 
+  // Persistent Refs to prevent re-instantiation and InvalidStateError
   const recognitionRef = useRef(null);
   const synthRef = useRef(window.speechSynthesis || null);
+  const isListeningRef = useRef(false);
+  const transcriptRef = useRef('');
+  const callbacksRef = useRef({ onAutoDispatch, onAcknowledge, onActivateGreenCorridor, onFilterChange, incidents, ambulances });
 
-  // Initialize Web Speech Recognition
+  // Keep callbacks fresh in ref without triggering useEffect re-instantiations
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.lang = 'en-IN';
+    callbacksRef.current = { onAutoDispatch, onAcknowledge, onActivateGreenCorridor, onFilterChange, incidents, ambulances };
+  }, [onAutoDispatch, onAcknowledge, onActivateGreenCorridor, onFilterChange, incidents, ambulances]);
 
-      recognition.onstart = () => {
-        setIsListening(true);
-        setStatusType('listening');
-        setStatusMessage('Listening to your voice command...');
-      };
-
-      recognition.onresult = (event) => {
-        let text = '';
-        for (let i = 0; i < event.results.length; i++) {
-          text += event.results[i][0].transcript;
-        }
-        setTranscript(text);
-      };
-
-      recognition.onerror = (event) => {
-        console.error('Speech recognition error:', event.error);
-        setIsListening(false);
-        setStatusType('error');
-        if (event.error === 'not-allowed') {
-          setStatusMessage('Microphone permission blocked. Please allow mic access in your browser address bar.');
-        } else if (event.error === 'no-speech') {
-          setStatusMessage('No speech detected. Click mic to try again.');
-        } else {
-          setStatusMessage(`Voice error: ${event.error}. You can also type commands below.`);
-        }
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-        if (transcript.trim()) {
-          executeCommand(transcript.trim());
-        } else if (statusType === 'listening') {
-          setStatusType('idle');
-          setStatusMessage('Listening timed out. Click mic to speak again.');
-        }
-      };
-
-      recognitionRef.current = recognition;
-    } else {
-      setStatusType('error');
-      setStatusMessage('Web Speech API not supported in this browser. Please use Chrome/Edge or type commands below.');
-    }
-  }, [transcript, statusType]);
-
-  const speakReply = (text) => {
-    if (!voiceEnabled || !synthRef.current) return;
-    try {
-      synthRef.current.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1.05;
-      utterance.pitch = 1.0;
-      utterance.onstart = () => setStatusType('speaking');
-      utterance.onend = () => setStatusType('idle');
-      synthRef.current.speak(utterance);
-    } catch (e) {
-      console.warn('Speech synthesis error:', e);
-    }
-  };
-
-  const startListening = () => {
-    setTranscript('');
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.start();
-      } catch (err) {
-        // If already started, restart
-        recognitionRef.current.stop();
-        setTimeout(() => recognitionRef.current?.start(), 200);
-      }
-    } else {
-      setStatusType('error');
-      setStatusMessage('Speech recognition is not available in your browser.');
-    }
-  };
-
-  const stopListening = () => {
-    if (recognitionRef.current && isListening) {
-      recognitionRef.current.stop();
-    }
-    setIsListening(false);
-  };
-
-  const executeCommand = (cmdText) => {
-    if (!cmdText) return;
+  // Execute recognized command
+  const executeCommand = useCallback((cmdText) => {
+    if (!cmdText || !cmdText.trim()) return;
+    const cleanCmd = cmdText.trim();
+    console.log('[VoiceAssistant] Executing command:', cleanCmd);
     setStatusType('processing');
-    const cmd = cmdText.toLowerCase();
+    const cmd = cleanCmd.toLowerCase();
 
-    // Log to history
-    setHistory(prev => [...prev, { role: 'user', text: cmdText, time: new Date().toLocaleTimeString() }]);
+    setHistory(prev => [...prev, { role: 'user', text: cleanCmd, time: new Date().toLocaleTimeString() }]);
 
     let reply = '';
+    const { onAutoDispatch, onAcknowledge, onActivateGreenCorridor, onFilterChange, ambulances } = callbacksRef.current;
 
     if (cmd.includes('dispatch') || cmd.includes('assign') || cmd.includes('send ambulance')) {
       onAutoDispatch?.();
-      reply = 'Initiating intelligent AI auto-dispatch for the highest priority emergency call.';
+      reply = 'Initiating intelligent AI auto-dispatch for highest priority emergency incident.';
       setStatusType('success');
     } else if (cmd.includes('green corridor') || cmd.includes('traffic') || cmd.includes('preempt')) {
       onActivateGreenCorridor?.();
-      reply = 'Activating automated Green Corridor signal preemption for emergency route.';
+      reply = 'Activating automated Green Corridor traffic signal preemption sequence.';
       setStatusType('success');
     } else if (cmd.includes('acknowledge') || cmd.includes('ack') || cmd.includes('accept all')) {
       onAcknowledge?.();
       reply = 'All pending emergency calls have been acknowledged.';
       setStatusType('success');
     } else if (cmd.includes('available') || cmd.includes('units') || cmd.includes('fleet status')) {
-      const availCount = ambulances.filter(a => a.status === 'AVAILABLE').length;
+      const availCount = (ambulances || []).filter(a => a.status === 'AVAILABLE').length;
       reply = `There are currently ${availCount} ambulances in available standby status across Bengaluru hubs.`;
       setStatusType('success');
     } else if (cmd.includes('critical') || cmd.includes('high priority')) {
       onFilterChange?.('active');
-      reply = 'Filtered view to display active critical and high-urgency emergency incidents.';
+      reply = 'Filtered view to display active critical emergency incidents.';
       setStatusType('success');
     } else if (cmd.includes('caller portal') || cmd.includes('intake')) {
       window.open('/#/caller', '_blank');
-      reply = 'Opening Caller Voice Intake portal in new tab.';
+      reply = 'Opening Caller Voice Intake portal.';
       setStatusType('success');
     } else if (cmd.includes('driver view') || cmd.includes('driver terminal')) {
       window.open('/#/driver', '_blank');
       reply = 'Opening Driver Navigation Terminal.';
       setStatusType('success');
     } else {
-      reply = `Recognized command: "${cmdText}". Command not mapped to an automatic action. Available commands: "Dispatch nearest", "Activate green corridor", "Show available units".`;
+      reply = `Recognized command: "${cleanCmd}". Available commands: "Dispatch nearest ambulance", "Activate green corridor", "Show available units".`;
       setStatusType('idle');
     }
 
     setStatusMessage(reply);
     setHistory(prev => [...prev, { role: 'assistant', text: reply, time: new Date().toLocaleTimeString() }]);
-    speakReply(reply);
+
+    // Speak confirmation TTS
+    if (voiceEnabled && synthRef.current) {
+      try {
+        synthRef.current.cancel();
+        const utterance = new SpeechSynthesisUtterance(reply);
+        utterance.rate = 1.05;
+        utterance.pitch = 1.0;
+        utterance.onstart = () => setStatusType('speaking');
+        utterance.onend = () => setStatusType('idle');
+        utterance.onerror = (e) => console.warn('[VoiceAssistant TTS Error]:', e);
+        synthRef.current.speak(utterance);
+      } catch (e) {
+        console.warn('[VoiceAssistant] SpeechSynthesis error:', e);
+      }
+    }
+  }, [voiceEnabled]);
+
+  // Initialize Speech Recognition ONCE on mount with empty dependency array []
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.warn('[SpeechRecognition] Web Speech API not supported in this browser.');
+      setStatusType('error');
+      setStatusMessage('Speech recognition is not supported in this browser. Please use Chrome/Edge or type commands.');
+      return;
+    }
+
+    console.log('[SpeechRecognition] Initializing stable SpeechRecognition instance...');
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+
+    // Language fallback cascade
+    try {
+      recognition.lang = 'en-IN';
+    } catch {
+      recognition.lang = navigator.language || 'en-US';
+    }
+    console.log('[SpeechRecognition] Language set to:', recognition.lang);
+
+    recognition.onstart = () => {
+      console.log('[SpeechRecognition] onstart: Mic listening actively.');
+      isListeningRef.current = true;
+      setIsListening(true);
+      setStatusType('listening');
+      setStatusMessage('Listening to your voice command...');
+    };
+
+    recognition.onresult = (event) => {
+      let currentText = '';
+      for (let i = 0; i < event.results.length; i++) {
+        currentText += event.results[i][0].transcript;
+      }
+      console.log('[SpeechRecognition] onresult:', currentText);
+      transcriptRef.current = currentText;
+      setTranscript(currentText);
+    };
+
+    recognition.onerror = (event) => {
+      console.error('[SpeechRecognition] onerror event:', event.error, event);
+      isListeningRef.current = false;
+      setIsListening(false);
+      setStatusType('error');
+
+      if (event.error === 'not-allowed') {
+        setStatusMessage('Microphone permission blocked. Please allow mic access in your browser address bar.');
+      } else if (event.error === 'no-speech') {
+        setStatusMessage('No speech detected. Tap mic to try again.');
+      } else if (event.error === 'network') {
+        setStatusMessage('Speech service network timeout. Tap mic to retry or type below.');
+      } else if (event.error === 'language-not-supported') {
+        console.warn('[SpeechRecognition] en-IN language not supported, falling back to en-US');
+        recognition.lang = 'en-US';
+        setStatusMessage('Language switched to en-US. Tap mic to speak.');
+      } else {
+        setStatusMessage(`Voice error (${event.error}). Tap mic to speak or type command.`);
+      }
+    };
+
+    recognition.onend = () => {
+      console.log('[SpeechRecognition] onend fired. Final transcript:', transcriptRef.current);
+      isListeningRef.current = false;
+      setIsListening(false);
+
+      const finalSpeech = transcriptRef.current;
+      if (finalSpeech && finalSpeech.trim()) {
+        executeCommand(finalSpeech.trim());
+      } else {
+        setStatusType('idle');
+        setStatusMessage('Tap mic to speak a dispatch command.');
+      }
+    };
+
+    recognitionRef.current = recognition;
+
+    // Check mic permission proactively
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: 'microphone' }).then((result) => {
+        console.log('[SpeechRecognition] Initial microphone permission state:', result.state);
+        result.onchange = () => console.log('[SpeechRecognition] Mic permission changed to:', result.state);
+      }).catch(err => console.log('[SpeechRecognition] Permissions query skipped:', err));
+    }
+
+    return () => {
+      console.log('[SpeechRecognition] Component cleanup: stopping active recognition.');
+      try {
+        recognition.abort();
+      } catch {}
+      recognitionRef.current = null;
+    };
+  }, [executeCommand]); // Empty of dynamic values, executeCommand is stable callback
+
+  const startListening = () => {
+    if (!recognitionRef.current) {
+      setStatusType('error');
+      setStatusMessage('Speech recognition not available. Please use Chrome/Edge or type below.');
+      return;
+    }
+
+    transcriptRef.current = '';
+    setTranscript('');
+
+    if (isListeningRef.current) {
+      console.log('[SpeechRecognition] Already listening, restarting...');
+      try { recognitionRef.current.stop(); } catch {}
+      setTimeout(() => {
+        try {
+          recognitionRef.current?.start();
+        } catch (err) {
+          console.warn('[SpeechRecognition] Restart error:', err);
+        }
+      }, 150);
+      return;
+    }
+
+    try {
+      console.log('[SpeechRecognition] Calling recognition.start()...');
+      recognitionRef.current.start();
+    } catch (err) {
+      console.warn('[SpeechRecognition] start() threw exception:', err);
+      if (err.name === 'InvalidStateError') {
+        // Stop first, then restart cleanly
+        try { recognitionRef.current.stop(); } catch {}
+        setTimeout(() => {
+          try { recognitionRef.current?.start(); } catch (e) { console.error('[SpeechRecognition] Second start attempt failed:', e); }
+        }, 200);
+      }
+    }
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      try {
+        console.log('[SpeechRecognition] Calling recognition.stop()...');
+        recognitionRef.current.stop();
+      } catch (err) {
+        console.warn('[SpeechRecognition] stop() threw exception:', err);
+      }
+    }
+    isListeningRef.current = false;
+    setIsListening(false);
   };
 
   const handleManualSubmit = (e) => {
