@@ -475,6 +475,9 @@ export default function DriverInterface() {
       });
     } catch (err) {
       console.warn('[DriverInterface] Error updating status in DB:', err);
+    }
+  };
+
   const isComplete = missionStatus === 'AVAILABLE';
   const nextAction = activeIncident ? STATUS_ACTIONS[missionStatus] : null;
 
