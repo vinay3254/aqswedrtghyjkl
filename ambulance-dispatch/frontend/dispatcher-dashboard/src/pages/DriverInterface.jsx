@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Box, Typography, Button, LinearProgress, Snackbar, Alert, Chip, IconButton } from '@mui/material';
 import { Logout } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
+import supabase from '../services/supabase';
 import { dispatchBroadcast, DISPATCH_EVENTS } from '../services/dispatchBroadcast';
 import DriverMap from '../components/DriverMap';
 import PatientVitalsForm from '../components/PatientVitalsForm';
@@ -474,8 +475,8 @@ export default function DriverInterface() {
       });
     } catch (err) {
       console.warn('[DriverInterface] Error updating status in DB:', err);
-    }
-  };
+  const isComplete = missionStatus === 'AVAILABLE';
+  const nextAction = activeIncident ? STATUS_ACTIONS[missionStatus] : null;
 
   return (
     <Box sx={{
