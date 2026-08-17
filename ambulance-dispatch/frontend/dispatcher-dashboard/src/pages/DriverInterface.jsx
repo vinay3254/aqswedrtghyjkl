@@ -200,13 +200,6 @@ function ActiveMission({ incident, status, onStatusUpdate }) {
     </Box>
   );
 }
-          <Typography sx={{ fontSize:14, fontWeight:700, color:G, textAlign:'center' }}>Mission Complete</Typography>
-          <Typography sx={{ fontSize:'10.5px', color:DIM, mt:'2px', textAlign:'center' }}>Patient successfully transported</Typography>
-        </Box>
-      )}
-    </Box>
-  );
-}
 
 /* ══ Main ══ */
 export default function DriverInterface() {
