@@ -24,7 +24,8 @@ import { dispatchBroadcast, DISPATCH_EVENTS } from '../services/dispatchBroadcas
 import { useNavigate } from 'react-router-dom';
 import GreenCorridorModal from '../components/GreenCorridorModal';
 import VoiceAssistantModal from '../components/VoiceAssistantModal';
-import { Traffic, Mic } from '@mui/icons-material';
+import FleetRosterModal from '../components/FleetRosterModal';
+import { Traffic, Mic, DirectionsCar } from '@mui/icons-material';
 
 /* ── Evergreen tokens ── */
 const BG      = '#F8FAFC';
@@ -92,6 +93,7 @@ export default function DashboardPage({ user, onLogout }) {
   const [fleetAmbulances, setFleetAmbulances]       = useState([]);
   const [greenCorridorOpen, setGreenCorridorOpen]   = useState(false);
   const [voiceModalOpen, setVoiceModalOpen]         = useState(false);
+  const [rosterOpen, setRosterOpen]                 = useState(false);
   const navigate = useNavigate();
 
   // Ensure only one right-panel open at a time
@@ -334,6 +336,18 @@ export default function DashboardPage({ user, onLogout }) {
           }}
         >
           AI Voice Command
+        </Button>
+
+        {/* Fleet & Driver Roster Trigger */}
+        <Button
+          onClick={() => setRosterOpen(true)}
+          startIcon={<DirectionsCar sx={{ fontSize: 15 }} />}
+          sx={{
+            px:'11px', py:'6px', borderRadius:'8px', border:`1.5px solid #38BDF8`, color: '#0284C7', bgcolor: 'rgba(56,189,248,0.08)', fontWeight:700, fontSize:'11.5px', flexShrink:0,
+            textTransform: 'none', '&:hover':{ background:'rgba(56,189,248,0.16)', borderColor: '#0284C7' }
+          }}
+        >
+          Fleet & Driver Roster
         </Button>
 
         {/* Green Corridor Trigger */}
@@ -759,6 +773,7 @@ export default function DashboardPage({ user, onLogout }) {
       <AssignmentWizard open={wizardOpen} onClose={()=>setWizardOpen(false)} incident={selectedIncident} onAssignmentCreated={handleAssignmentCreated} />
       <ShiftReportModal open={shiftReportOpen} onClose={()=>setShiftReportOpen(false)} stats={stats} incidents={incidents} ambulances={ambulances} />
       <GreenCorridorModal open={greenCorridorOpen} onClose={()=>setGreenCorridorOpen(false)} assignment={activeAssignment} />
+      <FleetRosterModal open={rosterOpen} onClose={() => setRosterOpen(false)} onRosterUpdated={refetchAmbulances} />
       <VoiceAssistantModal
         open={voiceModalOpen}
         onClose={() => setVoiceModalOpen(false)}
