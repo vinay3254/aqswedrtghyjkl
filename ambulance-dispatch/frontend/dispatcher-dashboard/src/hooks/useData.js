@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { incidentsApi, ambulancesApi, hospitalsApi, analyticsApi } from '../services/api';
+import supabase from '../services/supabase';
 import socketService from '../services/socket';
 import { dispatchBroadcast, DISPATCH_EVENTS } from '../services/dispatchBroadcast';
 
-/* ── Mock fallback data (used when backend is offline) ───────── */
+/* ── Fallback data when database is empty ───────── */
 const MOCK_AMBULANCES = [
-  { id: 'AMB-001', call_sign: 'Alpha-1',   vehicle_number: 'KA-01-A-0001', type: 'ALS', status: 'EN_ROUTE', assigned_incident_id: 'INC-004', latitude: 12.9716, longitude: 77.5946, driver: 'Rajesh Kumar', speed: 42, battery: 87, signal: 4, destination: 'Palace Grounds, Jayamahal', eta: 8 },
-  { id: 'AMB-002', call_sign: 'Bravo-2',   vehicle_number: 'KA-01-B-0002', type: 'BLS', status: 'EN_ROUTE', assigned_incident_id: 'INC-001', latitude: 12.9352, longitude: 77.6245, driver: 'Suresh Patel', speed: 38, battery: 100, signal: 5, destination: 'Indiranagar 100ft Road', eta: 11 },
-  { id: 'AMB-003', call_sign: 'Charlie-3', vehicle_number: 'KA-01-C-0003', type: 'ALS', status: 'AVAILABLE', assigned_incident_id: null, latitude: 13.0359, longitude: 77.5967, driver: 'Priya Singh', speed: 0, battery: 62, signal: 3, destination: null, eta: null },
-  { id: 'AMB-004', call_sign: 'Delta-4',   vehicle_number: 'KA-01-D-0004', type: 'BLS', status: 'AVAILABLE', assigned_incident_id: null, latitude: 12.9698, longitude: 77.7200, driver: 'Amit Sharma', speed: 0, battery: 45, signal: 4, destination: null, eta: null },
-  { id: 'AMB-005', call_sign: 'Echo-5',    vehicle_number: 'KA-01-E-0005', type: 'ALS', status: 'AVAILABLE', assigned_incident_id: null, latitude: 12.9308, longitude: 77.5838, driver: 'Neha Verma', speed: 0, battery: 95, signal: 5, destination: null, eta: null },
+  { id: 'AMB-001', call_sign: 'Alpha-1',   vehicle_number: 'KA-01-A-0001', type: 'ALS', status: 'AVAILABLE', assigned_incident_id: null, latitude: 12.9716, longitude: 77.5946, speed: 0, battery_level: 87 },
+  { id: 'AMB-002', call_sign: 'Bravo-2',   vehicle_number: 'KA-01-B-0002', type: 'BLS', status: 'AVAILABLE', assigned_incident_id: null, latitude: 12.9352, longitude: 77.6245, speed: 0, battery_level: 100 },
+  { id: 'AMB-003', call_sign: 'Charlie-3', vehicle_number: 'KA-01-C-0003', type: 'ALS', status: 'AVAILABLE', assigned_incident_id: null, latitude: 13.0359, longitude: 77.5967, speed: 0, battery_level: 62 },
+  { id: 'AMB-004', call_sign: 'Delta-4',   vehicle_number: 'KA-01-D-0004', type: 'BLS', status: 'AVAILABLE', assigned_incident_id: null, latitude: 12.9698, longitude: 77.7200, speed: 0, battery_level: 45 },
+  { id: 'AMB-005', call_sign: 'Echo-5',    vehicle_number: 'KA-01-E-0005', type: 'ALS', status: 'AVAILABLE', assigned_incident_id: null, latitude: 12.9308, longitude: 77.5838, speed: 0, battery_level: 95 },
 ];
 
 const MOCK_HOSPITALS = [
@@ -34,13 +34,6 @@ const MOCK_INCIDENTS = [
     is_sos: false, created_at: new Date(Date.now() - 7 * 60000).toISOString(),
   },
   {
-    id: 'INC-003', incident_type: 'Fire Emergency', severity: 'HIGH', status: 'PENDING',
-    location_address: 'Koramangala 6th Block, Bengaluru', location_lat: 12.9340, location_lng: 77.6180,
-    caller_name: 'Fire Control', caller_phone: '+91 101',
-    description: 'Commercial complex fire, smoke inhalation.', patients_count: 2,
-    is_sos: false, created_at: new Date(Date.now() - 12 * 60000).toISOString(),
-  },
-  {
     id: 'INC-004', incident_type: 'Trauma Incident', severity: 'CRITICAL', status: 'PENDING',
     location_address: 'Palace Grounds, Jayamahal, Bengaluru', location_lat: 12.9982, location_lng: 77.5921,
     caller_name: 'Palace Grounds Control', caller_phone: '+91 99001 22334',
@@ -49,17 +42,7 @@ const MOCK_INCIDENTS = [
   },
 ];
 
-const MOCK_STATS = {
-  active_incidents: 4,
-  available_ambulances: 5,
-  total_ambulances: 5,
-  hospitals_in_network: 3,
-  avg_response_time_minutes: 7.9,
-  incidents_today: 4,
-  response_time_improvement: 23,
-};
-
-/* ── Hooks ───────────────────────────────────────────────────── */
+/* ── Hooks Backed by Supabase with Realtime CDC & Parallel Broadcast ── */
 
 export function useIncidents() {
   const [incidents, setIncidents] = useState(MOCK_INCIDENTS);
@@ -69,14 +52,17 @@ export function useIncidents() {
   const fetchIncidents = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await incidentsApi.getAll({ status: 'active', limit: 200 });
-      const data = response.data.incidents || response.data;
-      if (Array.isArray(data) && data.length > 0) {
+      const { data, error: sbErr } = await supabase
+        .from('incidents')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!sbErr && Array.isArray(data) && data.length > 0) {
         setIncidents(data);
       }
       setError(null);
-    } catch {
-      // Keep mock data silently
+    } catch (e) {
+      console.warn('[useIncidents] Supabase fetch error, using fallback:', e);
     } finally {
       setLoading(false);
     }
@@ -84,15 +70,33 @@ export function useIncidents() {
 
   useEffect(() => {
     fetchIncidents();
-    const handleNewIncident = (incident) => setIncidents(prev => [incident, ...prev]);
-    const handleIncidentUpdated = (updated) =>
-      setIncidents(prev => prev.map(i => i.id === updated.id ? updated : i));
 
-    socketService.on('incident:created', handleNewIncident);
-    socketService.on('incident:updated', handleIncidentUpdated);
+    // 1. Supabase Postgres CDC Subscription
+    const channel = supabase
+      .channel('cad_incidents_realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'incidents' }, (payload) => {
+        console.log('[Realtime CDC] Incident Inserted:', payload.new);
+        setIncidents(prev => [payload.new, ...prev.filter(i => i.id !== payload.new.id)]);
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'incidents' }, (payload) => {
+        console.log('[Realtime CDC] Incident Updated:', payload.new);
+        setIncidents(prev => prev.map(i => i.id === payload.new.id ? payload.new : i));
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'incidents' }, (payload) => {
+        setIncidents(prev => prev.filter(i => i.id !== payload.old.id));
+      })
+      .subscribe();
+
+    // 2. Parallel BroadcastChannel / Socket fallback listeners
+    const handleBroadcastSOS = (inc) => {
+      setIncidents(prev => [inc, ...prev.filter(i => i.id !== inc.id)]);
+    };
+
+    dispatchBroadcast.on(DISPATCH_EVENTS.SOS_CREATED, handleBroadcastSOS);
+
     return () => {
-      socketService.off('incident:created', handleNewIncident);
-      socketService.off('incident:updated', handleIncidentUpdated);
+      supabase.removeChannel(channel);
+      dispatchBroadcast.off(DISPATCH_EVENTS.SOS_CREATED, handleBroadcastSOS);
     };
   }, [fetchIncidents]);
 
@@ -107,14 +111,17 @@ export function useAmbulances() {
   const fetchAmbulances = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await ambulancesApi.getAll({ limit: 200 });
-      const data = response.data.ambulances || response.data;
-      if (Array.isArray(data) && data.length > 0) {
+      const { data, error: sbErr } = await supabase
+        .from('ambulances')
+        .select('*')
+        .order('call_sign', { ascending: true });
+
+      if (!sbErr && Array.isArray(data) && data.length > 0) {
         setAmbulances(data);
       }
       setError(null);
-    } catch {
-      // Keep mock data silently
+    } catch (e) {
+      console.warn('[useAmbulances] Supabase fetch error, using fallback:', e);
     } finally {
       setLoading(false);
     }
@@ -123,18 +130,27 @@ export function useAmbulances() {
   useEffect(() => {
     fetchAmbulances();
 
-    const handleLocationUpdate = (data) =>
-      setAmbulances(prev => prev.map(a =>
-        a.id === data.ambulance_id
-          ? { ...a, latitude: data.latitude, longitude: data.longitude }
-          : a
-      ));
+    // 1. Supabase Postgres CDC Subscription
+    const channel = supabase
+      .channel('cad_ambulances_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ambulances' }, (payload) => {
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+          setAmbulances(prev => prev.map(a => a.id === payload.new.id ? { ...a, ...payload.new } : a));
+        }
+      })
+      // Supabase Ephemeral Broadcast for High-Frequency GPS
+      .on('broadcast', { event: 'ambulance_location' }, (payload) => {
+        const data = payload.payload;
+        if (!data) return;
+        setAmbulances(prev => prev.map(a =>
+          a.id === data.ambulance_id
+            ? { ...a, latitude: data.latitude, longitude: data.longitude, speed: data.speed, heading: data.heading }
+            : a
+        ));
+      })
+      .subscribe();
 
-    const handleStatusUpdate = (data) =>
-      setAmbulances(prev => prev.map(a =>
-        a.id === data.ambulance_id ? { ...a, status: data.status } : a
-      ));
-
+    // 2. Parallel BroadcastChannel / Socket listeners
     const handleBroadcastLocation = (data) => {
       if (!data) return;
       const targetId = data.ambulance_id || data.id;
@@ -147,12 +163,11 @@ export function useAmbulances() {
 
     const handleIncidentAssigned = (data) => {
       if (!data || !data.ambulance) return;
-      console.log('[useAmbulances] INCIDENT_ASSIGNED received for unit:', data.ambulance.call_sign || data.ambulance.id);
       setAmbulances(prev => prev.map(a =>
         a.id === data.ambulance.id
           ? {
               ...a,
-              status: 'EN_ROUTE',
+              status: 'EN_ROUTE_TO_SCENE',
               assigned_incident_id: data.incident?.id || data.id,
               destination: data.location_address || data.incident?.location_address || 'Emergency Scene',
             }
@@ -160,14 +175,11 @@ export function useAmbulances() {
       ));
     };
 
-    socketService.on('ambulance:location', handleLocationUpdate);
-    socketService.on('ambulance:status', handleStatusUpdate);
     dispatchBroadcast.on(DISPATCH_EVENTS.AMBULANCE_LOCATION, handleBroadcastLocation);
     dispatchBroadcast.on(DISPATCH_EVENTS.INCIDENT_ASSIGNED, handleIncidentAssigned);
 
     return () => {
-      socketService.off('ambulance:location', handleLocationUpdate);
-      socketService.off('ambulance:status', handleStatusUpdate);
+      supabase.removeChannel(channel);
       dispatchBroadcast.off(DISPATCH_EVENTS.AMBULANCE_LOCATION, handleBroadcastLocation);
       dispatchBroadcast.off(DISPATCH_EVENTS.INCIDENT_ASSIGNED, handleIncidentAssigned);
     };
@@ -177,21 +189,24 @@ export function useAmbulances() {
 }
 
 export function useHospitals() {
-  const [hospitals, setHospitals] = useState(MOCK_HOSPITALS); // start with mock immediately
+  const [hospitals, setHospitals] = useState(MOCK_HOSPITALS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const fetchHospitals = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await hospitalsApi.getAll({ limit: 100 });
-      const data = response.data.hospitals || response.data;
-      if (Array.isArray(data) && data.length > 0) {
+      const { data, error: sbErr } = await supabase
+        .from('hospitals')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (!sbErr && Array.isArray(data) && data.length > 0) {
         setHospitals(data);
       }
       setError(null);
     } catch {
-      // Keep mock data silently
+      // Keep mock fallback silently
     } finally {
       setLoading(false);
     }
@@ -200,36 +215,33 @@ export function useHospitals() {
   useEffect(() => {
     fetchHospitals();
 
-    const handleCapacityUpdate = (data) =>
-      setHospitals(prev => prev.map(h => h.id === data.hospital_id ? { ...h, ...data } : h));
+    const channel = supabase
+      .channel('cad_hospitals_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'hospitals' }, (payload) => {
+        if (payload.eventType === 'UPDATE') {
+          setHospitals(prev => prev.map(h => h.id === payload.new.id ? payload.new : h));
+        }
+      })
+      .subscribe();
 
-    socketService.on('hospital:capacity', handleCapacityUpdate);
-    return () => socketService.off('hospital:capacity', handleCapacityUpdate);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [fetchHospitals]);
 
   return { hospitals, loading, error, refetch: fetchHospitals };
 }
 
-export function useDashboardStats() {
-  const [stats, setStats] = useState(MOCK_STATS);
-  const [loading, setLoading] = useState(false);
+export function useAnalytics() {
+  const [stats, setStats] = useState({
+    active_incidents: 4,
+    available_ambulances: 5,
+    total_ambulances: 5,
+    hospitals_in_network: 3,
+    avg_response_time_minutes: 7.9,
+    incidents_today: 4,
+    response_time_improvement: 23,
+  });
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await analyticsApi.getDashboardStats();
-        setStats(response.data);
-      } catch {
-        // Keep mock stats silently
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
-    const interval = setInterval(fetchStats, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return { stats, loading };
+  return { stats, loading: false, error: null, refetch: () => {} };
 }

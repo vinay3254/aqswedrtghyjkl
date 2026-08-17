@@ -38,13 +38,34 @@ const PENDING_INCIDENTS = [
   { id:'SOS-102', incident_type:'Road Accident',  severity:'HIGH',     location_address:'Outer Ring Road, Bellandur', location_lat:12.9263, location_lng:77.6761, caller_name:'Police Control', caller_phone:'+91 100', description:'Multi-vehicle accident, 3 injured', distance:'5.8 km', eta:'11 min', patients_count:3, created_at:new Date(Date.now()-60000).toISOString(), is_sos:false },
 ];
 
-const STATUS_FLOW   = ['EN_ROUTE','ON_SCENE','TRANSPORTING','AT_HOSPITAL','COMPLETE'];
-const STATUS_LABELS = { EN_ROUTE:'En Route', ON_SCENE:'On Scene', TRANSPORTING:'Transport', AT_HOSPITAL:'Hospital', COMPLETE:'Done' };
+/* ── 7-Stage Emergency Lifecycle Flow ── */
+const STATUS_FLOW = [
+  'ASSIGNED',
+  'EN_ROUTE_TO_SCENE',
+  'ON_SCENE',
+  'TRANSPORTING_TO_HOSPITAL',
+  'ARRIVED_AT_HOSPITAL',
+  'RETURNING_TO_BASE',
+  'AVAILABLE',
+];
+
+const STATUS_LABELS = {
+  ASSIGNED: 'Assigned',
+  EN_ROUTE_TO_SCENE: 'En Route',
+  ON_SCENE: 'On Scene',
+  TRANSPORTING_TO_HOSPITAL: 'Transport',
+  ARRIVED_AT_HOSPITAL: 'At Hospital',
+  RETURNING_TO_BASE: 'Returning',
+  AVAILABLE: 'Available',
+};
+
 const STATUS_ACTIONS = {
-  EN_ROUTE:    { label:'Arrived On Scene',    next:'ON_SCENE' },
-  ON_SCENE:    { label:'Start Transport',     next:'TRANSPORTING' },
-  TRANSPORTING:{ label:'Arrived at Hospital', next:'AT_HOSPITAL' },
-  AT_HOSPITAL: { label:'Mission Complete',    next:'COMPLETE' },
+  ASSIGNED:                 { label:'🚨 Acknowledge & En Route',          next:'EN_ROUTE_TO_SCENE',        color:'#F97316' },
+  EN_ROUTE_TO_SCENE:        { label:'📍 Arrived on Scene',               next:'ON_SCENE',                 color:'#EF4444' },
+  ON_SCENE:                 { label:'🏥 Patient Loaded → Start Transport', next:'TRANSPORTING_TO_HOSPITAL', color:'#2563EB' },
+  TRANSPORTING_TO_HOSPITAL: { label:'🏁 Arrived at Hospital ER Bay',      next:'ARRIVED_AT_HOSPITAL',      color:'#9333EA' },
+  ARRIVED_AT_HOSPITAL:      { label:'🔄 Complete Handover & Return',      next:'RETURNING_TO_BASE',        color:'#64748B' },
+  RETURNING_TO_BASE:        { label:'✅ Confirm Ready / Available',       next:'AVAILABLE',                color:'#10B981' },
 };
 
 function CrossIcon({ size=12, color=G }) {
@@ -81,8 +102,16 @@ function IncomingAlert({ incident, onAccept, onReject }) {
       </Box>
       <Typography sx={{ fontSize:14, fontWeight:700, color:TEXT, mb:'3px' }}>{incident.incident_type}</Typography>
       <Typography sx={{ fontSize:'11.5px', color:DIM }}>
-        {incident.location_address} · {incident.distance} · ETA {incident.eta}
+        {incident.location_address} · {incident.distance || '3.5 km'} · ETA {incident.eta || '6 min'}
       </Typography>
+      <Box sx={{ display: 'flex', gap: 1, mt: 1.5 }}>
+        <Button variant="contained" size="small" onClick={onAccept} sx={{ flex: 1, bgcolor: '#2563EB', fontWeight: 800 }}>
+          Accept Call
+        </Button>
+        <Button variant="outlined" size="small" onClick={onReject} sx={{ color: '#94A3B8', borderColor: '#334155' }}>
+          Decline
+        </Button>
+      </Box>
     </Box>
   );
 }
@@ -91,6 +120,7 @@ function IncomingAlert({ incident, onAccept, onReject }) {
 function ActiveMission({ incident, status, onStatusUpdate }) {
   const sc  = SEV_COLOR[incident.severity] || AMBER;
   const idx = STATUS_FLOW.indexOf(status);
+  const action = STATUS_ACTIONS[status];
 
   return (
     <Box sx={{ padding:'14px', borderRadius:'14px', background:'#FFFFFF', border:'1px solid #E2E8F0', boxShadow:'0 2px 8px rgba(0,0,0,0.04)', marginBottom:'14px' }}>
@@ -110,8 +140,8 @@ function ActiveMission({ incident, status, onStatusUpdate }) {
       <Box sx={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', mb:'14px' }}>
         {[
           { label:'LOCATION', value:incident.location_address },
-          { label:'CALLER',   value:incident.caller_name || 'Unknown' },
-          { label:'PHONE',    value:incident.caller_phone },
+          { label:'CALLER',   value:incident.caller_name || 'Emergency Dispatch' },
+          { label:'PHONE',    value:incident.caller_phone || '+91 108' },
           { label:'PATIENTS', value:`${incident.patients_count||1} person(s)` },
         ].map(f=>(
           <Box key={f.label}>
@@ -122,23 +152,23 @@ function ActiveMission({ incident, status, onStatusUpdate }) {
       </Box>
 
       {/* Progress stepper */}
-      <Box sx={{ display:'flex', alignItems:'flex-start', gap:'4px' }}>
+      <Box sx={{ display:'flex', alignItems:'flex-start', gap:'3px', mb: 2 }}>
         {STATUS_FLOW.slice(0,-1).map((s,i)=>{
           const done   = i < idx;
           const active = i === idx;
           return (
             <Box key={s} sx={{ flex:1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <Box sx={{
-                width:24, height:24, borderRadius:'50%',
-                background: done ? G : active ? 'rgba(142,182,155,0.15)' : 'rgba(142,182,155,0.06)',
+                width:20, height:20, borderRadius:'50%',
+                background: done ? G : active ? 'rgba(37,99,235,0.15)' : 'rgba(142,182,155,0.06)',
                 border:`1.5px solid ${done ? G : active ? G : '#CBD5E1'}`,
-                color: done ? BG : active ? G : FAINT,
+                color: done ? '#FFFFFF' : active ? G : FAINT,
                 display:'flex', alignItems:'center', justifyContent:'center',
-                fontSize:'10.5px', fontWeight:700, transition:'all 0.3s',
+                fontSize:'9px', fontWeight:800, transition:'all 0.3s',
               }}>
                 {done ? '✓' : i+1}
               </Box>
-              <Typography sx={{ fontSize:'8.5px', color: done||active?TEXT:DIM, mt:'4px', fontWeight:600 }}>
+              <Typography sx={{ fontSize:'7.5px', color: done||active?TEXT:DIM, mt:'3px', fontWeight:700, textAlign: 'center', lineHeight: 1.1 }}>
                 {STATUS_LABELS[s]}
               </Typography>
             </Box>
@@ -146,8 +176,30 @@ function ActiveMission({ incident, status, onStatusUpdate }) {
         })}
       </Box>
 
-      {status === 'COMPLETE' && (
-        <Box sx={{ textalign:'center', p:'16px', background:'rgba(142,182,155,0.1)', border:`1px solid ${G}`, borderRadius:'11px', mt:'12px' }}>
+      {/* Active Stage Action Button */}
+      {action && (
+        <Button
+          fullWidth
+          variant="contained"
+          onClick={() => onStatusUpdate(action.next)}
+          sx={{
+            py: 1.2,
+            bgcolor: action.color,
+            color: 'white',
+            fontWeight: 800,
+            fontSize: '13px',
+            textTransform: 'none',
+            borderRadius: '10px',
+            boxShadow: `0 4px 14px ${action.color}40`,
+            '&:hover': { bgcolor: action.color, filter: 'brightness(0.9)' },
+          }}
+        >
+          {action.label} ➔
+        </Button>
+      )}
+    </Box>
+  );
+}
           <Typography sx={{ fontSize:14, fontWeight:700, color:G, textAlign:'center' }}>Mission Complete</Typography>
           <Typography sx={{ fontSize:'10.5px', color:DIM, mt:'2px', textAlign:'center' }}>Patient successfully transported</Typography>
         </Box>
@@ -371,28 +423,66 @@ export default function DriverInterface() {
     };
   }, []);
 
-  const handleAccept = () => {
+  const handleAccept = async () => {
     setActiveIncident(alertIncident);
-    setMissionStatus('EN_ROUTE');
-    setDriverPos({ lat:MOCK_DRIVER.latitude, lng:MOCK_DRIVER.longitude });
-    driverPosRef.current = { lat:MOCK_DRIVER.latitude, lng:MOCK_DRIVER.longitude };
+    setMissionStatus('ASSIGNED');
     setIncidentQueue(q=>q.filter(i=>i.id!==alertIncident.id));
     setAlertIncident(null);
     setVitalsSubmitted(false);
     setSelectedHospital(null);
     setChecklistPhase('PRE_DEPARTURE');
     setActiveTab('mission');
+
+    try {
+      const ambId = assignedAmbulance?.id || 'AMB-001';
+      await supabase.from('incidents').update({
+        status: 'ASSIGNED',
+        assigned_ambulance_id: ambId,
+        dispatched_at: new Date().toISOString(),
+      }).eq('id', alertIncident.id);
+      setToast({ msg: '🚨 Mission Accepted! Please proceed to scene.', sev: 'success' });
+    } catch (err) {
+      console.warn('[DriverInterface] Supabase accept error:', err);
+    }
   };
 
-  const handleStatusUpdate = (nextStatus) => {
+  const handleStatusUpdate = async (nextStatus) => {
+    if (!activeIncident) return;
     setMissionStatus(nextStatus);
-    // Auto-switch checklist phase
-    if (nextStatus === 'ON_SCENE')       setChecklistPhase('ON_SCENE');
-    if (nextStatus === 'AT_HOSPITAL')    setChecklistPhase('HANDOVER');
-  };
 
-  const isComplete = missionStatus === 'COMPLETE';
-  const nextAction = activeIncident ? STATUS_ACTIONS[missionStatus] : null;
+    // Auto-switch checklist phase
+    if (nextStatus === 'ON_SCENE') setChecklistPhase('ON_SCENE');
+    if (nextStatus === 'ARRIVED_AT_HOSPITAL') setChecklistPhase('HANDOVER');
+
+    const milestones = {};
+    if (nextStatus === 'EN_ROUTE_TO_SCENE') milestones.dispatched_at = new Date().toISOString();
+    if (nextStatus === 'ON_SCENE') milestones.arrived_scene_at = new Date().toISOString();
+    if (nextStatus === 'TRANSPORTING_TO_HOSPITAL') milestones.transport_started_at = new Date().toISOString();
+    if (nextStatus === 'ARRIVED_AT_HOSPITAL') milestones.arrived_hospital_at = new Date().toISOString();
+    if (nextStatus === 'RETURNING_TO_BASE' || nextStatus === 'AVAILABLE') milestones.resolved_at = new Date().toISOString();
+
+    try {
+      if (nextStatus === 'AVAILABLE') {
+        // Resolve incident & free ambulance
+        await supabase.from('incidents').update({ status: 'RESOLVED', ...milestones }).eq('id', activeIncident.id);
+        const ambId = assignedAmbulance?.id || 'AMB-001';
+        await supabase.from('ambulances').update({ status: 'AVAILABLE', assigned_incident_id: null, destination: null }).eq('id', ambId);
+        setActiveIncident(null);
+        setToast({ msg: '✅ Mission Complete! Unit is now Available for new dispatches.', sev: 'success' });
+      } else {
+        await supabase.from('incidents').update({ status: nextStatus, ...milestones }).eq('id', activeIncident.id);
+        setToast({ msg: `Status updated: ${STATUS_LABELS[nextStatus] || nextStatus}`, sev: 'info' });
+      }
+
+      dispatchBroadcast.send(DISPATCH_EVENTS.INCIDENT_UPDATED, {
+        id: activeIncident.id,
+        status: nextStatus,
+        ambulance_id: assignedAmbulance?.id || 'AMB-001',
+      });
+    } catch (err) {
+      console.warn('[DriverInterface] Error updating status in DB:', err);
+    }
+  };
 
   return (
     <Box sx={{

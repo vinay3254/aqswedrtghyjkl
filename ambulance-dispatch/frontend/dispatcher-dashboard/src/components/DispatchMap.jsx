@@ -140,18 +140,26 @@ function createAmbulanceDomElement(amb) {
   wrapper.style.cursor = 'pointer';
 
   const status = amb.status || 'AVAILABLE';
-  const moving = ['EN_ROUTE', 'TRANSPORTING'].includes(status);
-  const isStale = amb.last_ping && (Date.now() - amb.last_ping > 30000);
+  const moving = ['EN_ROUTE_TO_SCENE', 'EN_ROUTE', 'TRANSPORTING_TO_HOSPITAL', 'TRANSPORTING', 'RETURNING_TO_BASE'].includes(status);
+  const isStale = amb.last_ping && (Date.now() - new Date(amb.last_ping).getTime() > 120000);
 
-  const color = isStale
-    ? '#94A3B8'
-    : status === 'EN_ROUTE'
-    ? '#F97316'
-    : status === 'TRANSPORTING'
-    ? '#3B82F6'
-    : status === 'ON_SCENE'
-    ? '#EF4444'
-    : '#10B981';
+  const statusMap = {
+    AVAILABLE:                { color: '#10B981', label: '• STANDBY' },
+    ASSIGNED:                 { color: '#EAB308', label: '• ASSIGNED' },
+    EN_ROUTE_TO_SCENE:        { color: '#F97316', label: '• EN ROUTE' },
+    EN_ROUTE:                 { color: '#F97316', label: '• EN ROUTE' },
+    ON_SCENE:                 { color: '#EF4444', label: '• ON SCENE' },
+    TRANSPORTING_TO_HOSPITAL: { color: '#2563EB', label: '• TRANSPORTING' },
+    TRANSPORTING:             { color: '#2563EB', label: '• TRANSPORTING' },
+    ARRIVED_AT_HOSPITAL:      { color: '#9333EA', label: '• AT HOSPITAL' },
+    RETURNING_TO_BASE:        { color: '#64748B', label: '• RETURNING' },
+    MAINTENANCE:              { color: '#94A3B8', label: '• MAINTENANCE' },
+    OFFLINE:                  { color: '#94A3B8', label: '• OFFLINE' },
+  };
+
+  const currentConf = statusMap[status] || { color: '#10B981', label: `• ${status}` };
+  const color = isStale ? '#94A3B8' : currentConf.color;
+  const statusLabel = isStale ? '⚠️ OFFLINE' : currentConf.label;
 
   const callsign = amb.call_sign || amb.vehicle_number || amb.id || 'AMB';
 
@@ -168,7 +176,7 @@ function createAmbulanceDomElement(amb) {
       font-size:10px;font-weight:800;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,0.35);
       margin-bottom:-4px;z-index:10;border:1.5px solid #FFFFFF;letter-spacing:0.3px;font-family:'Inter',sans-serif;
     ">
-      ${callsign} ${isStale ? '⚠️ OFFLINE' : (moving ? '• EN ROUTE' : '• STANDBY')}
+      ${callsign} ${statusLabel}
     </div>
 
     <!-- Google Pin Circle with Drop-Shadow & Rotatable Vehicle Icon -->
