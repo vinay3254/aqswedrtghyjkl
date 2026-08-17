@@ -245,3 +245,13 @@ export function useAnalytics() {
 
   return { stats, loading: false, error: null, refetch: () => {} };
 }
+
+export function useDashboardStats() {
+  return useAnalytics();
+}
+
+export function useTimeline() {
+  const [events, setEvents] = useState([]);
+  return { events, setEvents, loading: false };
+}
+
