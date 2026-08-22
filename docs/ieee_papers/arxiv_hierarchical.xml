@@ -1,0 +1,196 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/LEbYlAoRmbO9rlyMt6WmEwxV6ZM</id>
+  <title>arXiv Query: search_query=all:"hierarchical clustering" OR all:medical OR all:clinical OR all:patient&amp;id_list=&amp;start=0&amp;max_results=6</title>
+  <updated>2026-08-17T09:11:57Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=all:%22hierarchical+clustering%22+OR+(all:medical+OR+(all:clinical+OR+all:patient))&amp;start=0&amp;max_results=6&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>6</opensearch:itemsPerPage>
+  <opensearch:totalResults>67556</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/1401.5814v1</id>
+    <title>On Randomly Projected Hierarchical Clustering with Guarantees</title>
+    <updated>2014-01-22T22:01:05Z</updated>
+    <link href="https://arxiv.org/abs/1401.5814v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/1401.5814v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Hierarchical clustering (HC) algorithms are generally limited to small data instances due to their runtime costs. Here we mitigate this shortcoming and explore fast HC algorithms based on random projections for single (SLC) and average (ALC) linkage clustering as well as for the minimum spanning tree problem (MST). We present a thorough adaptive analysis of our algorithms that improve prior work from $O(N^2)$ by up to a factor of $N/(\log N)^2$ for a dataset of $N$ points in Euclidean space. The algorithms maintain, with arbitrary high probability, the outcome of hierarchical clustering as well as the worst-case running-time guarantees. We also present parameter-free instances of our algorithms.</summary>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.DS" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2014-01-22T22:01:05Z</published>
+    <arxiv:comment>This version contains the conference paper "On Randomly Projected Hierarchical Clustering with Guarantees'', SIAM International Conference on Data Mining (SDM), 2014 and, additionally, proofs omitted in the conference version</arxiv:comment>
+    <arxiv:primary_category term="cs.IR"/>
+    <author>
+      <name>Johannes Schneider</name>
+    </author>
+    <author>
+      <name>Michail Vlachos</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2206.03003v2</id>
+    <title>Transformer-based Personalized Attention Mechanism for Medical Images with Clinical Records</title>
+    <updated>2023-01-27T09:54:07Z</updated>
+    <link href="https://arxiv.org/abs/2206.03003v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2206.03003v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>In medical image diagnosis, identifying the attention region, i.e., the region of interest for which the diagnosis is made, is an important task. Various methods have been developed to automatically identify target regions from given medical images. However, in actual medical practice, the diagnosis is made based not only on the images but also on a variety of clinical records. This means that pathologists examine medical images with some prior knowledge of the patients and that the attention regions may change depending on the clinical records. In this study, we propose a method called the Personalized Attention Mechanism (PersAM), by which the attention regions in medical images are adaptively changed according to the clinical records. The primary idea of the PersAM method is to encode the relationships between the medical images and clinical records using a variant of Transformer architecture. To demonstrate the effectiveness of the PersAM method, we applied it to a large-scale digital pathology problem of identifying the subtypes of 842 malignant lymphoma patients based on their gigapixel whole slide images and clinical records.</summary>
+    <category term="eess.IV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2022-06-07T04:35:22Z</published>
+    <arxiv:primary_category term="eess.IV"/>
+    <arxiv:journal_ref>Takagi, Yusuke, et al. "Transformer-based personalized attention mechanism for medical images with clinical records." Journal of Pathology Informatics (2023): 100185</arxiv:journal_ref>
+    <author>
+      <name>Yusuke Takagi</name>
+    </author>
+    <author>
+      <name>Noriaki Hashimoto</name>
+    </author>
+    <author>
+      <name>Hiroki Masuda</name>
+    </author>
+    <author>
+      <name>Hiroaki Miyoshi</name>
+    </author>
+    <author>
+      <name>Koichi Ohshima</name>
+    </author>
+    <author>
+      <name>Hidekata Hontani</name>
+    </author>
+    <author>
+      <name>Ichiro Takeuchi</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2302.04725v1</id>
+    <title>Lightweight Transformers for Clinical Natural Language Processing</title>
+    <updated>2023-02-09T16:07:31Z</updated>
+    <link href="https://arxiv.org/abs/2302.04725v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2302.04725v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Specialised pre-trained language models are becoming more frequent in NLP since they can potentially outperform models trained on generic texts. BioBERT and BioClinicalBERT are two examples of such models that have shown promise in medical NLP tasks. Many of these models are overparametrised and resource-intensive, but thanks to techniques like Knowledge Distillation (KD), it is possible to create smaller versions that perform almost as well as their larger counterparts. In this work, we specifically focus on development of compact language models for processing clinical texts (i.e. progress notes, discharge summaries etc). We developed a number of efficient lightweight clinical transformers using knowledge distillation and continual learning, with the number of parameters ranging from 15 million to 65 million. These models performed comparably to larger models such as BioBERT and ClinicalBioBERT and significantly outperformed other compact models trained on general or biomedical data. Our extensive evaluation was done across several standard datasets and covered a wide range of clinical text-mining tasks, including Natural Language Inference, Relation Extraction, Named Entity Recognition, and Sequence Classification. To our knowledge, this is the first comprehensive study specifically focused on creating efficient and compact transformers for clinical NLP tasks. The models and code used in this study can be found on our Huggingface profile at https://huggingface.co/nlpie and Github page at https://github.com/nlpie-research/Lightweight-Clinical-Transformers, respectively, promoting reproducibility of our results.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-02-09T16:07:31Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <arxiv:journal_ref>Nat. Lang. Eng. 30 (2024) 887-914</arxiv:journal_ref>
+    <author>
+      <name>Omid Rohanian</name>
+    </author>
+    <author>
+      <name>Mohammadmahdi Nouriborji</name>
+    </author>
+    <author>
+      <name>Hannah Jauncey</name>
+    </author>
+    <author>
+      <name>Samaneh Kouchaki</name>
+    </author>
+    <author>
+      <name>ISARIC Clinical Characterisation Group</name>
+    </author>
+    <author>
+      <name>Lei Clifton</name>
+    </author>
+    <author>
+      <name>Laura Merson</name>
+    </author>
+    <author>
+      <name>David A. Clifton</name>
+    </author>
+    <arxiv:doi>10.1017/S1351324923000542</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1017/S1351324923000542" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/cs/0608049v2</id>
+    <title>Solving non-uniqueness in agglomerative hierarchical clustering using multidendrograms</title>
+    <updated>2009-06-10T17:10:51Z</updated>
+    <link href="https://arxiv.org/abs/cs/0608049v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/cs/0608049v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>  In agglomerative hierarchical clustering, pair-group methods suffer from a problem of non-uniqueness when two or more distances between different clusters coincide during the amalgamation process. The traditional approach for solving this drawback has been to take any arbitrary criterion in order to break ties between distances, which results in different hierarchical classifications depending on the criterion followed. In this article we propose a variable-group algorithm that consists in grouping more than two clusters at the same time when ties occur. We give a tree representation for the results of the algorithm, which we call a multidendrogram, as well as a generalization of the Lance and Williams' formula which enables the implementation of the algorithm in a recursive way.</summary>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="math.ST" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="physics.data-an" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2006-08-08T18:35:52Z</published>
+    <arxiv:comment>Free Software for Agglomerative Hierarchical Clustering using Multidendrograms available at http://deim.urv.cat/~sgomez/multidendrograms.php</arxiv:comment>
+    <arxiv:primary_category term="cs.IR"/>
+    <arxiv:journal_ref>Journal of Classification 25 (2008) 43-65</arxiv:journal_ref>
+    <author>
+      <name>Alberto Fernandez</name>
+    </author>
+    <author>
+      <name>Sergio Gomez</name>
+    </author>
+    <arxiv:doi>10.1007/s00357-008-9004-x</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1007/s00357-008-9004-x" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2011.09625v2</id>
+    <title>Exploring Text Specific and Blackbox Fairness Algorithms in Multimodal Clinical NLP</title>
+    <updated>2021-06-10T15:54:39Z</updated>
+    <link href="https://arxiv.org/abs/2011.09625v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2011.09625v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Clinical machine learning is increasingly multimodal, collected in both structured tabular formats and unstructured forms such as freetext. We propose a novel task of exploring fairness on a multimodal clinical dataset, adopting equalized odds for the downstream medical prediction tasks. To this end, we investigate a modality-agnostic fairness algorithm - equalized odds post processing - and compare it to a text-specific fairness algorithm: debiased clinical word embeddings. Despite the fact that debiased word embeddings do not explicitly address equalized odds of protected groups, we show that a text-specific approach to fairness may simultaneously achieve a good balance of performance and classical notions of fairness. We hope that our paper inspires future contributions at the critical intersection of clinical NLP and fairness. The full source code is available here: https://github.com/johntiger1/multimodal_fairness</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2020-11-19T03:11:24Z</published>
+    <arxiv:comment>Best paper award at 3rd Clinical Natural Language Processing Workshop at EMNLP 2020</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <arxiv:journal_ref>Proceedings of the 3rd Clinical Natural Language Processing Workshop (2020), pages 301--312</arxiv:journal_ref>
+    <author>
+      <name>John Chen</name>
+    </author>
+    <author>
+      <name>Ian Berlot-Attwell</name>
+    </author>
+    <author>
+      <name>Safwan Hossain</name>
+    </author>
+    <author>
+      <name>Xindi Wang</name>
+    </author>
+    <author>
+      <name>Frank Rudzicz</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2505.01206v2</id>
+    <title>Design for a Digital Twin in Clinical Patient Care</title>
+    <updated>2026-04-09T22:09:28Z</updated>
+    <link href="https://arxiv.org/abs/2505.01206v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2505.01206v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Digital Twins hold great potential to personalize clinical patient care, provided the concept is translated to meet specific requirements emerging from established clinical workflows. We present a general and unspecialized Digital Twin design combining knowledge graphs and ensemble learning to reflect the entire patient's clinical journey and assist clinicians in their decision-making. Such a design is predictive, modular, evolving, informed, interpretable and explainable, thus opening broad clinical applications.</summary>
+    <category term="cs.SE" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CE" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="physics.med-ph" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-05-02T11:50:42Z</published>
+    <arxiv:comment>Accepted version of the journal. Added clinical examples in the supplementary material and revised the introduction and section 3</arxiv:comment>
+    <arxiv:primary_category term="cs.SE"/>
+    <author>
+      <name>Anna-Katharina Nitschke</name>
+      <arxiv:affiliation>Physikalisches Institut, Universität Heidelberg, Heidelberg, Germany</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Carlos Brandl</name>
+      <arxiv:affiliation>Physikalisches Institut, Universität Heidelberg, Heidelberg, Germany</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Fabian Egersdörfer</name>
+      <arxiv:affiliation>Physikalisches Institut, Universität Heidelberg, Heidelberg, Germany</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Magdalena Görtz</name>
+      <arxiv:affiliation>Junior Clinical Cooperation Unit 'Multiparametric Methods for Early Detection of Prostate Cancer', German Cancer Research Center</arxiv:affiliation>
+      <arxiv:affiliation>Department of Urology, Heidelberg University Hospital, Heidelberg, Germany</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Markus Hohenfellner</name>
+      <arxiv:affiliation>Department of Urology, Heidelberg University Hospital, Heidelberg, Germany</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Matthias Weidemüller</name>
+      <arxiv:affiliation>Physikalisches Institut, Universität Heidelberg, Heidelberg, Germany</arxiv:affiliation>
+    </author>
+    <arxiv:doi>10.1038/s44401-025-00060-1</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1038/s44401-025-00060-1" title="doi"/>
+  </entry>
+</feed>

@@ -1,0 +1,83 @@
+==============================================================================
+IEEE-FORMAT REFERENCES (grouped) — MediCluster
+Total: 30 papers across 6 sections
+==============================================================================
+
+
+--- A. Clustering Algorithms ---
+
+[2] T. Jiang and Y. Zhou, "Simple KNN-Based Outlier Detection Achieves Robust Clustering," arXiv preprint arXiv:2605.07130, May 2026. [Online]. Available: https://arxiv.org/abs/2605.07130
+
+[3] N. Gada, "A novel k-means clustering approach using two distance measures for Gaussian data," arXiv preprint arXiv:2511.17823, Nov 2025. [Online]. Available: https://arxiv.org/abs/2511.17823
+
+[9] C. Leiber, N. Strauß, M. Schubert, and T. Seidl, "Dying Clusters Is All You Need -- Deep Clustering With an Unknown Number of Clusters," arXiv preprint arXiv:2410.09491, Oct 2024. [Online]. Available: https://arxiv.org/abs/2410.09491
+
+[10] S. Thejaswi, A. Gadekar, B. Ordozgoiti, and A. Gionis, "Diversity-aware clustering: Computational Complexity and Approximation Algorithms," arXiv preprint arXiv:2401.05502, Jan 2024. [Online]. Available: https://arxiv.org/abs/2401.05502
+
+[17] R. Zhang, H. Peng, Y. Dou, J. Wu, Q. Sun, J. Zhang, and P. S. Yu, "Automating DBSCAN via Deep Reinforcement Learning," arXiv preprint arXiv:2208.04537, Aug 2022. [Online]. Available: https://arxiv.org/abs/2208.04537
+
+[19] B. Fritzke, "Breathing K-Means: Superior K-Means Solutions through Dynamic K-Values," arXiv preprint arXiv:2006.15666, Jun 2020. [Online]. Available: https://arxiv.org/abs/2006.15666
+
+[22] C. Tarn, Y. Zhang, and Y. Feng, "Reductive Clustering: An Efficient Linear-time Graph-based Divisive Cluster Analysis Approach," arXiv preprint arXiv:1806.08245, Jun 2018. [Online]. Available: https://arxiv.org/abs/1806.08245
+
+[24] S. Kolay, K. S. Ray, and A. C. Mondal, "K+ Means : An Enhancement Over K-Means Clustering Algorithm," arXiv preprint arXiv:1706.02949, Jun 2017. [Online]. Available: https://arxiv.org/abs/1706.02949
+
+[25] S. Chakraborty, N. K. Nagwani, and L. Dey, "Performance Comparison of Incremental K-means and Incremental DBSCAN Algorithms," arXiv preprint arXiv:1406.4751, Jun 2014. [Online]. Available: https://arxiv.org/abs/1406.4751
+
+[26] D. J. Bora and D. A. K. Gupta, "A Comparative study Between Fuzzy Clustering Algorithm and Hard Clustering Algorithm," arXiv preprint arXiv:1404.6059, Apr 2014. [Online]. Available: https://arxiv.org/abs/1404.6059
+
+[27] J. Schneider and M. Vlachos, "On Randomly Projected Hierarchical Clustering with Guarantees," arXiv preprint arXiv:1401.5814, Jan 2014. [Online]. Available: https://arxiv.org/abs/1401.5814
+
+[28] P. Ashok, G. M. K. Nawaz, E. Elayaraja, and V. Vadivel, "Improved Performance of Unsupervised Method by Renovated K-Means," arXiv preprint arXiv:1304.0725, Mar 2013. [Online]. Available: https://arxiv.org/abs/1304.0725
+
+[30] A. Fernandez and S. Gomez, "Solving non-uniqueness in agglomerative hierarchical clustering using multidendrograms," arXiv preprint arXiv:cs/0608049, Aug 2006. [Online]. Available: https://arxiv.org/abs/cs/0608049
+
+
+--- B. Clustering Evaluation & Metrics ---
+
+[1] P. Fränti, "How to evaluate clustering with ground truth?," arXiv preprint arXiv:2606.27061, Jun 2026. [Online]. Available: https://arxiv.org/abs/2606.27061
+
+[18] G. Liu, "A New Index for Clustering Evaluation Based on Density Estimation," arXiv preprint arXiv:2207.01294, Jul 2022. [Online]. Available: https://arxiv.org/abs/2207.01294
+
+
+--- C. Dimensionality Reduction & Visualization ---
+
+[5] M. Salah, N. Saeed, D. Svetinovic, S. Sfarra, M. Omar, and Y. Abdulrahman, "PCA-Guided Autoencoding for Structured Dimensionality Reduction in Active Infrared Thermography," arXiv preprint arXiv:2508.07773, Aug 2025. [Online]. Available: https://arxiv.org/abs/2508.07773
+
+[8] E. Bergh, "Interpretable non-linear dimensionality reduction using gaussian weighted linear transformation," arXiv preprint arXiv:2504.17601, Apr 2025. [Online]. Available: https://arxiv.org/abs/2504.17601
+
+[23] Y. Shen, P. A. Traganitis, and G. B. Giannakis, "Nonlinear Dimensionality Reduction on Graphs," arXiv preprint arXiv:1801.09390, Jan 2018. [Online]. Available: https://arxiv.org/abs/1801.09390
+
+
+--- D. Patient Risk Stratification & Disease Prediction ---
+
+[4] E. Chowdhury, "Risk Prediction of Cardiovascular Disease for Diabetic Patients with Machine Learning and Deep Learning Techniques," arXiv preprint arXiv:2511.04971, Nov 2025. [Online]. Available: https://arxiv.org/abs/2511.04971
+
+[13] A. R. Rao, S. Garai, S. Dey, and H. Peng, "Building predictive models of healthcare costs with open healthcare data," arXiv preprint arXiv:2304.02191, Apr 2023. [Online]. Available: https://arxiv.org/abs/2304.02191
+
+[20] G. Luo, "Automatically Explaining Machine Learning Prediction Results: A Demonstration on Type 2 Diabetes Risk Prediction," arXiv preprint arXiv:1812.02852, Dec 2018. [Online]. Available: https://arxiv.org/abs/1812.02852
+
+
+--- E. EHR / Clinical Data Analytics ---
+
+[6] H. Arno and T. Demeester, "Annotation-Assisted Learning of Treatment Policies From Multimodal Electronic Health Records," arXiv preprint arXiv:2507.20993, Jul 2025. [Online]. Available: https://arxiv.org/abs/2507.20993
+
+[12] J. Mistry and N. M. Arzeno, "Document Understanding for Healthcare Referrals," arXiv preprint arXiv:2309.13184, Sep 2023. [Online]. Available: https://arxiv.org/abs/2309.13184
+
+[15] O. Rohanian, M. Nouriborji, H. Jauncey, S. Kouchaki, I. C. C. Group, L. Clifton, L. Merson, and D. A. Clifton, "Lightweight Transformers for Clinical Natural Language Processing," arXiv preprint arXiv:2302.04725, Feb 2023. [Online]. Available: https://arxiv.org/abs/2302.04725
+
+[21] D. Liu, T. Miller, R. Sayeed, and K. D. Mandl, "FADL:Federated-Autonomous Deep Learning for Distributed Electronic Health Record," arXiv preprint arXiv:1811.11400, Nov 2018. [Online]. Available: https://arxiv.org/abs/1811.11400
+
+[29] C. Bennett and T. Doub, "Data Mining and Electronic Health Records: Selecting Optimal Clinical Treatments in Practice," arXiv preprint arXiv:1112.1668, Dec 2011. [Online]. Available: https://arxiv.org/abs/1112.1668
+
+
+--- F. Healthcare ML Infrastructure & Privacy ---
+
+[7] A. Nitschke, C. Brandl, F. Egersdörfer, M. Görtz, M. Hohenfellner, and M. Weidemüller, "Design for a Digital Twin in Clinical Patient Care," arXiv preprint arXiv:2505.01206, May 2025. [Online]. Available: https://arxiv.org/abs/2505.01206
+
+[11] M. Saifuzzaman and T. N. Ananna, "Towards Smart Healthcare: Challenges and Opportunities in IoT and ML," arXiv preprint arXiv:2312.05530, Dec 2023. [Online]. Available: https://arxiv.org/abs/2312.05530
+
+[14] A. Guerra-Manzanares, L. J. L. Lopez, M. Maniatakos, and F. E. Shamout, "Privacy-preserving machine learning for healthcare: open challenges and future perspectives," arXiv preprint arXiv:2303.15563, Mar 2023. [Online]. Available: https://arxiv.org/abs/2303.15563
+
+[16] M. Joshi, A. Pal, and M. Sankarasubbu, "Federated Learning for Healthcare Domain - Pipeline, Applications and Challenges," arXiv preprint arXiv:2211.07893, Nov 2022. [Online]. Available: https://arxiv.org/abs/2211.07893
+

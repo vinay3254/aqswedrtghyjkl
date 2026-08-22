@@ -1,0 +1,192 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/vTDUPEOLahakbOpaMV9pYlsZOCE</id>
+  <title>arXiv Query: search_query=all:"electronic health records" OR all:machine OR all:learning OR all:risk OR all:prediction&amp;id_list=&amp;start=0&amp;max_results=8</title>
+  <updated>2026-08-17T09:11:56Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=all:%22electronic+health+records%22+OR+(all:machine+OR+(all:learning+OR+(all:risk+OR+all:prediction)))&amp;start=0&amp;max_results=8&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>8</opensearch:itemsPerPage>
+  <opensearch:totalResults>778031</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2306.04338v1</id>
+    <title>Changing Data Sources in the Age of Machine Learning for Official Statistics</title>
+    <updated>2023-06-07T11:08:12Z</updated>
+    <link href="https://arxiv.org/abs/2306.04338v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2306.04338v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Data science has become increasingly essential for the production of official statistics, as it enables the automated collection, processing, and analysis of large amounts of data. With such data science practices in place, it enables more timely, more insightful and more flexible reporting. However, the quality and integrity of data-science-driven statistics rely on the accuracy and reliability of the data sources and the machine learning techniques that support them. In particular, changes in data sources are inevitable to occur and pose significant risks that are crucial to address in the context of machine learning for official statistics.
+  This paper gives an overview of the main risks, liabilities, and uncertainties associated with changing data sources in the context of machine learning for official statistics. We provide a checklist of the most prevalent origins and causes of changing data sources; not only on a technical level but also regarding ownership, ethics, regulation, and public perception. Next, we highlight the repercussions of changing data sources on statistical reporting. These include technical effects such as concept drift, bias, availability, validity, accuracy and completeness, but also the neutrality and potential discontinuation of the statistical offering. We offer a few important precautionary measures, such as enhancing robustness in both data sourcing and statistical techniques, and thorough monitoring. In doing so, machine learning-based official statistics can maintain integrity, reliability, consistency, and relevance in policy-making, decision-making, and public discourse.</summary>
+    <category term="stat.ML" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-06-07T11:08:12Z</published>
+    <arxiv:comment>Presented at UNECE Machine Learning for Official Statistics Workshop 2023</arxiv:comment>
+    <arxiv:primary_category term="stat.ML"/>
+    <arxiv:journal_ref>UNECE Machine Learning for Official Statistics Workshop 2023</arxiv:journal_ref>
+    <author>
+      <name>Cedric De Boom</name>
+    </author>
+    <author>
+      <name>Michael Reusens</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2006.16189v4</id>
+    <title>DOME: Recommendations for supervised machine learning validation in biology</title>
+    <updated>2021-01-07T07:29:24Z</updated>
+    <link href="https://arxiv.org/abs/2006.16189v4" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2006.16189v4" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Modern biology frequently relies on machine learning to provide predictions and improve decision processes. There have been recent calls for more scrutiny on machine learning performance and possible limitations. Here we present a set of community-wide recommendations aiming to help establish standards of supervised machine learning validation in biology. Adopting a structured methods description for machine learning based on data, optimization, model, evaluation (DOME) will aim to help both reviewers and readers to better understand and assess the performance and limitations of a method or outcome. The recommendations are formulated as questions to anyone wishing to pursue implementation of a machine learning algorithm. Answers to these questions can be easily included in the supplementary material of published papers.</summary>
+    <category term="q-bio.OT" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2020-06-25T12:01:39Z</published>
+    <arxiv:primary_category term="q-bio.OT"/>
+    <author>
+      <name>Ian Walsh</name>
+    </author>
+    <author>
+      <name>Dmytro Fishman</name>
+    </author>
+    <author>
+      <name>Dario Garcia-Gasulla</name>
+    </author>
+    <author>
+      <name>Tiina Titma</name>
+    </author>
+    <author>
+      <name>Gianluca Pollastri</name>
+    </author>
+    <author>
+      <name>The ELIXIR Machine Learning focus group</name>
+    </author>
+    <author>
+      <name>Jen Harrow</name>
+    </author>
+    <author>
+      <name>Fotis E. Psomopoulos</name>
+    </author>
+    <author>
+      <name>Silvio C. E. Tosatto</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2507.20993v4</id>
+    <title>Annotation-Assisted Learning of Treatment Policies From Multimodal Electronic Health Records</title>
+    <updated>2026-07-28T14:40:44Z</updated>
+    <link href="https://arxiv.org/abs/2507.20993v4" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2507.20993v4" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We study how to learn treatment policies from multimodal electronic health records (EHRs) that consist of tabular data and clinical text. These policies can help physicians make better treatment decisions and allocate healthcare resources more efficiently. Causal policy learning methods prioritize patients with the largest expected treatment benefit. Yet, existing estimators are designed for tabular covariates under causal assumptions that may be hard to justify in the multimodal setting. A pragmatic alternative is to apply causal estimators directly to multimodal representations, but this can produce biased treatment effect estimates when the representations do not preserve the relevant confounding information. As a result, predictive models of baseline risk are commonly used in practice to guide treatment decisions, although they are not designed to identify which patients benefit most from treatment. We propose AACE (Annotation-Assisted Coarsened Effects), an annotation-assisted approach to causal policy learning for multimodal EHRs. The method uses expert-provided annotations during training to support confounding adjustment, and then predicts treatment benefit from only multimodal representations at inference. We show that the proposed method achieves strong empirical performance across synthetic, semi-synthetic, and real-world EHR datasets, outperforming risk-based and representation-based causal baselines, and offering practical insights for applying causal machine learning in clinical practice.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="stat.ML" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-07-28T16:52:31Z</published>
+    <arxiv:comment>Accepted at Machine Learning for Healthcare (MLHC) 2026</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Henri Arno</name>
+    </author>
+    <author>
+      <name>Thomas Demeester</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/1112.1668v1</id>
+    <title>Data Mining and Electronic Health Records: Selecting Optimal Clinical Treatments in Practice</title>
+    <updated>2011-12-07T19:44:19Z</updated>
+    <link href="https://arxiv.org/abs/1112.1668v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/1112.1668v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Electronic health records (EHR's) are only a first step in capturing and utilizing health-related data - the problem is turning that data into useful information. Models produced via data mining and predictive analysis profile inherited risks and environmental/behavioral factors associated with patient disorders, which can be utilized to generate predictions about treatment outcomes. This can form the backbone of clinical decision support systems driven by live data based on the actual population. The advantage of such an approach based on the actual population is that it is "adaptive". Here, we evaluate the predictive capacity of a clinical EHR of a large mental healthcare provider (~75,000 distinct clients a year) to provide decision support information in a real-world clinical setting. Initial research has achieved a 70% success rate in predicting treatment outcomes using these methods.</summary>
+    <category term="cs.DB" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2011-12-07T19:44:19Z</published>
+    <arxiv:comment>Keywords: Data Mining; Decision Support Systems, Clinical; Electronic Health Records; Evidence-Based Medicine; Data Warehouse</arxiv:comment>
+    <arxiv:primary_category term="cs.DB"/>
+    <arxiv:journal_ref>Proceedings of the 6th International Conference on Data Mining. (2010) pp. 313-318</arxiv:journal_ref>
+    <author>
+      <name>Casey Bennett</name>
+    </author>
+    <author>
+      <name>Thomas Doub</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/1811.11400v2</id>
+    <title>FADL:Federated-Autonomous Deep Learning for Distributed Electronic Health Record</title>
+    <updated>2018-12-03T02:08:28Z</updated>
+    <link href="https://arxiv.org/abs/1811.11400v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/1811.11400v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Electronic health record (EHR) data is collected by individual institutions and often stored across locations in silos. Getting access to these data is difficult and slow due to security, privacy, regulatory, and operational issues. We show, using ICU data from 58 different hospitals, that machine learning models to predict patient mortality can be trained efficiently without moving health data out of their silos using a distributed machine learning strategy. We propose a new method, called Federated-Autonomous Deep Learning (FADL) that trains part of the model using all data sources in a distributed manner and other parts using data from specific data sources. We observed that FADL outperforms traditional federated learning strategy and conclude that balance between global and local training is an important factor to consider when design distributed machine learning methods , especially in healthcare.</summary>
+    <category term="cs.CY" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2018-11-28T06:06:38Z</published>
+    <arxiv:comment>Machine Learning for Health (ML4H) Workshop at NeurIPS 2018 arXiv:cs/0101200</arxiv:comment>
+    <arxiv:primary_category term="cs.CY"/>
+    <arxiv:journal_ref>Machine Learning for Health (ML4H) Workshop at NeurIPS 2018</arxiv:journal_ref>
+    <author>
+      <name>Dianbo Liu</name>
+    </author>
+    <author>
+      <name>Timothy Miller</name>
+    </author>
+    <author>
+      <name>Raheel Sayeed</name>
+    </author>
+    <author>
+      <name>Kenneth D. Mandl</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2201.12150v2</id>
+    <title>Learning Curves for Decision Making in Supervised Machine Learning: A Survey</title>
+    <updated>2025-01-28T14:39:26Z</updated>
+    <link href="https://arxiv.org/abs/2201.12150v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2201.12150v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Learning curves are a concept from social sciences that has been adopted in the context of machine learning to assess the performance of a learning algorithm with respect to a certain resource, e.g., the number of training examples or the number of training iterations. Learning curves have important applications in several machine learning contexts, most notably in data acquisition, early stopping of model training, and model selection. For instance, learning curves can be used to model the performance of the combination of an algorithm and its hyperparameter configuration, providing insights into their potential suitability at an early stage and often expediting the algorithm selection process. Various learning curve models have been proposed to use learning curves for decision making. Some of these models answer the binary decision question of whether a given algorithm at a certain budget will outperform a certain reference performance, whereas more complex models predict the entire learning curve of an algorithm. We contribute a framework that categorises learning curve approaches using three criteria: the decision-making situation they address, the intrinsic learning curve question they answer and the type of resources they use. We survey papers from the literature and classify them into this framework.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2022-01-28T14:34:32Z</published>
+    <arxiv:comment>Accepted in Machine Learning Journal</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <arxiv:journal_ref>Machine Learning, Volume 113, pages 8371-8425 (2024)</arxiv:journal_ref>
+    <author>
+      <name>Felix Mohr</name>
+    </author>
+    <author>
+      <name>Jan N. van Rijn</name>
+    </author>
+    <arxiv:doi>10.1007/s10994-024-06619-7</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1007/s10994-024-06619-7" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/1710.05204v2</id>
+    <title>Sequential Design and Spatial Modeling for Portfolio Tail Risk Measurement</title>
+    <updated>2018-05-17T13:24:49Z</updated>
+    <link href="https://arxiv.org/abs/1710.05204v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/1710.05204v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We consider calculation of capital requirements when the underlying economic scenarios are determined by simulatable risk factors. In the respective nested simulation framework, the goal is to estimate portfolio tail risk, quantified via VaR or TVaR of a given collection of future economic scenarios representing factor levels at the risk horizon. Traditionally, evaluating portfolio losses of an outer scenario is done by computing a conditional expectation via inner-level Monte Carlo and is computationally expensive. We introduce several inter-related machine learning techniques to speed up this computation, in particular by properly accounting for the simulation noise. Our main workhorse is an advanced Gaussian Process (GP) regression approach which uses nonparametric spatial modeling to efficiently learn the relationship between the stochastic factors defining scenarios and corresponding portfolio value. Leveraging this emulator, we develop sequential algorithms that adaptively allocate inner simulation budgets to target the quantile region. The GP framework also yields better uncertainty quantification for the resulting VaR/TVaR estimators that reduces bias and variance compared to existing methods. We illustrate the proposed strategies with two case-studies in two and six dimensions.</summary>
+    <category term="q-fin.RM" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2017-10-14T16:12:23Z</published>
+    <arxiv:comment>40 pages, 11 figures</arxiv:comment>
+    <arxiv:primary_category term="q-fin.RM"/>
+    <author>
+      <name>Michael Ludkovski</name>
+    </author>
+    <author>
+      <name>James Risk</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/1812.02852v1</id>
+    <title>Automatically Explaining Machine Learning Prediction Results: A Demonstration on Type 2 Diabetes Risk Prediction</title>
+    <updated>2018-12-06T23:22:15Z</updated>
+    <link href="https://arxiv.org/abs/1812.02852v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/1812.02852v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Background: Predictive modeling is a key component of solutions to many healthcare problems. Among all predictive modeling approaches, machine learning methods often achieve the highest prediction accuracy, but suffer from a long-standing open problem precluding their widespread use in healthcare. Most machine learning models give no explanation for their prediction results, whereas interpretability is essential for a predictive model to be adopted in typical healthcare settings. Methods: This paper presents the first complete method for automatically explaining results for any machine learning predictive model without degrading accuracy. We did a computer coding implementation of the method. Using the electronic medical record data set from the Practice Fusion diabetes classification competition containing patient records from all 50 states in the United States, we demonstrated the method on predicting type 2 diabetes diagnosis within the next year. Results: For the champion machine learning model of the competition, our method explained prediction results for 87.4% of patients who were correctly predicted by the model to have type 2 diabetes diagnosis within the next year. Conclusions: Our demonstration showed the feasibility of automatically explaining results for any machine learning predictive model without degrading accuracy.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="stat.ML" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2018-12-06T23:22:15Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <arxiv:journal_ref>Gang Luo. Automatically Explaining Machine Learning Prediction Results: A Demonstration on Type 2 Diabetes Risk Prediction. Health Information Science and Systems, Vol. 4, No. 2, Mar. 2016</arxiv:journal_ref>
+    <author>
+      <name>Gang Luo</name>
+    </author>
+    <arxiv:doi>10.1186/s13755-016-0015-4</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1186/s13755-016-0015-4" title="doi"/>
+  </entry>
+</feed>

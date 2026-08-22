@@ -1,0 +1,190 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/G6haNciVLLKY+Dn1kSqaLLnIhgg</id>
+  <title>arXiv Query: search_query=all:"dimensionality reduction" OR all:PCA OR all:t-SNE OR all:biomedical OR all:clinical OR all:features&amp;id_list=&amp;start=0&amp;max_results=5</title>
+  <updated>2026-08-17T09:12:09Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=all:%22dimensionality+reduction%22+OR+(all:PCA+OR+(all:t-SNE+OR+(all:biomedical+OR+(all:clinical+OR+all:features))))&amp;start=0&amp;max_results=5&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>5</opensearch:itemsPerPage>
+  <opensearch:totalResults>313671</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2508.07773v1</id>
+    <title>PCA-Guided Autoencoding for Structured Dimensionality Reduction in Active Infrared Thermography</title>
+    <updated>2025-08-11T08:58:13Z</updated>
+    <link href="https://arxiv.org/abs/2508.07773v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2508.07773v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Active Infrared thermography (AIRT) is a widely adopted non-destructive testing (NDT) technique for detecting subsurface anomalies in industrial components. Due to the high dimensionality of AIRT data, current approaches employ non-linear autoencoders (AEs) for dimensionality reduction. However, the latent space learned by AIRT AEs lacks structure, limiting their effectiveness in downstream defect characterization tasks. To address this limitation, this paper proposes a principal component analysis guided (PCA-guided) autoencoding framework for structured dimensionality reduction to capture intricate, non-linear features in thermographic signals while enforcing a structured latent space. A novel loss function, PCA distillation loss, is introduced to guide AIRT AEs to align the latent representation with structured PCA components while capturing the intricate, non-linear patterns in thermographic signals. To evaluate the utility of the learned, structured latent space, we propose a neural network-based evaluation metric that assesses its suitability for defect characterization. Experimental results show that the proposed PCA-guided AE outperforms state-of-the-art dimensionality reduction methods on PVC, CFRP, and PLA samples in terms of contrast, signal-to-noise ratio (SNR), and neural network-based metrics.</summary>
+    <category term="eess.IV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-08-11T08:58:13Z</published>
+    <arxiv:comment>Infrared thermography, Non-Destructive Testing, Principal Component Analysis, PCA-Guided Autoencoder, PCA Distillation Loss, Dimensionality Reduction</arxiv:comment>
+    <arxiv:primary_category term="eess.IV"/>
+    <author>
+      <name>Mohammed Salah</name>
+    </author>
+    <author>
+      <name>Numan Saeed</name>
+    </author>
+    <author>
+      <name>Davor Svetinovic</name>
+    </author>
+    <author>
+      <name>Stefano Sfarra</name>
+    </author>
+    <author>
+      <name>Mohammed Omar</name>
+    </author>
+    <author>
+      <name>Yusra Abdulrahman</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/1801.09390v2</id>
+    <title>Nonlinear Dimensionality Reduction on Graphs</title>
+    <updated>2018-03-29T06:56:17Z</updated>
+    <link href="https://arxiv.org/abs/1801.09390v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/1801.09390v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>In this era of data deluge, many signal processing and machine learning tasks are faced with high-dimensional datasets, including images, videos, as well as time series generated from social, commercial and brain network interactions. Their efficient processing calls for dimensionality reduction techniques capable of properly compressing the data while preserving task-related characteristics, going beyond pairwise data correlations. The present paper puts forth a nonlinear dimensionality reduction framework that accounts for data lying on known graphs. The novel framework encompasses most of the existing dimensionality reduction methods, but it is also capable of capturing and preserving possibly nonlinear correlations that are ignored by linear methods. Furthermore, it can take into account information from multiple graphs. The proposed algorithms were tested on synthetic as well as real datasets to corroborate their effectiveness.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="stat.ML" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2018-01-29T08:11:04Z</published>
+    <arxiv:comment>Dimensionality reduction, nonlinear modeling, signal processing over graphs</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Yanning Shen</name>
+    </author>
+    <author>
+      <name>Panagiotis A. Traganitis</name>
+    </author>
+    <author>
+      <name>Georgios B. Giannakis</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/1608.05605v1</id>
+    <title>Using Distributed Representations to Disambiguate Biomedical and Clinical Concepts</title>
+    <updated>2016-08-19T14:05:03Z</updated>
+    <link href="https://arxiv.org/abs/1608.05605v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/1608.05605v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>In this paper, we report a knowledge-based method for Word Sense Disambiguation in the domains of biomedical and clinical text. We combine word representations created on large corpora with a small number of definitions from the UMLS to create concept representations, which we then compare to representations of the context of ambiguous terms. Using no relational information, we obtain comparable performance to previous approaches on the MSH-WSD dataset, which is a well-known dataset in the biomedical domain. Additionally, our method is fast and easy to set up and extend to other domains. Supplementary materials, including source code, can be found at https: //github.com/clips/yarn</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2016-08-19T14:05:03Z</published>
+    <arxiv:comment>6 pages, 1 figure, presented at the 15th Workshop on Biomedical Natural Language Processing, Berlin 2016</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <arxiv:journal_ref>Proceedings of the 15th Workshop on Biomedical Natural Language Processing, Berlin, Germany, 2016, pages 77-82. Association for Computational Linguistics</arxiv:journal_ref>
+    <author>
+      <name>Stéphan Tulkens</name>
+    </author>
+    <author>
+      <name>Simon Šuster</name>
+    </author>
+    <author>
+      <name>Walter Daelemans</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2203.13906v1</id>
+    <title>Biolink Model: A Universal Schema for Knowledge Graphs in Clinical, Biomedical, and Translational Science</title>
+    <updated>2022-03-25T20:54:15Z</updated>
+    <link href="https://arxiv.org/abs/2203.13906v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2203.13906v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Within clinical, biomedical, and translational science, an increasing number of projects are adopting graphs for knowledge representation. Graph-based data models elucidate the interconnectedness between core biomedical concepts, enable data structures to be easily updated, and support intuitive queries, visualizations, and inference algorithms. However, knowledge discovery across these "knowledge graphs" (KGs) has remained difficult. Data set heterogeneity and complexity; the proliferation of ad hoc data formats; poor compliance with guidelines on findability, accessibility, interoperability, and reusability; and, in particular, the lack of a universally-accepted, open-access model for standardization across biomedical KGs has left the task of reconciling data sources to downstream consumers. Biolink Model is an open source data model that can be used to formalize the relationships between data structures in translational science. It incorporates object-oriented classification and graph-oriented features. The core of the model is a set of hierarchical, interconnected classes (or categories) and relationships between them (or predicates), representing biomedical entities such as gene, disease, chemical, anatomical structure, and phenotype. The model provides class and edge attributes and associations that guide how entities should relate to one another. Here, we highlight the need for a standardized data model for KGs, describe Biolink Model, and compare it with other models. We demonstrate the utility of Biolink Model in various initiatives, including the Biomedical Data Translator Consortium and the Monarch Initiative, and show how it has supported easier integration and interoperability of biomedical KGs, bringing together knowledge from multiple sources and helping to realize the goals of translational science.</summary>
+    <category term="cs.DB" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2022-03-25T20:54:15Z</published>
+    <arxiv:primary_category term="cs.DB"/>
+    <author>
+      <name>Deepak R. Unni</name>
+    </author>
+    <author>
+      <name>Sierra A. T. Moxon</name>
+    </author>
+    <author>
+      <name>Michael Bada</name>
+    </author>
+    <author>
+      <name>Matthew Brush</name>
+    </author>
+    <author>
+      <name>Richard Bruskiewich</name>
+    </author>
+    <author>
+      <name>Paul Clemons</name>
+    </author>
+    <author>
+      <name>Vlado Dancik</name>
+    </author>
+    <author>
+      <name>Michel Dumontier</name>
+    </author>
+    <author>
+      <name>Karamarie Fecho</name>
+    </author>
+    <author>
+      <name>Gustavo Glusman</name>
+    </author>
+    <author>
+      <name>Jennifer J. Hadlock</name>
+    </author>
+    <author>
+      <name>Nomi L. Harris</name>
+    </author>
+    <author>
+      <name>Arpita Joshi</name>
+    </author>
+    <author>
+      <name>Tim Putman</name>
+    </author>
+    <author>
+      <name>Guangrong Qin</name>
+    </author>
+    <author>
+      <name>Stephen A. Ramsey</name>
+    </author>
+    <author>
+      <name>Kent A. Shefchek</name>
+    </author>
+    <author>
+      <name>Harold Solbrig</name>
+    </author>
+    <author>
+      <name>Karthik Soman</name>
+    </author>
+    <author>
+      <name>Anne T. Thessen</name>
+    </author>
+    <author>
+      <name>Melissa A. Haendel</name>
+    </author>
+    <author>
+      <name>Chris Bizon</name>
+    </author>
+    <author>
+      <name>Christopher J. Mungall</name>
+    </author>
+    <author>
+      <name>the Biomedical Data Translator Consortium</name>
+    </author>
+    <arxiv:doi>10.1111/cts.13302</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1111/cts.13302" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2504.17601v1</id>
+    <title>Interpretable non-linear dimensionality reduction using gaussian weighted linear transformation</title>
+    <updated>2025-04-24T14:26:42Z</updated>
+    <link href="https://arxiv.org/abs/2504.17601v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2504.17601v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Dimensionality reduction techniques are fundamental for analyzing and visualizing high-dimensional data. With established methods like t-SNE and PCA presenting a trade-off between representational power and interpretability. This paper introduces a novel approach that bridges this gap by combining the interpretability of linear methods with the expressiveness of non-linear transformations. The proposed algorithm constructs a non-linear mapping between high-dimensional and low-dimensional spaces through a combination of linear transformations, each weighted by Gaussian functions. This architecture enables complex non-linear transformations while preserving the interpretability advantages of linear methods, as each transformation can be analyzed independently. The resulting model provides both powerful dimensionality reduction and transparent insights into the transformed space. Techniques for interpreting the learned transformations are presented, including methods for identifying suppressed dimensions and how space is expanded and contracted. These tools enable practitioners to understand how the algorithm preserves and modifies geometric relationships during dimensionality reduction. To ensure the practical utility of this algorithm, the creation of user-friendly software packages is emphasized, facilitating its adoption in both academia and industry.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-04-24T14:26:42Z</published>
+    <arxiv:comment>11 pages, 5 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <arxiv:journal_ref>Erik Bergh (2025). Interpretable dimensionality reduction using weighted linear transformation. Adv. Artif. Intell. Mach. Learn., 5 (1 ):3465-3475</arxiv:journal_ref>
+    <author>
+      <name>Erik Bergh</name>
+    </author>
+    <arxiv:doi>10.54364/AAIML.2025.51198</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.54364/AAIML.2025.51198" title="doi"/>
+  </entry>
+</feed>

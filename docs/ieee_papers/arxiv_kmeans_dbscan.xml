@@ -1,0 +1,198 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/9Vue2fWUEPvGkKF1nZQR0dPJzPg</id>
+  <title>arXiv Query: search_query=all:"K-means" OR all:"DBSCAN" OR all:"patient clustering" OR all:healthcare&amp;id_list=&amp;start=0&amp;max_results=8</title>
+  <updated>2026-08-17T09:11:59Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=all:%22K-means%22+OR+(all:%22DBSCAN%22+OR+(all:%22patient+clustering%22+OR+all:healthcare))&amp;start=0&amp;max_results=8&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>8</opensearch:itemsPerPage>
+  <opensearch:totalResults>15468</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/1304.0725v1</id>
+    <title>Improved Performance of Unsupervised Method by Renovated K-Means</title>
+    <updated>2013-03-11T05:28:06Z</updated>
+    <link href="https://arxiv.org/abs/1304.0725v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/1304.0725v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Clustering is a separation of data into groups of similar objects. Every group called cluster consists of objects that are similar to one another and dissimilar to objects of other groups. In this paper, the K-Means algorithm is implemented by three distance functions and to identify the optimal distance function for clustering methods. The proposed K-Means algorithm is compared with K-Means, Static Weighted K-Means (SWK-Means) and Dynamic Weighted K-Means (DWK-Means) algorithm by using Davis Bouldin index, Execution Time and Iteration count methods. Experimental results show that the proposed K-Means algorithm performed better on Iris and Wine dataset when compared with other three clustering methods.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="stat.ML" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2013-03-11T05:28:06Z</published>
+    <arxiv:comment>7 pages, to strengthen the k means algorithm</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>P. Ashok</name>
+    </author>
+    <author>
+      <name>G. M Kadhar Nawaz</name>
+    </author>
+    <author>
+      <name>E. Elayaraja</name>
+    </author>
+    <author>
+      <name>V. Vadivel</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2208.04537v1</id>
+    <title>Automating DBSCAN via Deep Reinforcement Learning</title>
+    <updated>2022-08-09T04:40:11Z</updated>
+    <link href="https://arxiv.org/abs/2208.04537v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2208.04537v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>DBSCAN is widely used in many scientific and engineering fields because of its simplicity and practicality. However, due to its high sensitivity parameters, the accuracy of the clustering result depends heavily on practical experience. In this paper, we first propose a novel Deep Reinforcement Learning guided automatic DBSCAN parameters search framework, namely DRL-DBSCAN. The framework models the process of adjusting the parameter search direction by perceiving the clustering environment as a Markov decision process, which aims to find the best clustering parameters without manual assistance. DRL-DBSCAN learns the optimal clustering parameter search policy for different feature distributions via interacting with the clusters, using a weakly-supervised reward training policy network. In addition, we also present a recursive search mechanism driven by the scale of the data to efficiently and controllably process large parameter spaces. Extensive experiments are conducted on five artificial and real-world datasets based on the proposed four working modes. The results of offline and online tasks show that the DRL-DBSCAN not only consistently improves DBSCAN clustering accuracy by up to 26% and 25% respectively, but also can stably find the dominant parameters with high computational efficiency. The code is available at https://github.com/RingBDStack/DRL-DBSCAN.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2022-08-09T04:40:11Z</published>
+    <arxiv:comment>Accepted by CIKM 2022. The code is available at https://github.com/RingBDStack/DRL-DBSCAN</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Ruitong Zhang</name>
+    </author>
+    <author>
+      <name>Hao Peng</name>
+    </author>
+    <author>
+      <name>Yingtong Dou</name>
+    </author>
+    <author>
+      <name>Jia Wu</name>
+    </author>
+    <author>
+      <name>Qingyun Sun</name>
+    </author>
+    <author>
+      <name>Jingyi Zhang</name>
+    </author>
+    <author>
+      <name>Philip S. Yu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/1706.02949v2</id>
+    <title>K+ Means : An Enhancement Over K-Means Clustering Algorithm</title>
+    <updated>2017-06-22T13:25:51Z</updated>
+    <link href="https://arxiv.org/abs/1706.02949v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/1706.02949v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>K-means (MacQueen, 1967) [1] is one of the simplest unsupervised learning algorithms that solve the well-known clustering problem. The procedure follows a simple and easy way to classify a given data set to a predefined, say K number of clusters. Determination of K is a difficult job and it is not known that which value of K can partition the objects as per our intuition. To overcome this problem we proposed K+ Means algorithm. This algorithm is an enhancement over K-Means algorithm.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2017-06-08T10:06:25Z</published>
+    <arxiv:comment>Authors: Co-author's name added Section 3: Step (a) and (b) of K+Means algorithm are merged for simplicity. Section 3.1: K+ Means algorithm complexity rectified. Section 4.3: Figure-7 and Figure-8 modified for clarity</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Srikanta Kolay</name>
+    </author>
+    <author>
+      <name>Kumar Sankar Ray</name>
+    </author>
+    <author>
+      <name>Abhoy Chand Mondal</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2006.15666v5</id>
+    <title>Breathing K-Means: Superior K-Means Solutions through Dynamic K-Values</title>
+    <updated>2024-08-18T14:14:19Z</updated>
+    <link href="https://arxiv.org/abs/2006.15666v5" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2006.15666v5" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We introduce the breathing k-means algorithm, which on average significantly improves solutions obtained by the widely-known greedy k-means++ algorithm, the default method for k-means clustering in the scikit-learn package. The improvements are achieved through a novel ``breathing'' technique, that cyclically increases and decreases the number of centroids based on local error and utility measures. We conducted experiments using greedy k-means++ as a baseline, comparing it with breathing k-means and five other k-means algorithms. Among the methods investigated, only breathing k-means and better k-means++ consistently outperformed the baseline, with breathing k-means demonstrating a substantial lead. This superior performance was maintained even when comparing the best result of ten runs for all other algorithms to a single run of breathing k-means, highlighting its effectiveness and speed. Our findings indicate that the breathing k-means algorithm outperforms the other k-means techniques, especially greedy k-means++ with ten repetitions, which it dominates in both solution quality and speed. This positions breathing k-means (with the built-in initialization by a single run of greedy k-means++) as a superior alternative to running greedy k-means++ on its own.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="stat.ML" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2020-06-28T17:49:37Z</published>
+    <arxiv:comment>v5: Title changed to better address the core contribution. Terminology unified. v4: 40 pages, 10 figures, 19 tables; Algorithm has been compared to five additional k-means algorithms (beneath greedy k-means++). Five different groups of test problems have been investigated. Python package: https://pypi.org/project/bkmeans</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Bernd Fritzke</name>
+      <arxiv:affiliation>individual researcher</arxiv:affiliation>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2303.15563v1</id>
+    <title>Privacy-preserving machine learning for healthcare: open challenges and future perspectives</title>
+    <updated>2023-03-27T19:20:51Z</updated>
+    <link href="https://arxiv.org/abs/2303.15563v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2303.15563v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Machine Learning (ML) has recently shown tremendous success in modeling various healthcare prediction tasks, ranging from disease diagnosis and prognosis to patient treatment. Due to the sensitive nature of medical data, privacy must be considered along the entire ML pipeline, from model training to inference. In this paper, we conduct a review of recent literature concerning Privacy-Preserving Machine Learning (PPML) for healthcare. We primarily focus on privacy-preserving training and inference-as-a-service, and perform a comprehensive review of existing trends, identify challenges, and discuss opportunities for future research directions. The aim of this review is to guide the development of private and efficient ML models in healthcare, with the prospects of translating research efforts into real-world settings.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-03-27T19:20:51Z</published>
+    <arxiv:comment>ICLR 2023 Workshop on Trustworthy Machine Learning for Healthcare (TML4H)</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <arxiv:journal_ref>Trustworthy Machine Learning for Healthcare. TML4H 2023. Lecture Notes in Computer Science, vol 13932</arxiv:journal_ref>
+    <author>
+      <name>Alejandro Guerra-Manzanares</name>
+    </author>
+    <author>
+      <name>L. Julian Lechuga Lopez</name>
+    </author>
+    <author>
+      <name>Michail Maniatakos</name>
+    </author>
+    <author>
+      <name>Farah E. Shamout</name>
+    </author>
+    <arxiv:doi>10.1007/978-3-031-39539-0_3</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1007/978-3-031-39539-0_3" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/1406.4751v1</id>
+    <title>Performance Comparison of Incremental K-means and Incremental DBSCAN Algorithms</title>
+    <updated>2014-06-18T15:00:53Z</updated>
+    <link href="https://arxiv.org/abs/1406.4751v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/1406.4751v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Incremental K-means and DBSCAN are two very important and popular clustering techniques for today's large dynamic databases (Data warehouses, WWW and so on) where data are changed at random fashion. The performance of the incremental K-means and the incremental DBSCAN are different with each other based on their time analysis characteristics. Both algorithms are efficient compare to their existing algorithms with respect to time, cost and effort. In this paper, the performance evaluation of incremental DBSCAN clustering algorithm is implemented and most importantly it is compared with the performance of incremental K-means clustering algorithm and it also explains the characteristics of these two algorithms based on the changes of the data in the database. This paper also explains some logical differences between these two most popular clustering algorithms. This paper uses an air pollution database as original database on which the experiment is performed.</summary>
+    <category term="cs.DB" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2014-06-18T15:00:53Z</published>
+    <arxiv:primary_category term="cs.DB"/>
+    <author>
+      <name>Sanjay Chakraborty</name>
+    </author>
+    <author>
+      <name>N. K. Nagwani</name>
+    </author>
+    <author>
+      <name>Lopamudra Dey</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2309.13184v1</id>
+    <title>Document Understanding for Healthcare Referrals</title>
+    <updated>2023-09-22T21:19:47Z</updated>
+    <link href="https://arxiv.org/abs/2309.13184v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2309.13184v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Reliance on scanned documents and fax communication for healthcare referrals leads to high administrative costs and errors that may affect patient care. In this work we propose a hybrid model leveraging LayoutLMv3 along with domain-specific rules to identify key patient, physician, and exam-related entities in faxed referral documents. We explore some of the challenges in applying a document understanding model to referrals, which have formats varying by medical practice, and evaluate model performance using MUC-5 metrics to obtain appropriate metrics for the practical use case. Our analysis shows the addition of domain-specific rules to the transformer model yields greatly increased precision and F1 scores, suggesting a hybrid model trained on a curated dataset can increase efficiency in referral management.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-09-22T21:19:47Z</published>
+    <arxiv:comment>Accepted and presented at the 11th IEEE International Conference on Healthcare Informatics (ICHI) 2023 - Industry Track</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <arxiv:journal_ref>2023 IEEE 11th International Conference on Healthcare Informatics (ICHI)</arxiv:journal_ref>
+    <author>
+      <name>Jimit Mistry</name>
+    </author>
+    <author>
+      <name>Natalia M. Arzeno</name>
+    </author>
+    <arxiv:doi>10.1109/ICHI57859.2023.00067</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1109/ICHI57859.2023.00067" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2511.17823v2</id>
+    <title>A novel k-means clustering approach using two distance measures for Gaussian data</title>
+    <updated>2026-07-29T18:44:03Z</updated>
+    <link href="https://arxiv.org/abs/2511.17823v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2511.17823v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Clustering algorithms have long been the topic of research, representing the more popular side of unsupervised learning. Since clustering analysis is one of the best ways to find some clarity and structure within raw data, this paper explores a novel approach to k-means clustering. Here we present a k-means clustering algorithm that takes both the within cluster distance (WCD) and the inter cluster distance (ICD) as the distance metric to cluster the data into k clusters pre-determined by the Calinski-Harabasz criterion in order to provide a more robust output for the clustering analysis. The idea with this approach is that by including both the measurement metrics, the convergence of the data into their clusters becomes solidified and more robust. We run the algorithm with some synthetically produced data and also some benchmark data sets obtained from the UCI repository. The results show that the convergence of the data into their respective clusters is more accurate by using both WCD and ICD measurement metrics. The algorithm is also better at clustering the outliers into their true clusters as opposed to the traditional k means method. We also address some interesting possible research topics that reveal themselves as we answer the questions we initially set out to address.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CE" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="stat.ME" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="stat.ML" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-11-21T22:36:14Z</published>
+    <arxiv:comment>Keywords: machine learning, clustering algorithms, k-means</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Naitik Gada</name>
+      <arxiv:affiliation>Rochester Institute of Technology</arxiv:affiliation>
+    </author>
+  </entry>
+</feed>

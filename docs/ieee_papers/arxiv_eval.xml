@@ -1,0 +1,204 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/rbdU0CgwX32bl3ZR2vEIY+HI048</id>
+  <title>arXiv Query: search_query=all:"clustering evaluation" OR all:silhouette OR all:"Davies-Bouldin" OR all:CH OR all:index&amp;id_list=&amp;start=0&amp;max_results=4</title>
+  <updated>2026-08-17T09:12:10Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=all:%22clustering+evaluation%22+OR+(all:silhouette+OR+(all:%22Davies-Bouldin%22+OR+(all:CH+OR+all:index)))&amp;start=0&amp;max_results=4&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>4</opensearch:itemsPerPage>
+  <opensearch:totalResults>73406</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2207.01294v4</id>
+    <title>A New Index for Clustering Evaluation Based on Density Estimation</title>
+    <updated>2024-06-17T07:27:57Z</updated>
+    <link href="https://arxiv.org/abs/2207.01294v4" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2207.01294v4" rel="related" type="application/pdf" title="pdf"/>
+    <summary>A new index for internal evaluation of clustering is introduced. The index is defined as a mixture of two sub-indices. The first sub-index $ I_a $ is called the Ambiguous Index; the second sub-index $ I_s $ is called the Similarity Index. Calculation of the two sub-indices is based on density estimation to each cluster of a partition of the data. An experiment is conducted to test the performance of the new index, and compared with six other internal clustering evaluation indices -- Calinski-Harabasz index, Silhouette coefficient, Davies-Bouldin index, CDbw, DBCV, and VIASCKDE, on a set of 145 datasets. The result shows the new index significantly improves other internal clustering evaluation indices.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="stat.ML" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2022-07-04T09:54:09Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Gangli Liu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/1007.1420v1</id>
+    <title>Strong CH+ J=1-0 emission and absorption in DR21</title>
+    <updated>2010-07-08T17:10:07Z</updated>
+    <link href="https://arxiv.org/abs/1007.1420v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/1007.1420v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We report the first detection of the ground-state rotational transition of the methylidyne cation CH+ towards the massive star-forming region DR21 with the HIFI instrument onboard the Herschel satellite. The line profile exhibits a broad emission line, in addition to two deep and broad absorption features associated with the DR21 molecular ridge and foreground gas. These observations allow us to determine a CH+ J=1-0 line frequency of 835137 +/- 3 MHz, in good agreement with a recent experimental determination. We estimate the CH+ column density to be a few 1e13 cm^-2 in the gas seen in emission, and &gt; 1e14 cm^-2 in the components responsible for the absorption, which is indicative of a high line of sight average abundance [CH+]/[H] &gt; 1.2x10^-8. We show that the CH+ column densities agree well with the predictions of state-of-the-art C-shock models in dense UV-illuminated gas for the emission line, and with those of turbulent dissipation models in diffuse gas for the absorption lines.</summary>
+    <category term="astro-ph.GA" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2010-07-08T17:10:07Z</published>
+    <arxiv:comment>Accepted for publication in A&amp;A</arxiv:comment>
+    <arxiv:primary_category term="astro-ph.GA"/>
+    <author>
+      <name>E. Falgarone</name>
+    </author>
+    <author>
+      <name>V. Ossenkopf</name>
+    </author>
+    <author>
+      <name>M. Gerin</name>
+    </author>
+    <author>
+      <name>P. Lesaffre</name>
+    </author>
+    <author>
+      <name>B. Godard</name>
+    </author>
+    <author>
+      <name>J. Pearson</name>
+    </author>
+    <author>
+      <name>S. Cabrit</name>
+    </author>
+    <author>
+      <name>Ch. Joblin</name>
+    </author>
+    <author>
+      <name>A. O. ~Benz</name>
+    </author>
+    <author>
+      <name>F. Boulanger</name>
+    </author>
+    <author>
+      <name>A. Fuente</name>
+    </author>
+    <author>
+      <name>R. Güsten</name>
+    </author>
+    <author>
+      <name>A. Harris</name>
+    </author>
+    <author>
+      <name>T. Klein</name>
+    </author>
+    <author>
+      <name>C. Kramer</name>
+    </author>
+    <author>
+      <name>S. Lord</name>
+    </author>
+    <author>
+      <name>P. Martin</name>
+    </author>
+    <author>
+      <name>J. Martin-Pintado</name>
+    </author>
+    <author>
+      <name>D. Neufeld</name>
+    </author>
+    <author>
+      <name>T. G. ~Phillips</name>
+    </author>
+    <author>
+      <name>M. Röllig</name>
+    </author>
+    <author>
+      <name>R. Simon</name>
+    </author>
+    <author>
+      <name>J. Stutzki</name>
+    </author>
+    <author>
+      <name>F. van der Tak</name>
+    </author>
+    <author>
+      <name>D. Teyssier</name>
+    </author>
+    <author>
+      <name>H. Yorke</name>
+    </author>
+    <author>
+      <name>N. Erickson</name>
+    </author>
+    <author>
+      <name>M. Fich</name>
+    </author>
+    <author>
+      <name>W. Jellema</name>
+    </author>
+    <author>
+      <name>A. Marston</name>
+    </author>
+    <author>
+      <name>C. Risacher</name>
+    </author>
+    <author>
+      <name>M. Salez</name>
+    </author>
+    <author>
+      <name>F. Schmülling</name>
+    </author>
+    <arxiv:doi>10.1051/0004-6361/201014671</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1051/0004-6361/201014671" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2501.01074v2</id>
+    <title>First Search for Pulsed CH Maser Emission Stimulated by a Pulsar</title>
+    <updated>2025-02-05T05:24:20Z</updated>
+    <link href="https://arxiv.org/abs/2501.01074v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2501.01074v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We present the first search for pulsed CH maser emission potentially stimulated by PSR J1644$-$4559, conducted using the ultra-wide-bandwidth low-frequency receiver on Murriyang, CSIRO's Parkes Radio Telescope. Observations targeted three CH $Λ$-doublet transitions at 3264, 3335, and 3349 MHz, with a variability timescale of 78 ms. We detected ten CH emission features at 3335 and 3349 MHz, and seven features at 3264 MHz, during both pulsar-ON and pulsar-OFF phases. The observed velocities align with the OH emission and absorption reported by a previous study, suggesting a close spatial association between CH and OH molecules. The derived column densities for CH clouds within the Parkes beam range from $0.05$ to $9.8 \times 10^{13}$ cm$^{-2}$, indicating that these clouds are likely in diffuse and translucent states. Upper limits for CH column densities within the pulsar beam ranged from $0.3$ to $9.8 \times 10^{13}$ cm$^{-2}$. Comparison of these column densities suggests that CH clouds may exhibit clumpiness and substructure. No significant stimulated emission feature was detected in the optical depth spectra. Additionally, as part of our search for pulsed stimulated emission, we investigated the potential CH absorption of the pulsar signal and found none, in agreement with astrophysical expectations. The upper limits for the potential maser amplification factors towards PSR J1644$-$4559 at 3264, 3335, and 3349 MHz are 1.014, 1.009, and 1.009, respectively. This study demonstrates the feasibility of detecting pulsed CH maser emission in the interstellar medium stimulated by pulsar photons.</summary>
+    <category term="astro-ph.GA" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-01-02T05:44:12Z</published>
+    <arxiv:comment>If you make use of the CH spectral line dataset in a publication, we request that you acknowledge the source of the information by referencing the DOI: https://doi.org/10.57760/sciencedb.Fastro.00022 and by quoting the web address of "NAOC - The Commensal Radio Astronomy FAST Survey (CRAFTS) Data Community (ScienceDB . Fastro)": https://www.scidb.cn/en/c/o00138</arxiv:comment>
+    <arxiv:primary_category term="astro-ph.GA"/>
+    <arxiv:journal_ref>Research in Astronomy and Astrophysics, Volume 25, Issue 2, id.025007, 10 pp (2025)</arxiv:journal_ref>
+    <author>
+      <name>Mengting Liu</name>
+    </author>
+    <author>
+      <name>Di Li</name>
+    </author>
+    <author>
+      <name>J. R. Dawson</name>
+    </author>
+    <author>
+      <name>Joel M. Weisberg</name>
+    </author>
+    <author>
+      <name>George Hobbs</name>
+    </author>
+    <author>
+      <name>Ningyu Tang</name>
+    </author>
+    <author>
+      <name>Gan Luo</name>
+    </author>
+    <author>
+      <name>Duo Xu</name>
+    </author>
+    <author>
+      <name>Donghui Quan</name>
+    </author>
+    <arxiv:doi>10.1088/1674-4527/ada515</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1088/1674-4527/ada515" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/1410.3024v2</id>
+    <title>Consistent system of oscillator strengths of A$^{2}Δ$ -- X$^{2}Π$ (0, 0) and B$^{2}Σ^{-}$ -- X$^{2}Π$ (0, 0) bands of CH molecule</title>
+    <updated>2014-10-20T10:35:34Z</updated>
+    <link href="https://arxiv.org/abs/1410.3024v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/1410.3024v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Detailed analysis of intensity ratios of unsaturated methylidyne (CH) A--X and B--X bands suggests consistency of the recently published oscillator strengths of A$^{2}Δ$ -- X$^{2}Π$ (0, 0) -- 4300 Å and B$^{2}Σ^{-}$ -- X$^{2}Π$ (0, 0) -- (3878, 3886 and 3890 Å) bands (ie. 506, 107, 320 and 213$\times$10$^{-5}$ respectively). This result is based on extremely high S/N ratio spectra of 45 stars, acquired with three high-resolution spectrographs, situated in Chile: ESO LaSilla (HARPS), ESO Paranal (UVES) and Las Campanas (MIKE) and MAESTRO instrument situated in Northern Caucasus (Russia). The calculated methylidyne column densities, obtained using the consistent system of the oscillator strengths toward the observed targets, are given as well. We verify oscillator strengths of the CH+ A-X (0, 0) and (0, 1) bands at 4232 Å and 3957 Å equal to 545 and 342$\times$10$^{-5}$ respectively. We also confirm the lack of correlation between abundances of neutral CH and CH$^{+}$ which the fact demonstrates that they are originated in different environments.</summary>
+    <category term="astro-ph.GA" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2014-10-11T20:04:19Z</published>
+    <arxiv:comment>19 pages, 9 figure, accepted to Acta Astronomica with remark in the text concerning Fig. 3: "As it is seen in Table 4 column density obtained on the basis CH A-X 4300 A is two times higher than value from CH B-X 3886 A band. As a result equivalent width ratio of the CH 4300 and 3886 bands obtained from Eq. (2) should be multiplied by a factor of 2."</arxiv:comment>
+    <arxiv:primary_category term="astro-ph.GA"/>
+    <author>
+      <name>T. Weselak</name>
+    </author>
+    <author>
+      <name>G. A. Galazutdinov</name>
+    </author>
+    <author>
+      <name>P. Gnaciński</name>
+    </author>
+    <author>
+      <name>J. Krełowski</name>
+    </author>
+  </entry>
+</feed>

@@ -1,0 +1,256 @@
+==============================================================================
+PAPER SUMMARIES — for citation context
+==============================================================================
+
+[1] How to evaluate clustering with ground truth?
+    arXiv:2606.27061 | 2026-06-25 | cs.AI
+    Authors: Pasi Fränti
+    Abstract: External indexes can be used for cluster evaluation when ground truth is available. We review the most common external validity indexes focusing on set-matching-based measures. We recommend centroid index (CI), because it is an intuitive cluster-level measure with an explainable result. If we need a more fine-tuned, point-level measure, there are more choices. Pair-set index (PSI) provides a norma...
+    URL: https://arxiv.org/abs/2606.27061
+
+[2] Simple KNN-Based Outlier Detection Achieves Robust Clustering
+    arXiv:2605.07130 | 2026-05-08 | cs.LG, cs.DS
+    Authors: Tianle Jiang, Yufa Zhou
+    Abstract: Being robust to the presence of outliers is crucial for applying clustering algorithms in practice. In the $\textit{robust $k$-Means}$ problem (i.e., $k$-Means with outliers), the goal is to remove $z$ outliers and minimize the $k$-Means cost on the remaining points. Despite the close connection between robust $k$-Means and outlier detection, both theoretical and empirical understanding of the eff...
+    URL: https://arxiv.org/abs/2605.07130
+
+[3] A novel k-means clustering approach using two distance measures for Gaussian data
+    arXiv:2511.17823 | 2025-11-21 | cs.LG, cs.CE, stat.ME, stat.ML
+    Authors: Naitik Gada
+    Abstract: Clustering algorithms have long been the topic of research, representing the more popular side of unsupervised learning. Since clustering analysis is one of the best ways to find some clarity and structure within raw data, this paper explores a novel approach to k-means clustering. Here we present a k-means clustering algorithm that takes both the within cluster distance (WCD) and the inter cluste...
+    URL: https://arxiv.org/abs/2511.17823
+
+[4] Risk Prediction of Cardiovascular Disease for Diabetic Patients with Machine Learning and Deep Learning Techniques
+    arXiv:2511.04971 | 2025-11-07 | cs.LG
+    Authors: Esha Chowdhury
+    Abstract: Accurate prediction of cardiovascular disease (CVD) risk is crucial for healthcare institutions. This study addresses the growing prevalence of diabetes and its strong link to heart disease by proposing an efficient CVD risk prediction model for diabetic patients using machine learning (ML) and hybrid deep learning (DL) approaches. The BRFSS dataset was preprocessed by removing duplicates, handlin...
+    URL: https://arxiv.org/abs/2511.04971
+
+[5] PCA-Guided Autoencoding for Structured Dimensionality Reduction in Active Infrared Thermography
+    arXiv:2508.07773 | 2025-08-11 | eess.IV, cs.AI, cs.CV, cs.LG
+    Authors: Mohammed Salah, Numan Saeed, Davor Svetinovic, Stefano Sfarra, Mohammed Omar, Yusra Abdulrahman
+    Abstract: Active Infrared thermography (AIRT) is a widely adopted non-destructive testing (NDT) technique for detecting subsurface anomalies in industrial components. Due to the high dimensionality of AIRT data, current approaches employ non-linear autoencoders (AEs) for dimensionality reduction. However, the latent space learned by AIRT AEs lacks structure, limiting their effectiveness in downstream defect...
+    URL: https://arxiv.org/abs/2508.07773
+
+[6] Annotation-Assisted Learning of Treatment Policies From Multimodal Electronic Health Records
+    arXiv:2507.20993 | 2025-07-28 | cs.LG, cs.AI, stat.ML
+    Authors: Henri Arno, Thomas Demeester
+    Abstract: We study how to learn treatment policies from multimodal electronic health records (EHRs) that consist of tabular data and clinical text. These policies can help physicians make better treatment decisions and allocate healthcare resources more efficiently. Causal policy learning methods prioritize patients with the largest expected treatment benefit. Yet, existing estimators are designed for tabul...
+    URL: https://arxiv.org/abs/2507.20993
+
+[7] Design for a Digital Twin in Clinical Patient Care
+    arXiv:2505.01206 | 2025-05-02 | cs.SE, cs.CE, physics.med-ph
+    Authors: Anna-Katharina Nitschke, Carlos Brandl, Fabian Egersdörfer, Magdalena Görtz, Markus Hohenfellner, Matthias Weidemüller
+    Abstract: Digital Twins hold great potential to personalize clinical patient care, provided the concept is translated to meet specific requirements emerging from established clinical workflows. We present a general and unspecialized Digital Twin design combining knowledge graphs and ensemble learning to reflect the entire patient's clinical journey and assist clinicians in their decision-making. Such a desi...
+    URL: https://arxiv.org/abs/2505.01206
+
+[8] Interpretable non-linear dimensionality reduction using gaussian weighted linear transformation
+    arXiv:2504.17601 | 2025-04-24 | cs.LG
+    Authors: Erik Bergh
+    Abstract: Dimensionality reduction techniques are fundamental for analyzing and visualizing high-dimensional data. With established methods like t-SNE and PCA presenting a trade-off between representational power and interpretability. This paper introduces a novel approach that bridges this gap by combining the interpretability of linear methods with the expressiveness of non-linear transformations. The pro...
+    URL: https://arxiv.org/abs/2504.17601
+
+[9] First Search for Pulsed CH Maser Emission Stimulated by a Pulsar
+    arXiv:2501.01074 | 2025-01-02 | astro-ph.GA
+    Authors: Mengting Liu, Di Li, J. R. Dawson, Joel M. Weisberg, George Hobbs, Ningyu Tang, Gan Luo, Duo Xu, Donghui Quan
+    Abstract: We present the first search for pulsed CH maser emission potentially stimulated by PSR J1644$-$4559, conducted using the ultra-wide-bandwidth low-frequency receiver on Murriyang, CSIRO's Parkes Radio Telescope. Observations targeted three CH $Λ$-doublet transitions at 3264, 3335, and 3349 MHz, with a variability timescale of 78 ms. We detected ten CH emission features at 3335 and 3349 MHz, and sev...
+    URL: https://arxiv.org/abs/2501.01074
+
+[10] Dying Clusters Is All You Need -- Deep Clustering With an Unknown Number of Clusters
+    arXiv:2410.09491 | 2024-10-12 | cs.LG, cs.AI
+    Authors: Collin Leiber, Niklas Strauß, Matthias Schubert, Thomas Seidl
+    Abstract: Finding meaningful groups, i.e., clusters, in high-dimensional data such as images or texts without labeled data at hand is an important challenge in data mining. In recent years, deep clustering methods have achieved remarkable results in these tasks. However, most of these methods require the user to specify the number of clusters in advance. This is a major limitation since the number of cluste...
+    URL: https://arxiv.org/abs/2410.09491
+
+[11] Diversity-aware clustering: Computational Complexity and Approximation Algorithms
+    arXiv:2401.05502 | 2024-01-10 | cs.DS, cs.AI, cs.CC, cs.LG
+    Authors: Suhas Thejaswi, Ameet Gadekar, Bruno Ordozgoiti, Aristides Gionis
+    Abstract: In this work, we study diversity-aware clustering problems where the data points are associated with multiple attributes resulting in intersecting groups. A clustering solution needs to ensure that the number of chosen cluster centers from each group should be within the range defined by a lower and upper bound threshold for each group, while simultaneously minimizing the clustering objective, whi...
+    URL: https://arxiv.org/abs/2401.05502
+
+[12] Towards Smart Healthcare: Challenges and Opportunities in IoT and ML
+    arXiv:2312.05530 | 2023-12-09 | cs.CY, cs.CR
+    Authors: Munshi Saifuzzaman, Tajkia Nuri Ananna
+    Abstract: The COVID-19 pandemic and other ongoing health crises have underscored the need for prompt healthcare services worldwide. The traditional healthcare system, centered around hospitals and clinics, has proven inadequate in the face of such challenges. Intelligent wearable devices, a key part of modern healthcare, leverage Internet of Things technology to collect extensive data related to the environ...
+    URL: https://arxiv.org/abs/2312.05530
+
+[13] Document Understanding for Healthcare Referrals
+    arXiv:2309.13184 | 2023-09-22 | cs.CL, cs.IR
+    Authors: Jimit Mistry, Natalia M. Arzeno
+    Abstract: Reliance on scanned documents and fax communication for healthcare referrals leads to high administrative costs and errors that may affect patient care. In this work we propose a hybrid model leveraging LayoutLMv3 along with domain-specific rules to identify key patient, physician, and exam-related entities in faxed referral documents. We explore some of the challenges in applying a document under...
+    URL: https://arxiv.org/abs/2309.13184
+
+[14] Changing Data Sources in the Age of Machine Learning for Official Statistics
+    arXiv:2306.04338 | 2023-06-07 | stat.ML, cs.LG
+    Authors: Cedric De Boom, Michael Reusens
+    Abstract: Data science has become increasingly essential for the production of official statistics, as it enables the automated collection, processing, and analysis of large amounts of data. With such data science practices in place, it enables more timely, more insightful and more flexible reporting. However, the quality and integrity of data-science-driven statistics rely on the accuracy and reliability o...
+    URL: https://arxiv.org/abs/2306.04338
+
+[15] Building predictive models of healthcare costs with open healthcare data
+    arXiv:2304.02191 | 2023-04-05 | cs.LG, cs.CY
+    Authors: A. Ravishankar Rao, Subrata Garai, Soumyabrata Dey, Hang Peng
+    Abstract: Due to rapidly rising healthcare costs worldwide, there is significant interest in controlling them. An important aspect concerns price transparency, as preliminary efforts have demonstrated that patients will shop for lower costs, driving efficiency. This requires the data to be made available, and models that can predict healthcare costs for a wide range of patient demographics and conditions. W...
+    URL: https://arxiv.org/abs/2304.02191
+
+[16] Privacy-preserving machine learning for healthcare: open challenges and future perspectives
+    arXiv:2303.15563 | 2023-03-27 | cs.LG, cs.CR
+    Authors: Alejandro Guerra-Manzanares, L. Julian Lechuga Lopez, Michail Maniatakos, Farah E. Shamout
+    Abstract: Machine Learning (ML) has recently shown tremendous success in modeling various healthcare prediction tasks, ranging from disease diagnosis and prognosis to patient treatment. Due to the sensitive nature of medical data, privacy must be considered along the entire ML pipeline, from model training to inference. In this paper, we conduct a review of recent literature concerning Privacy-Preserving Ma...
+    URL: https://arxiv.org/abs/2303.15563
+
+[17] Lightweight Transformers for Clinical Natural Language Processing
+    arXiv:2302.04725 | 2023-02-09 | cs.CL, cs.AI, cs.LG
+    Authors: Omid Rohanian, Mohammadmahdi Nouriborji, Hannah Jauncey, Samaneh Kouchaki, ISARIC Clinical Characterisation Group, Lei Clifton, Laura Merson, David A. Clifton
+    Abstract: Specialised pre-trained language models are becoming more frequent in NLP since they can potentially outperform models trained on generic texts. BioBERT and BioClinicalBERT are two examples of such models that have shown promise in medical NLP tasks. Many of these models are overparametrised and resource-intensive, but thanks to techniques like Knowledge Distillation (KD), it is possible to create...
+    URL: https://arxiv.org/abs/2302.04725
+
+[18] Federated Learning for Healthcare Domain - Pipeline, Applications and Challenges
+    arXiv:2211.07893 | 2022-11-15 | cs.LG, cs.AI, cs.CR, cs.DC
+    Authors: Madhura Joshi, Ankit Pal, Malaikannan Sankarasubbu
+    Abstract: Federated learning is the process of developing machine learning models over datasets distributed across data centers such as hospitals, clinical research labs, and mobile devices while preventing data leakage. This survey examines previous research and studies on federated learning in the healthcare sector across a range of use cases and applications. Our survey shows what challenges, methods, an...
+    URL: https://arxiv.org/abs/2211.07893
+
+[19] Automating DBSCAN via Deep Reinforcement Learning
+    arXiv:2208.04537 | 2022-08-09 | cs.LG, cs.IR
+    Authors: Ruitong Zhang, Hao Peng, Yingtong Dou, Jia Wu, Qingyun Sun, Jingyi Zhang, Philip S. Yu
+    Abstract: DBSCAN is widely used in many scientific and engineering fields because of its simplicity and practicality. However, due to its high sensitivity parameters, the accuracy of the clustering result depends heavily on practical experience. In this paper, we first propose a novel Deep Reinforcement Learning guided automatic DBSCAN parameters search framework, namely DRL-DBSCAN. The framework models the...
+    URL: https://arxiv.org/abs/2208.04537
+
+[20] A New Index for Clustering Evaluation Based on Density Estimation
+    arXiv:2207.01294 | 2022-07-04 | cs.LG, stat.ML
+    Authors: Gangli Liu
+    Abstract: A new index for internal evaluation of clustering is introduced. The index is defined as a mixture of two sub-indices. The first sub-index $ I_a $ is called the Ambiguous Index; the second sub-index $ I_s $ is called the Similarity Index. Calculation of the two sub-indices is based on density estimation to each cluster of a partition of the data. An experiment is conducted to test the performance ...
+    URL: https://arxiv.org/abs/2207.01294
+
+[21] Transformer-based Personalized Attention Mechanism for Medical Images with Clinical Records
+    arXiv:2206.03003 | 2022-06-07 | eess.IV, cs.CV
+    Authors: Yusuke Takagi, Noriaki Hashimoto, Hiroki Masuda, Hiroaki Miyoshi, Koichi Ohshima, Hidekata Hontani, Ichiro Takeuchi
+    Abstract: In medical image diagnosis, identifying the attention region, i.e., the region of interest for which the diagnosis is made, is an important task. Various methods have been developed to automatically identify target regions from given medical images. However, in actual medical practice, the diagnosis is made based not only on the images but also on a variety of clinical records. This means that pat...
+    URL: https://arxiv.org/abs/2206.03003
+
+[22] Biolink Model: A Universal Schema for Knowledge Graphs in Clinical, Biomedical, and Translational Science
+    arXiv:2203.13906 | 2022-03-25 | cs.DB
+    Authors: Deepak R. Unni, Sierra A. T. Moxon, Michael Bada, Matthew Brush, Richard Bruskiewich, Paul Clemons, Vlado Dancik, Michel Dumontier, Karamarie Fecho, Gustavo Glusman, Jennifer J. Hadlock, Nomi L. Harri
+    Abstract: Within clinical, biomedical, and translational science, an increasing number of projects are adopting graphs for knowledge representation. Graph-based data models elucidate the interconnectedness between core biomedical concepts, enable data structures to be easily updated, and support intuitive queries, visualizations, and inference algorithms. However, knowledge discovery across these "knowledge...
+    URL: https://arxiv.org/abs/2203.13906
+
+[23] Learning Curves for Decision Making in Supervised Machine Learning: A Survey
+    arXiv:2201.12150 | 2022-01-28 | cs.LG
+    Authors: Felix Mohr, Jan N. van Rijn
+    Abstract: Learning curves are a concept from social sciences that has been adopted in the context of machine learning to assess the performance of a learning algorithm with respect to a certain resource, e.g., the number of training examples or the number of training iterations. Learning curves have important applications in several machine learning contexts, most notably in data acquisition, early stopping...
+    URL: https://arxiv.org/abs/2201.12150
+
+[24] Exploring Text Specific and Blackbox Fairness Algorithms in Multimodal Clinical NLP
+    arXiv:2011.09625 | 2020-11-19 | cs.CL, cs.AI
+    Authors: John Chen, Ian Berlot-Attwell, Safwan Hossain, Xindi Wang, Frank Rudzicz
+    Abstract: Clinical machine learning is increasingly multimodal, collected in both structured tabular formats and unstructured forms such as freetext. We propose a novel task of exploring fairness on a multimodal clinical dataset, adopting equalized odds for the downstream medical prediction tasks. To this end, we investigate a modality-agnostic fairness algorithm - equalized odds post processing - and compa...
+    URL: https://arxiv.org/abs/2011.09625
+
+[25] Breathing K-Means: Superior K-Means Solutions through Dynamic K-Values
+    arXiv:2006.15666 | 2020-06-28 | cs.LG, stat.ML
+    Authors: Bernd Fritzke
+    Abstract: We introduce the breathing k-means algorithm, which on average significantly improves solutions obtained by the widely-known greedy k-means++ algorithm, the default method for k-means clustering in the scikit-learn package. The improvements are achieved through a novel ``breathing'' technique, that cyclically increases and decreases the number of centroids based on local error and utility measures...
+    URL: https://arxiv.org/abs/2006.15666
+
+[26] DOME: Recommendations for supervised machine learning validation in biology
+    arXiv:2006.16189 | 2020-06-25 | q-bio.OT, cs.LG
+    Authors: Ian Walsh, Dmytro Fishman, Dario Garcia-Gasulla, Tiina Titma, Gianluca Pollastri, The ELIXIR Machine Learning focus group, Jen Harrow, Fotis E. Psomopoulos, Silvio C. E. Tosatto
+    Abstract: Modern biology frequently relies on machine learning to provide predictions and improve decision processes. There have been recent calls for more scrutiny on machine learning performance and possible limitations. Here we present a set of community-wide recommendations aiming to help establish standards of supervised machine learning validation in biology. Adopting a structured methods description ...
+    URL: https://arxiv.org/abs/2006.16189
+
+[27] Automatically Explaining Machine Learning Prediction Results: A Demonstration on Type 2 Diabetes Risk Prediction
+    arXiv:1812.02852 | 2018-12-06 | cs.LG, stat.ML
+    Authors: Gang Luo
+    Abstract: Background: Predictive modeling is a key component of solutions to many healthcare problems. Among all predictive modeling approaches, machine learning methods often achieve the highest prediction accuracy, but suffer from a long-standing open problem precluding their widespread use in healthcare. Most machine learning models give no explanation for their prediction results, whereas interpretabili...
+    URL: https://arxiv.org/abs/1812.02852
+
+[28] FADL:Federated-Autonomous Deep Learning for Distributed Electronic Health Record
+    arXiv:1811.11400 | 2018-11-28 | cs.CY, cs.LG
+    Authors: Dianbo Liu, Timothy Miller, Raheel Sayeed, Kenneth D. Mandl
+    Abstract: Electronic health record (EHR) data is collected by individual institutions and often stored across locations in silos. Getting access to these data is difficult and slow due to security, privacy, regulatory, and operational issues. We show, using ICU data from 58 different hospitals, that machine learning models to predict patient mortality can be trained efficiently without moving health data ou...
+    URL: https://arxiv.org/abs/1811.11400
+
+[29] Reductive Clustering: An Efficient Linear-time Graph-based Divisive Cluster Analysis Approach
+    arXiv:1806.08245 | 2018-06-21 | cs.AI, cs.CV, cs.DB, cs.IR, cs.LG
+    Authors: Ching Tarn, Yinan Zhang, Ye Feng
+    Abstract: We propose an efficient linear-time graph-based divisive cluster analysis approach called Reductive Clustering. The approach tries to reveal the hierarchical structural information through reducing the graph into a more concise one repeatedly. With the reductions, the original graph can be divided into subgraphs recursively, and a lite informative dendrogram is constructed based on the divisions. ...
+    URL: https://arxiv.org/abs/1806.08245
+
+[30] Nonlinear Dimensionality Reduction on Graphs
+    arXiv:1801.09390 | 2018-01-29 | cs.LG, stat.ML
+    Authors: Yanning Shen, Panagiotis A. Traganitis, Georgios B. Giannakis
+    Abstract: In this era of data deluge, many signal processing and machine learning tasks are faced with high-dimensional datasets, including images, videos, as well as time series generated from social, commercial and brain network interactions. Their efficient processing calls for dimensionality reduction techniques capable of properly compressing the data while preserving task-related characteristics, goin...
+    URL: https://arxiv.org/abs/1801.09390
+
+[31] Sequential Design and Spatial Modeling for Portfolio Tail Risk Measurement
+    arXiv:1710.05204 | 2017-10-14 | q-fin.RM
+    Authors: Michael Ludkovski, James Risk
+    Abstract: We consider calculation of capital requirements when the underlying economic scenarios are determined by simulatable risk factors. In the respective nested simulation framework, the goal is to estimate portfolio tail risk, quantified via VaR or TVaR of a given collection of future economic scenarios representing factor levels at the risk horizon. Traditionally, evaluating portfolio losses of an ou...
+    URL: https://arxiv.org/abs/1710.05204
+
+[32] K+ Means : An Enhancement Over K-Means Clustering Algorithm
+    arXiv:1706.02949 | 2017-06-08 | cs.LG
+    Authors: Srikanta Kolay, Kumar Sankar Ray, Abhoy Chand Mondal
+    Abstract: K-means (MacQueen, 1967) [1] is one of the simplest unsupervised learning algorithms that solve the well-known clustering problem. The procedure follows a simple and easy way to classify a given data set to a predefined, say K number of clusters. Determination of K is a difficult job and it is not known that which value of K can partition the objects as per our intuition. To overcome this problem ...
+    URL: https://arxiv.org/abs/1706.02949
+
+[33] Using Distributed Representations to Disambiguate Biomedical and Clinical Concepts
+    arXiv:1608.05605 | 2016-08-19 | cs.CL
+    Authors: Stéphan Tulkens, Simon Šuster, Walter Daelemans
+    Abstract: In this paper, we report a knowledge-based method for Word Sense Disambiguation in the domains of biomedical and clinical text. We combine word representations created on large corpora with a small number of definitions from the UMLS to create concept representations, which we then compare to representations of the context of ambiguous terms. Using no relational information, we obtain comparable p...
+    URL: https://arxiv.org/abs/1608.05605
+
+[34] Consistent system of oscillator strengths of A$^{2}Δ$ -- X$^{2}Π$ (0, 0) and B$^{2}Σ^{-}$ -- X$^{2}Π$ (0, 0) bands of CH molecule
+    arXiv:1410.3024 | 2014-10-11 | astro-ph.GA
+    Authors: T. Weselak, G. A. Galazutdinov, P. Gnaciński, J. Krełowski
+    Abstract: Detailed analysis of intensity ratios of unsaturated methylidyne (CH) A--X and B--X bands suggests consistency of the recently published oscillator strengths of A$^{2}Δ$ -- X$^{2}Π$ (0, 0) -- 4300 Å and B$^{2}Σ^{-}$ -- X$^{2}Π$ (0, 0) -- (3878, 3886 and 3890 Å) bands (ie. 506, 107, 320 and 213$\times$10$^{-5}$ respectively). This result is based on extremely high S/N ratio spectra of 45 stars, acq...
+    URL: https://arxiv.org/abs/1410.3024
+
+[35] Performance Comparison of Incremental K-means and Incremental DBSCAN Algorithms
+    arXiv:1406.4751 | 2014-06-18 | cs.DB, cs.IR
+    Authors: Sanjay Chakraborty, N. K. Nagwani, Lopamudra Dey
+    Abstract: Incremental K-means and DBSCAN are two very important and popular clustering techniques for today's large dynamic databases (Data warehouses, WWW and so on) where data are changed at random fashion. The performance of the incremental K-means and the incremental DBSCAN are different with each other based on their time analysis characteristics. Both algorithms are efficient compare to their existing...
+    URL: https://arxiv.org/abs/1406.4751
+
+[36] A Comparative study Between Fuzzy Clustering Algorithm and Hard Clustering Algorithm
+    arXiv:1404.6059 | 2014-04-24 | cs.AI
+    Authors: Dibya Jyoti Bora, Dr. Anil Kumar Gupta
+    Abstract: Data clustering is an important area of data mining. This is an unsupervised study where data of similar types are put into one cluster while data of another types are put into different cluster. Fuzzy C means is a very important clustering technique based on fuzzy logic. Also we have some hard clustering techniques available like K-means among the popular ones. In this paper a comparative study i...
+    URL: https://arxiv.org/abs/1404.6059
+
+[37] On Randomly Projected Hierarchical Clustering with Guarantees
+    arXiv:1401.5814 | 2014-01-22 | cs.IR, cs.DS
+    Authors: Johannes Schneider, Michail Vlachos
+    Abstract: Hierarchical clustering (HC) algorithms are generally limited to small data instances due to their runtime costs. Here we mitigate this shortcoming and explore fast HC algorithms based on random projections for single (SLC) and average (ALC) linkage clustering as well as for the minimum spanning tree problem (MST). We present a thorough adaptive analysis of our algorithms that improve prior work f...
+    URL: https://arxiv.org/abs/1401.5814
+
+[38] Improved Performance of Unsupervised Method by Renovated K-Means
+    arXiv:1304.0725 | 2013-03-11 | cs.LG, cs.CV, stat.ML
+    Authors: P. Ashok, G. M Kadhar Nawaz, E. Elayaraja, V. Vadivel
+    Abstract: Clustering is a separation of data into groups of similar objects. Every group called cluster consists of objects that are similar to one another and dissimilar to objects of other groups. In this paper, the K-Means algorithm is implemented by three distance functions and to identify the optimal distance function for clustering methods. The proposed K-Means algorithm is compared with K-Means, Stat...
+    URL: https://arxiv.org/abs/1304.0725
+
+[39] Data Mining and Electronic Health Records: Selecting Optimal Clinical Treatments in Practice
+    arXiv:1112.1668 | 2011-12-07 | cs.DB
+    Authors: Casey Bennett, Thomas Doub
+    Abstract: Electronic health records (EHR's) are only a first step in capturing and utilizing health-related data - the problem is turning that data into useful information. Models produced via data mining and predictive analysis profile inherited risks and environmental/behavioral factors associated with patient disorders, which can be utilized to generate predictions about treatment outcomes. This can form...
+    URL: https://arxiv.org/abs/1112.1668
+
+[40] Strong CH+ J=1-0 emission and absorption in DR21
+    arXiv:1007.1420 | 2010-07-08 | astro-ph.GA
+    Authors: E. Falgarone, V. Ossenkopf, M. Gerin, P. Lesaffre, B. Godard, J. Pearson, S. Cabrit, Ch. Joblin, A. O. ~Benz, F. Boulanger, A. Fuente, R. Güsten, A. Harris, T. Klein, C. Kramer, S. Lord, P. Martin, J.
+    Abstract: We report the first detection of the ground-state rotational transition of the methylidyne cation CH+ towards the massive star-forming region DR21 with the HIFI instrument onboard the Herschel satellite. The line profile exhibits a broad emission line, in addition to two deep and broad absorption features associated with the DR21 molecular ridge and foreground gas. These observations allow us to d...
+    URL: https://arxiv.org/abs/1007.1420
+
+[41] Solving non-uniqueness in agglomerative hierarchical clustering using multidendrograms
+    arXiv:cs/0608049 | 2006-08-08 | cs.IR, math.ST, physics.data-an
+    Authors: Alberto Fernandez, Sergio Gomez
+    Abstract: In agglomerative hierarchical clustering, pair-group methods suffer from a problem of non-uniqueness when two or more distances between different clusters coincide during the amalgamation process. The traditional approach for solving this drawback has been to take any arbitrary criterion in order to break ties between distances, which results in different hierarchical classifications depending on ...
+    URL: https://arxiv.org/abs/cs/0608049
+
+[42] Cluster environments around quasars at 0.5 < z < 0.8
+    arXiv:astro-ph/9910261 | 1999-10-14 | astro-ph
+    Authors: M. Wold, M. Lacy, P. B. Lilje, S. Serjeant
+    Abstract: We have observed the galaxy environments around two complete samples of radio-loud (steep-spectrum) and radio-quiet quasars (RLQ and RQQ) at 0.5 < z < 0.8 that are matched in B-luminosity, and find that the environments of both quasar populations are pratically indistinguishable. A few objects are found in relatively rich clusters, but on average, they seem to prefer galaxy groups or cluster of ap...
+    URL: https://arxiv.org/abs/astro-ph/9910261
+

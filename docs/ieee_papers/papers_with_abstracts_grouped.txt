@@ -1,0 +1,201 @@
+==============================================================================
+PAPER SUMMARIES (grouped) — for citation context
+==============================================================================
+
+
+--- A. Clustering Algorithms ---
+
+[2] Simple KNN-Based Outlier Detection Achieves Robust Clustering
+    arXiv:2605.07130 | 2026-05-08 | cs.LG, cs.DS
+    Authors: Tianle Jiang, Yufa Zhou
+    Abstract: Being robust to the presence of outliers is crucial for applying clustering algorithms in practice. In the $\textit{robust $k$-Means}$ problem (i.e., $k$-Means with outliers), the goal is to remove $z$ outliers and minimize the $k$-Means cost on the remaining points. Despite the close connection between robust $k$-Means and outlier detection, both theoretical and empirical understanding of the effectiveness of $\textit{classic outlier detection heuristics}$ for robust $k$-Means remains limited. In this paper, we prove that under a practical assumption on the optimal cluster sizes, simply removing points with large $K$-Nearest-Neighbor distances achieves performance comparable to prior work in terms of approximation guarantees: it yields a constant-factor reduction from robust $k$-Means to standard $k$-Means, without introducing additional centers or discarding extra outliers, as is commonly required by existing approaches. Empirically, experiments on real-world datasets show that our method outperforms or matches several more sophisticated algorithms in terms of clustering cost and runtime. These results demonstrate that simple KNN-based heuristics can be surprisingly effective for robust clustering, highlighting new opportunities to bridge techniques from outlier detection and clustering....
+    URL: https://arxiv.org/abs/2605.07130
+
+[3] A novel k-means clustering approach using two distance measures for Gaussian data
+    arXiv:2511.17823 | 2025-11-21 | cs.LG, cs.CE, stat.ME, stat.ML
+    Authors: Naitik Gada
+    Abstract: Clustering algorithms have long been the topic of research, representing the more popular side of unsupervised learning. Since clustering analysis is one of the best ways to find some clarity and structure within raw data, this paper explores a novel approach to k-means clustering. Here we present a k-means clustering algorithm that takes both the within cluster distance (WCD) and the inter cluster distance (ICD) as the distance metric to cluster the data into k clusters pre-determined by the Calinski-Harabasz criterion in order to provide a more robust output for the clustering analysis. The idea with this approach is that by including both the measurement metrics, the convergence of the data into their clusters becomes solidified and more robust. We run the algorithm with some synthetically produced data and also some benchmark data sets obtained from the UCI repository. The results show that the convergence of the data into their respective clusters is more accurate by using both WCD and ICD measurement metrics. The algorithm is also better at clustering the outliers into their true clusters as opposed to the traditional k means method. We also address some interesting possible research topics that reveal themselves as we answer the questions we initially set out to address....
+    URL: https://arxiv.org/abs/2511.17823
+
+[9] Dying Clusters Is All You Need -- Deep Clustering With an Unknown Number of Clusters
+    arXiv:2410.09491 | 2024-10-12 | cs.LG, cs.AI
+    Authors: Collin Leiber, Niklas Strauß, Matthias Schubert, Thomas Seidl
+    Abstract: Finding meaningful groups, i.e., clusters, in high-dimensional data such as images or texts without labeled data at hand is an important challenge in data mining. In recent years, deep clustering methods have achieved remarkable results in these tasks. However, most of these methods require the user to specify the number of clusters in advance. This is a major limitation since the number of clusters is typically unknown if labeled data is unavailable. Thus, an area of research has emerged that addresses this problem. Most of these approaches estimate the number of clusters separated from the clustering process. This results in a strong dependency of the clustering result on the quality of the initial embedding. Other approaches are tailored to specific clustering processes, making them hard to adapt to other scenarios. In this paper, we propose UNSEEN, a general framework that, starting from a given upper bound, is able to estimate the number of clusters. To the best of our knowledge, it is the first method that can be easily combined with various deep clustering algorithms. We demonstrate the applicability of our approach by combining UNSEEN with the popular deep clustering algorithms DCN, DEC, and DKM and verify its effectiveness through an extensive experimental evaluation on several image and tabular datasets. Moreover, we perform numerous ablations to analyze our approach and show the importance of its components. The code is available at: https://github.com/collinleiber/UNSEEN...
+    URL: https://arxiv.org/abs/2410.09491
+
+[10] Diversity-aware clustering: Computational Complexity and Approximation Algorithms
+    arXiv:2401.05502 | 2024-01-10 | cs.DS, cs.AI, cs.CC, cs.LG
+    Authors: Suhas Thejaswi, Ameet Gadekar, Bruno Ordozgoiti, Aristides Gionis
+    Abstract: In this work, we study diversity-aware clustering problems where the data points are associated with multiple attributes resulting in intersecting groups. A clustering solution needs to ensure that the number of chosen cluster centers from each group should be within the range defined by a lower and upper bound threshold for each group, while simultaneously minimizing the clustering objective, which can be either $k$-median, $k$-means or $k$-supplier. We study the computational complexity of the proposed problems, offering insights into their NP-hardness, polynomial-time inapproximability, and fixed-parameter intractability. We present parameterized approximation algorithms with approximation ratios $1+ \frac{2}{e} + ε\approx 1.736$, $1+\frac{8}{e} + ε\approx 3.943$, and $5$ for diversity-aware $k$-median, diversity-aware $k$-means and diversity-aware $k$-supplier, respectively. Assuming Gap-ETH, the approximation ratios are tight for the diversity-aware $k$-median and diversity-aware $k$-means problems. Our results imply the same approximation factors for their respective fair variants with disjoint groups -- fair $k$-median, fair $k$-means, and fair $k$-supplier -- with lower bound requirements....
+    URL: https://arxiv.org/abs/2401.05502
+
+[17] Automating DBSCAN via Deep Reinforcement Learning
+    arXiv:2208.04537 | 2022-08-09 | cs.LG, cs.IR
+    Authors: Ruitong Zhang, Hao Peng, Yingtong Dou, Jia Wu, Qingyun Sun, Jingyi Zhang, Philip S. Yu
+    Abstract: DBSCAN is widely used in many scientific and engineering fields because of its simplicity and practicality. However, due to its high sensitivity parameters, the accuracy of the clustering result depends heavily on practical experience. In this paper, we first propose a novel Deep Reinforcement Learning guided automatic DBSCAN parameters search framework, namely DRL-DBSCAN. The framework models the process of adjusting the parameter search direction by perceiving the clustering environment as a Markov decision process, which aims to find the best clustering parameters without manual assistance. DRL-DBSCAN learns the optimal clustering parameter search policy for different feature distributions via interacting with the clusters, using a weakly-supervised reward training policy network. In addition, we also present a recursive search mechanism driven by the scale of the data to efficiently and controllably process large parameter spaces. Extensive experiments are conducted on five artificial and real-world datasets based on the proposed four working modes. The results of offline and online tasks show that the DRL-DBSCAN not only consistently improves DBSCAN clustering accuracy by up to 26% and 25% respectively, but also can stably find the dominant parameters with high computational efficiency. The code is available at https://github.com/RingBDStack/DRL-DBSCAN....
+    URL: https://arxiv.org/abs/2208.04537
+
+[19] Breathing K-Means: Superior K-Means Solutions through Dynamic K-Values
+    arXiv:2006.15666 | 2020-06-28 | cs.LG, stat.ML
+    Authors: Bernd Fritzke
+    Abstract: We introduce the breathing k-means algorithm, which on average significantly improves solutions obtained by the widely-known greedy k-means++ algorithm, the default method for k-means clustering in the scikit-learn package. The improvements are achieved through a novel ``breathing'' technique, that cyclically increases and decreases the number of centroids based on local error and utility measures. We conducted experiments using greedy k-means++ as a baseline, comparing it with breathing k-means and five other k-means algorithms. Among the methods investigated, only breathing k-means and better k-means++ consistently outperformed the baseline, with breathing k-means demonstrating a substantial lead. This superior performance was maintained even when comparing the best result of ten runs for all other algorithms to a single run of breathing k-means, highlighting its effectiveness and speed. Our findings indicate that the breathing k-means algorithm outperforms the other k-means techniques, especially greedy k-means++ with ten repetitions, which it dominates in both solution quality and speed. This positions breathing k-means (with the built-in initialization by a single run of greedy k-means++) as a superior alternative to running greedy k-means++ on its own....
+    URL: https://arxiv.org/abs/2006.15666
+
+[22] Reductive Clustering: An Efficient Linear-time Graph-based Divisive Cluster Analysis Approach
+    arXiv:1806.08245 | 2018-06-21 | cs.AI, cs.CV, cs.DB, cs.IR, cs.LG
+    Authors: Ching Tarn, Yinan Zhang, Ye Feng
+    Abstract: We propose an efficient linear-time graph-based divisive cluster analysis approach called Reductive Clustering. The approach tries to reveal the hierarchical structural information through reducing the graph into a more concise one repeatedly. With the reductions, the original graph can be divided into subgraphs recursively, and a lite informative dendrogram is constructed based on the divisions. The reduction consists of three steps: selection, connection, and partition. First a subset of vertices of the graph are selected as representatives to build a concise graph. The representatives are re-connected to maintain a consistent structure with the previous graph. If possible, the concise graph is divided into subgraphs, and each subgraph is further reduced recursively until the termination condition is met. We discuss the approach, along with several selection and connection methods, in detail both theoretically and experimentally in this paper. Our implementations run in linear time and achieve outstanding performance on various types of datasets. Experimental results show that they outperform state-of-the-art clustering algorithms with significantly less computing resource requirements....
+    URL: https://arxiv.org/abs/1806.08245
+
+[24] K+ Means : An Enhancement Over K-Means Clustering Algorithm
+    arXiv:1706.02949 | 2017-06-08 | cs.LG
+    Authors: Srikanta Kolay, Kumar Sankar Ray, Abhoy Chand Mondal
+    Abstract: K-means (MacQueen, 1967) [1] is one of the simplest unsupervised learning algorithms that solve the well-known clustering problem. The procedure follows a simple and easy way to classify a given data set to a predefined, say K number of clusters. Determination of K is a difficult job and it is not known that which value of K can partition the objects as per our intuition. To overcome this problem we proposed K+ Means algorithm. This algorithm is an enhancement over K-Means algorithm....
+    URL: https://arxiv.org/abs/1706.02949
+
+[25] Performance Comparison of Incremental K-means and Incremental DBSCAN Algorithms
+    arXiv:1406.4751 | 2014-06-18 | cs.DB, cs.IR
+    Authors: Sanjay Chakraborty, N. K. Nagwani, Lopamudra Dey
+    Abstract: Incremental K-means and DBSCAN are two very important and popular clustering techniques for today's large dynamic databases (Data warehouses, WWW and so on) where data are changed at random fashion. The performance of the incremental K-means and the incremental DBSCAN are different with each other based on their time analysis characteristics. Both algorithms are efficient compare to their existing algorithms with respect to time, cost and effort. In this paper, the performance evaluation of incremental DBSCAN clustering algorithm is implemented and most importantly it is compared with the performance of incremental K-means clustering algorithm and it also explains the characteristics of these two algorithms based on the changes of the data in the database. This paper also explains some logical differences between these two most popular clustering algorithms. This paper uses an air pollution database as original database on which the experiment is performed....
+    URL: https://arxiv.org/abs/1406.4751
+
+[26] A Comparative study Between Fuzzy Clustering Algorithm and Hard Clustering Algorithm
+    arXiv:1404.6059 | 2014-04-24 | cs.AI
+    Authors: Dibya Jyoti Bora, Dr. Anil Kumar Gupta
+    Abstract: Data clustering is an important area of data mining. This is an unsupervised study where data of similar types are put into one cluster while data of another types are put into different cluster. Fuzzy C means is a very important clustering technique based on fuzzy logic. Also we have some hard clustering techniques available like K-means among the popular ones. In this paper a comparative study is done between Fuzzy clustering algorithm and hard clustering algorithm...
+    URL: https://arxiv.org/abs/1404.6059
+
+[27] On Randomly Projected Hierarchical Clustering with Guarantees
+    arXiv:1401.5814 | 2014-01-22 | cs.IR, cs.DS
+    Authors: Johannes Schneider, Michail Vlachos
+    Abstract: Hierarchical clustering (HC) algorithms are generally limited to small data instances due to their runtime costs. Here we mitigate this shortcoming and explore fast HC algorithms based on random projections for single (SLC) and average (ALC) linkage clustering as well as for the minimum spanning tree problem (MST). We present a thorough adaptive analysis of our algorithms that improve prior work from $O(N^2)$ by up to a factor of $N/(\log N)^2$ for a dataset of $N$ points in Euclidean space. The algorithms maintain, with arbitrary high probability, the outcome of hierarchical clustering as well as the worst-case running-time guarantees. We also present parameter-free instances of our algorithms....
+    URL: https://arxiv.org/abs/1401.5814
+
+[28] Improved Performance of Unsupervised Method by Renovated K-Means
+    arXiv:1304.0725 | 2013-03-11 | cs.LG, cs.CV, stat.ML
+    Authors: P. Ashok, G. M Kadhar Nawaz, E. Elayaraja, V. Vadivel
+    Abstract: Clustering is a separation of data into groups of similar objects. Every group called cluster consists of objects that are similar to one another and dissimilar to objects of other groups. In this paper, the K-Means algorithm is implemented by three distance functions and to identify the optimal distance function for clustering methods. The proposed K-Means algorithm is compared with K-Means, Static Weighted K-Means (SWK-Means) and Dynamic Weighted K-Means (DWK-Means) algorithm by using Davis Bouldin index, Execution Time and Iteration count methods. Experimental results show that the proposed K-Means algorithm performed better on Iris and Wine dataset when compared with other three clustering methods....
+    URL: https://arxiv.org/abs/1304.0725
+
+[30] Solving non-uniqueness in agglomerative hierarchical clustering using multidendrograms
+    arXiv:cs/0608049 | 2006-08-08 | cs.IR, math.ST, physics.data-an
+    Authors: Alberto Fernandez, Sergio Gomez
+    Abstract: In agglomerative hierarchical clustering, pair-group methods suffer from a problem of non-uniqueness when two or more distances between different clusters coincide during the amalgamation process. The traditional approach for solving this drawback has been to take any arbitrary criterion in order to break ties between distances, which results in different hierarchical classifications depending on the criterion followed. In this article we propose a variable-group algorithm that consists in grouping more than two clusters at the same time when ties occur. We give a tree representation for the results of the algorithm, which we call a multidendrogram, as well as a generalization of the Lance and Williams' formula which enables the implementation of the algorithm in a recursive way....
+    URL: https://arxiv.org/abs/cs/0608049
+
+
+--- B. Clustering Evaluation & Metrics ---
+
+[1] How to evaluate clustering with ground truth?
+    arXiv:2606.27061 | 2026-06-25 | cs.AI
+    Authors: Pasi Fränti
+    Abstract: External indexes can be used for cluster evaluation when ground truth is available. We review the most common external validity indexes focusing on set-matching-based measures. We recommend centroid index (CI), because it is an intuitive cluster-level measure with an explainable result. If we need a more fine-tuned, point-level measure, there are more choices. Pair-set index (PSI) provides a normalized score which is not biased by cluster sizes. If all points should matter equally, then clustering accuracy (ACC) or any other set-matching measure is suitable....
+    URL: https://arxiv.org/abs/2606.27061
+
+[18] A New Index for Clustering Evaluation Based on Density Estimation
+    arXiv:2207.01294 | 2022-07-04 | cs.LG, stat.ML
+    Authors: Gangli Liu
+    Abstract: A new index for internal evaluation of clustering is introduced. The index is defined as a mixture of two sub-indices. The first sub-index $ I_a $ is called the Ambiguous Index; the second sub-index $ I_s $ is called the Similarity Index. Calculation of the two sub-indices is based on density estimation to each cluster of a partition of the data. An experiment is conducted to test the performance of the new index, and compared with six other internal clustering evaluation indices -- Calinski-Harabasz index, Silhouette coefficient, Davies-Bouldin index, CDbw, DBCV, and VIASCKDE, on a set of 145 datasets. The result shows the new index significantly improves other internal clustering evaluation indices....
+    URL: https://arxiv.org/abs/2207.01294
+
+
+--- C. Dimensionality Reduction & Visualization ---
+
+[5] PCA-Guided Autoencoding for Structured Dimensionality Reduction in Active Infrared Thermography
+    arXiv:2508.07773 | 2025-08-11 | eess.IV, cs.AI, cs.CV, cs.LG
+    Authors: Mohammed Salah, Numan Saeed, Davor Svetinovic, Stefano Sfarra, Mohammed Omar, Yusra Abdulrahman
+    Abstract: Active Infrared thermography (AIRT) is a widely adopted non-destructive testing (NDT) technique for detecting subsurface anomalies in industrial components. Due to the high dimensionality of AIRT data, current approaches employ non-linear autoencoders (AEs) for dimensionality reduction. However, the latent space learned by AIRT AEs lacks structure, limiting their effectiveness in downstream defect characterization tasks. To address this limitation, this paper proposes a principal component analysis guided (PCA-guided) autoencoding framework for structured dimensionality reduction to capture intricate, non-linear features in thermographic signals while enforcing a structured latent space. A novel loss function, PCA distillation loss, is introduced to guide AIRT AEs to align the latent representation with structured PCA components while capturing the intricate, non-linear patterns in thermographic signals. To evaluate the utility of the learned, structured latent space, we propose a neural network-based evaluation metric that assesses its suitability for defect characterization. Experimental results show that the proposed PCA-guided AE outperforms state-of-the-art dimensionality reduction methods on PVC, CFRP, and PLA samples in terms of contrast, signal-to-noise ratio (SNR), and neural network-based metrics....
+    URL: https://arxiv.org/abs/2508.07773
+
+[8] Interpretable non-linear dimensionality reduction using gaussian weighted linear transformation
+    arXiv:2504.17601 | 2025-04-24 | cs.LG
+    Authors: Erik Bergh
+    Abstract: Dimensionality reduction techniques are fundamental for analyzing and visualizing high-dimensional data. With established methods like t-SNE and PCA presenting a trade-off between representational power and interpretability. This paper introduces a novel approach that bridges this gap by combining the interpretability of linear methods with the expressiveness of non-linear transformations. The proposed algorithm constructs a non-linear mapping between high-dimensional and low-dimensional spaces through a combination of linear transformations, each weighted by Gaussian functions. This architecture enables complex non-linear transformations while preserving the interpretability advantages of linear methods, as each transformation can be analyzed independently. The resulting model provides both powerful dimensionality reduction and transparent insights into the transformed space. Techniques for interpreting the learned transformations are presented, including methods for identifying suppressed dimensions and how space is expanded and contracted. These tools enable practitioners to understand how the algorithm preserves and modifies geometric relationships during dimensionality reduction. To ensure the practical utility of this algorithm, the creation of user-friendly software packages is emphasized, facilitating its adoption in both academia and industry....
+    URL: https://arxiv.org/abs/2504.17601
+
+[23] Nonlinear Dimensionality Reduction on Graphs
+    arXiv:1801.09390 | 2018-01-29 | cs.LG, stat.ML
+    Authors: Yanning Shen, Panagiotis A. Traganitis, Georgios B. Giannakis
+    Abstract: In this era of data deluge, many signal processing and machine learning tasks are faced with high-dimensional datasets, including images, videos, as well as time series generated from social, commercial and brain network interactions. Their efficient processing calls for dimensionality reduction techniques capable of properly compressing the data while preserving task-related characteristics, going beyond pairwise data correlations. The present paper puts forth a nonlinear dimensionality reduction framework that accounts for data lying on known graphs. The novel framework encompasses most of the existing dimensionality reduction methods, but it is also capable of capturing and preserving possibly nonlinear correlations that are ignored by linear methods. Furthermore, it can take into account information from multiple graphs. The proposed algorithms were tested on synthetic as well as real datasets to corroborate their effectiveness....
+    URL: https://arxiv.org/abs/1801.09390
+
+
+--- D. Patient Risk Stratification & Disease Prediction ---
+
+[4] Risk Prediction of Cardiovascular Disease for Diabetic Patients with Machine Learning and Deep Learning Techniques
+    arXiv:2511.04971 | 2025-11-07 | cs.LG
+    Authors: Esha Chowdhury
+    Abstract: Accurate prediction of cardiovascular disease (CVD) risk is crucial for healthcare institutions. This study addresses the growing prevalence of diabetes and its strong link to heart disease by proposing an efficient CVD risk prediction model for diabetic patients using machine learning (ML) and hybrid deep learning (DL) approaches. The BRFSS dataset was preprocessed by removing duplicates, handling missing values, identifying categorical and numerical features, and applying Principal Component Analysis (PCA) for feature extraction. Several ML models, including Decision Trees (DT), Random Forest (RF), k-Nearest Neighbors (KNN), Support Vector Machine (SVM), AdaBoost, and XGBoost, were implemented, with XGBoost achieving the highest accuracy of 0.9050. Various DL models, such as Artificial Neural Networks (ANN), Deep Neural Networks (DNN), Recurrent Neural Networks (RNN), Convolutional Neural Networks (CNN), Long Short-Term Memory (LSTM), Bidirectional LSTM (BiLSTM), and Gated Recurrent Unit (GRU), as well as hybrid models combining CNN with LSTM, BiLSTM, and GRU, were also explored. Some of these models achieved perfect recall (1.00), with the LSTM model achieving the highest accuracy of 0.9050. Our research highlights the effectiveness of ML and DL models in predicting CVD risk among diabetic patients, automating and enhancing clinical decision-making. High accuracy and F1 scores demonstrate these models' potential to improve personalized risk management and preventive strategies....
+    URL: https://arxiv.org/abs/2511.04971
+
+[13] Building predictive models of healthcare costs with open healthcare data
+    arXiv:2304.02191 | 2023-04-05 | cs.LG, cs.CY
+    Authors: A. Ravishankar Rao, Subrata Garai, Soumyabrata Dey, Hang Peng
+    Abstract: Due to rapidly rising healthcare costs worldwide, there is significant interest in controlling them. An important aspect concerns price transparency, as preliminary efforts have demonstrated that patients will shop for lower costs, driving efficiency. This requires the data to be made available, and models that can predict healthcare costs for a wide range of patient demographics and conditions. We present an approach to this problem by developing a predictive model using machine-learning techniques. We analyzed de-identified patient data from New York State SPARCS (statewide planning and research cooperative system), consisting of 2.3 million records in 2016. We built models to predict costs from patient diagnoses and demographics. We investigated two model classes consisting of sparse regression and decision trees. We obtained the best performance by using a decision tree with depth 10. We obtained an R-square value of 0.76 which is better than the values reported in the literature for similar problems....
+    URL: https://arxiv.org/abs/2304.02191
+
+[20] Automatically Explaining Machine Learning Prediction Results: A Demonstration on Type 2 Diabetes Risk Prediction
+    arXiv:1812.02852 | 2018-12-06 | cs.LG, stat.ML
+    Authors: Gang Luo
+    Abstract: Background: Predictive modeling is a key component of solutions to many healthcare problems. Among all predictive modeling approaches, machine learning methods often achieve the highest prediction accuracy, but suffer from a long-standing open problem precluding their widespread use in healthcare. Most machine learning models give no explanation for their prediction results, whereas interpretability is essential for a predictive model to be adopted in typical healthcare settings. Methods: This paper presents the first complete method for automatically explaining results for any machine learning predictive model without degrading accuracy. We did a computer coding implementation of the method. Using the electronic medical record data set from the Practice Fusion diabetes classification competition containing patient records from all 50 states in the United States, we demonstrated the method on predicting type 2 diabetes diagnosis within the next year. Results: For the champion machine learning model of the competition, our method explained prediction results for 87.4% of patients who were correctly predicted by the model to have type 2 diabetes diagnosis within the next year. Conclusions: Our demonstration showed the feasibility of automatically explaining results for any machine learning predictive model without degrading accuracy....
+    URL: https://arxiv.org/abs/1812.02852
+
+
+--- E. EHR / Clinical Data Analytics ---
+
+[6] Annotation-Assisted Learning of Treatment Policies From Multimodal Electronic Health Records
+    arXiv:2507.20993 | 2025-07-28 | cs.LG, cs.AI, stat.ML
+    Authors: Henri Arno, Thomas Demeester
+    Abstract: We study how to learn treatment policies from multimodal electronic health records (EHRs) that consist of tabular data and clinical text. These policies can help physicians make better treatment decisions and allocate healthcare resources more efficiently. Causal policy learning methods prioritize patients with the largest expected treatment benefit. Yet, existing estimators are designed for tabular covariates under causal assumptions that may be hard to justify in the multimodal setting. A pragmatic alternative is to apply causal estimators directly to multimodal representations, but this can produce biased treatment effect estimates when the representations do not preserve the relevant confounding information. As a result, predictive models of baseline risk are commonly used in practice to guide treatment decisions, although they are not designed to identify which patients benefit most from treatment. We propose AACE (Annotation-Assisted Coarsened Effects), an annotation-assisted approach to causal policy learning for multimodal EHRs. The method uses expert-provided annotations during training to support confounding adjustment, and then predicts treatment benefit from only multimodal representations at inference. We show that the proposed method achieves strong empirical performance across synthetic, semi-synthetic, and real-world EHR datasets, outperforming risk-based and representation-based causal baselines, and offering practical insights for applying causal machine learning in clinical practice....
+    URL: https://arxiv.org/abs/2507.20993
+
+[12] Document Understanding for Healthcare Referrals
+    arXiv:2309.13184 | 2023-09-22 | cs.CL, cs.IR
+    Authors: Jimit Mistry, Natalia M. Arzeno
+    Abstract: Reliance on scanned documents and fax communication for healthcare referrals leads to high administrative costs and errors that may affect patient care. In this work we propose a hybrid model leveraging LayoutLMv3 along with domain-specific rules to identify key patient, physician, and exam-related entities in faxed referral documents. We explore some of the challenges in applying a document understanding model to referrals, which have formats varying by medical practice, and evaluate model performance using MUC-5 metrics to obtain appropriate metrics for the practical use case. Our analysis shows the addition of domain-specific rules to the transformer model yields greatly increased precision and F1 scores, suggesting a hybrid model trained on a curated dataset can increase efficiency in referral management....
+    URL: https://arxiv.org/abs/2309.13184
+
+[15] Lightweight Transformers for Clinical Natural Language Processing
+    arXiv:2302.04725 | 2023-02-09 | cs.CL, cs.AI, cs.LG
+    Authors: Omid Rohanian, Mohammadmahdi Nouriborji, Hannah Jauncey, Samaneh Kouchaki, ISARIC Clinical Characterisation Group, Lei Clifton, Laura Merson, David A. Clifton
+    Abstract: Specialised pre-trained language models are becoming more frequent in NLP since they can potentially outperform models trained on generic texts. BioBERT and BioClinicalBERT are two examples of such models that have shown promise in medical NLP tasks. Many of these models are overparametrised and resource-intensive, but thanks to techniques like Knowledge Distillation (KD), it is possible to create smaller versions that perform almost as well as their larger counterparts. In this work, we specifically focus on development of compact language models for processing clinical texts (i.e. progress notes, discharge summaries etc). We developed a number of efficient lightweight clinical transformers using knowledge distillation and continual learning, with the number of parameters ranging from 15 million to 65 million. These models performed comparably to larger models such as BioBERT and ClinicalBioBERT and significantly outperformed other compact models trained on general or biomedical data. Our extensive evaluation was done across several standard datasets and covered a wide range of clinical text-mining tasks, including Natural Language Inference, Relation Extraction, Named Entity Recognition, and Sequence Classification. To our knowledge, this is the first comprehensive study specifically focused on creating efficient and compact transformers for clinical NLP tasks. The models and code used in this study can be found on our Huggingface profile at https://huggingface.co/nlpie and Github page at https://github.com/nlpie-research/Lightweight-Clinical-Transformers, respectively, promoting reproducibility of our results....
+    URL: https://arxiv.org/abs/2302.04725
+
+[21] FADL:Federated-Autonomous Deep Learning for Distributed Electronic Health Record
+    arXiv:1811.11400 | 2018-11-28 | cs.CY, cs.LG
+    Authors: Dianbo Liu, Timothy Miller, Raheel Sayeed, Kenneth D. Mandl
+    Abstract: Electronic health record (EHR) data is collected by individual institutions and often stored across locations in silos. Getting access to these data is difficult and slow due to security, privacy, regulatory, and operational issues. We show, using ICU data from 58 different hospitals, that machine learning models to predict patient mortality can be trained efficiently without moving health data out of their silos using a distributed machine learning strategy. We propose a new method, called Federated-Autonomous Deep Learning (FADL) that trains part of the model using all data sources in a distributed manner and other parts using data from specific data sources. We observed that FADL outperforms traditional federated learning strategy and conclude that balance between global and local training is an important factor to consider when design distributed machine learning methods , especially in healthcare....
+    URL: https://arxiv.org/abs/1811.11400
+
+[29] Data Mining and Electronic Health Records: Selecting Optimal Clinical Treatments in Practice
+    arXiv:1112.1668 | 2011-12-07 | cs.DB
+    Authors: Casey Bennett, Thomas Doub
+    Abstract: Electronic health records (EHR's) are only a first step in capturing and utilizing health-related data - the problem is turning that data into useful information. Models produced via data mining and predictive analysis profile inherited risks and environmental/behavioral factors associated with patient disorders, which can be utilized to generate predictions about treatment outcomes. This can form the backbone of clinical decision support systems driven by live data based on the actual population. The advantage of such an approach based on the actual population is that it is "adaptive". Here, we evaluate the predictive capacity of a clinical EHR of a large mental healthcare provider (~75,000 distinct clients a year) to provide decision support information in a real-world clinical setting. Initial research has achieved a 70% success rate in predicting treatment outcomes using these methods....
+    URL: https://arxiv.org/abs/1112.1668
+
+
+--- F. Healthcare ML Infrastructure & Privacy ---
+
+[7] Design for a Digital Twin in Clinical Patient Care
+    arXiv:2505.01206 | 2025-05-02 | cs.SE, cs.CE, physics.med-ph
+    Authors: Anna-Katharina Nitschke, Carlos Brandl, Fabian Egersdörfer, Magdalena Görtz, Markus Hohenfellner, Matthias Weidemüller
+    Abstract: Digital Twins hold great potential to personalize clinical patient care, provided the concept is translated to meet specific requirements emerging from established clinical workflows. We present a general and unspecialized Digital Twin design combining knowledge graphs and ensemble learning to reflect the entire patient's clinical journey and assist clinicians in their decision-making. Such a design is predictive, modular, evolving, informed, interpretable and explainable, thus opening broad clinical applications....
+    URL: https://arxiv.org/abs/2505.01206
+
+[11] Towards Smart Healthcare: Challenges and Opportunities in IoT and ML
+    arXiv:2312.05530 | 2023-12-09 | cs.CY, cs.CR
+    Authors: Munshi Saifuzzaman, Tajkia Nuri Ananna
+    Abstract: The COVID-19 pandemic and other ongoing health crises have underscored the need for prompt healthcare services worldwide. The traditional healthcare system, centered around hospitals and clinics, has proven inadequate in the face of such challenges. Intelligent wearable devices, a key part of modern healthcare, leverage Internet of Things technology to collect extensive data related to the environment as well as psychological, behavioral, and physical health. However, managing the substantial data generated by these wearables and other IoT devices in healthcare poses a significant challenge, potentially impeding decision-making processes. Recent interest has grown in applying data analytics for extracting information, gaining insights, and making predictions. Additionally, machine learning, known for addressing various big data and networking challenges, has seen increased implementation to enhance IoT systems in healthcare. This chapter focuses exclusively on exploring the hurdles encountered when integrating ML methods into the IoT healthcare sector. It offers a comprehensive summary of current research challenges and potential opportunities, categorized into three scenarios: IoT-based, ML-based, and the implementation of machine learning methodologies in the IoT-based healthcare industry. This compilation will assist future researchers, healthcare professionals, and government agencies by offering valuable insights into recent smart healthcare advancements....
+    URL: https://arxiv.org/abs/2312.05530
+
+[14] Privacy-preserving machine learning for healthcare: open challenges and future perspectives
+    arXiv:2303.15563 | 2023-03-27 | cs.LG, cs.CR
+    Authors: Alejandro Guerra-Manzanares, L. Julian Lechuga Lopez, Michail Maniatakos, Farah E. Shamout
+    Abstract: Machine Learning (ML) has recently shown tremendous success in modeling various healthcare prediction tasks, ranging from disease diagnosis and prognosis to patient treatment. Due to the sensitive nature of medical data, privacy must be considered along the entire ML pipeline, from model training to inference. In this paper, we conduct a review of recent literature concerning Privacy-Preserving Machine Learning (PPML) for healthcare. We primarily focus on privacy-preserving training and inference-as-a-service, and perform a comprehensive review of existing trends, identify challenges, and discuss opportunities for future research directions. The aim of this review is to guide the development of private and efficient ML models in healthcare, with the prospects of translating research efforts into real-world settings....
+    URL: https://arxiv.org/abs/2303.15563
+
+[16] Federated Learning for Healthcare Domain - Pipeline, Applications and Challenges
+    arXiv:2211.07893 | 2022-11-15 | cs.LG, cs.AI, cs.CR, cs.DC
+    Authors: Madhura Joshi, Ankit Pal, Malaikannan Sankarasubbu
+    Abstract: Federated learning is the process of developing machine learning models over datasets distributed across data centers such as hospitals, clinical research labs, and mobile devices while preventing data leakage. This survey examines previous research and studies on federated learning in the healthcare sector across a range of use cases and applications. Our survey shows what challenges, methods, and applications a practitioner should be aware of in the topic of federated learning. This paper aims to lay out existing research and list the possibilities of federated learning for healthcare industries....
+    URL: https://arxiv.org/abs/2211.07893

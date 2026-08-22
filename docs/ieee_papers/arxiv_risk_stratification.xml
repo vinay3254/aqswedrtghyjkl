@@ -1,0 +1,187 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/MCB/q4lhuo1a4zCHFNOQQb9dU9c</id>
+  <title>arXiv Query: search_query=all:"patient risk stratification" OR all:clustering&amp;id_list=&amp;start=0&amp;max_results=8</title>
+  <updated>2026-08-17T09:11:58Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=all:%22patient+risk+stratification%22+OR+all:clustering&amp;start=0&amp;max_results=8&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>8</opensearch:itemsPerPage>
+  <opensearch:totalResults>121043</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/astro-ph/9910261v1</id>
+    <title>Cluster environments around quasars at 0.5 &lt; z &lt; 0.8</title>
+    <updated>1999-10-14T13:43:32Z</updated>
+    <link href="https://arxiv.org/abs/astro-ph/9910261v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/astro-ph/9910261v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>  We have observed the galaxy environments around two complete samples of radio-loud (steep-spectrum) and radio-quiet quasars (RLQ and RQQ) at 0.5 &lt; z &lt; 0.8 that are matched in B-luminosity, and find that the environments of both quasar populations are pratically indistinguishable. A few objects are found in relatively rich clusters, but on average, they seem to prefer galaxy groups or cluster of approximatly Abell class 0.
+  By combining the RLQ sample with samples from the literature, we detect a weak, but significant, positive correlation between environmental richness and quasar radio luminosity. This may give us clues about what determines a quasar's radio luminosity.</summary>
+    <category term="astro-ph" scheme="http://arxiv.org/schemas/atom"/>
+    <published>1999-10-14T13:43:32Z</published>
+    <arxiv:comment>2 pages, to appear in the proceedings of the Marseille IGRAP conference 1999, "Clustering at high redshift"</arxiv:comment>
+    <arxiv:primary_category term="astro-ph"/>
+    <arxiv:journal_ref>"Clustering at high redshift", ASP.Conf.Ser. 200, 57</arxiv:journal_ref>
+    <author>
+      <name>M. Wold</name>
+    </author>
+    <author>
+      <name>M. Lacy</name>
+    </author>
+    <author>
+      <name>P. B. Lilje</name>
+    </author>
+    <author>
+      <name>S. Serjeant</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2410.09491v1</id>
+    <title>Dying Clusters Is All You Need -- Deep Clustering With an Unknown Number of Clusters</title>
+    <updated>2024-10-12T11:04:10Z</updated>
+    <link href="https://arxiv.org/abs/2410.09491v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2410.09491v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Finding meaningful groups, i.e., clusters, in high-dimensional data such as images or texts without labeled data at hand is an important challenge in data mining. In recent years, deep clustering methods have achieved remarkable results in these tasks. However, most of these methods require the user to specify the number of clusters in advance. This is a major limitation since the number of clusters is typically unknown if labeled data is unavailable. Thus, an area of research has emerged that addresses this problem. Most of these approaches estimate the number of clusters separated from the clustering process. This results in a strong dependency of the clustering result on the quality of the initial embedding. Other approaches are tailored to specific clustering processes, making them hard to adapt to other scenarios. In this paper, we propose UNSEEN, a general framework that, starting from a given upper bound, is able to estimate the number of clusters. To the best of our knowledge, it is the first method that can be easily combined with various deep clustering algorithms. We demonstrate the applicability of our approach by combining UNSEEN with the popular deep clustering algorithms DCN, DEC, and DKM and verify its effectiveness through an extensive experimental evaluation on several image and tabular datasets. Moreover, we perform numerous ablations to analyze our approach and show the importance of its components. The code is available at: https://github.com/collinleiber/UNSEEN</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-10-12T11:04:10Z</published>
+    <arxiv:comment>Acceppted at the Sixth ICDM Workshop on Deep Learning and Clustering</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Collin Leiber</name>
+    </author>
+    <author>
+      <name>Niklas Strauß</name>
+    </author>
+    <author>
+      <name>Matthias Schubert</name>
+    </author>
+    <author>
+      <name>Thomas Seidl</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2401.05502v3</id>
+    <title>Diversity-aware clustering: Computational Complexity and Approximation Algorithms</title>
+    <updated>2025-05-20T07:47:39Z</updated>
+    <link href="https://arxiv.org/abs/2401.05502v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2401.05502v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>In this work, we study diversity-aware clustering problems where the data points are associated with multiple attributes resulting in intersecting groups. A clustering solution needs to ensure that the number of chosen cluster centers from each group should be within the range defined by a lower and upper bound threshold for each group, while simultaneously minimizing the clustering objective, which can be either $k$-median, $k$-means or $k$-supplier. We study the computational complexity of the proposed problems, offering insights into their NP-hardness, polynomial-time inapproximability, and fixed-parameter intractability. We present parameterized approximation algorithms with approximation ratios $1+ \frac{2}{e} + ε\approx 1.736$, $1+\frac{8}{e} + ε\approx 3.943$, and $5$ for diversity-aware $k$-median, diversity-aware $k$-means and diversity-aware $k$-supplier, respectively. Assuming Gap-ETH, the approximation ratios are tight for the diversity-aware $k$-median and diversity-aware $k$-means problems. Our results imply the same approximation factors for their respective fair variants with disjoint groups -- fair $k$-median, fair $k$-means, and fair $k$-supplier -- with lower bound requirements.</summary>
+    <category term="cs.DS" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CC" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-01-10T19:01:05Z</published>
+    <arxiv:comment>Algorithmic Fairness, Fair Clustering, Diversity-aware Clustering, Intersectionaly, Subgroup fairness</arxiv:comment>
+    <arxiv:primary_category term="cs.DS"/>
+    <author>
+      <name>Suhas Thejaswi</name>
+    </author>
+    <author>
+      <name>Ameet Gadekar</name>
+    </author>
+    <author>
+      <name>Bruno Ordozgoiti</name>
+    </author>
+    <author>
+      <name>Aristides Gionis</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/1806.08245v3</id>
+    <title>Reductive Clustering: An Efficient Linear-time Graph-based Divisive Cluster Analysis Approach</title>
+    <updated>2020-09-25T12:20:22Z</updated>
+    <link href="https://arxiv.org/abs/1806.08245v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/1806.08245v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We propose an efficient linear-time graph-based divisive cluster analysis approach called Reductive Clustering. The approach tries to reveal the hierarchical structural information through reducing the graph into a more concise one repeatedly. With the reductions, the original graph can be divided into subgraphs recursively, and a lite informative dendrogram is constructed based on the divisions. The reduction consists of three steps: selection, connection, and partition. First a subset of vertices of the graph are selected as representatives to build a concise graph. The representatives are re-connected to maintain a consistent structure with the previous graph. If possible, the concise graph is divided into subgraphs, and each subgraph is further reduced recursively until the termination condition is met. We discuss the approach, along with several selection and connection methods, in detail both theoretically and experimentally in this paper. Our implementations run in linear time and achieve outstanding performance on various types of datasets. Experimental results show that they outperform state-of-the-art clustering algorithms with significantly less computing resource requirements.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.DB" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2018-06-21T13:44:17Z</published>
+    <arxiv:comment>http://res.ctarn.io/reductive-clustering</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Ching Tarn</name>
+    </author>
+    <author>
+      <name>Yinan Zhang</name>
+    </author>
+    <author>
+      <name>Ye Feng</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2606.27061v1</id>
+    <title>How to evaluate clustering with ground truth?</title>
+    <updated>2026-06-25T14:07:17Z</updated>
+    <link href="https://arxiv.org/abs/2606.27061v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2606.27061v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>External indexes can be used for cluster evaluation when ground truth is available. We review the most common external validity indexes focusing on set-matching-based measures. We recommend centroid index (CI), because it is an intuitive cluster-level measure with an explainable result. If we need a more fine-tuned, point-level measure, there are more choices. Pair-set index (PSI) provides a normalized score which is not biased by cluster sizes. If all points should matter equally, then clustering accuracy (ACC) or any other set-matching measure is suitable.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-25T14:07:17Z</published>
+    <arxiv:comment>Preprint of a book chapter to appear: P. Fränti, "How to evaluate clustering with ground truth?", In Center-based clustering, Springer Nature, 2026</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Pasi Fränti</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2511.17823v2</id>
+    <title>A novel k-means clustering approach using two distance measures for Gaussian data</title>
+    <updated>2026-07-29T18:44:03Z</updated>
+    <link href="https://arxiv.org/abs/2511.17823v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2511.17823v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Clustering algorithms have long been the topic of research, representing the more popular side of unsupervised learning. Since clustering analysis is one of the best ways to find some clarity and structure within raw data, this paper explores a novel approach to k-means clustering. Here we present a k-means clustering algorithm that takes both the within cluster distance (WCD) and the inter cluster distance (ICD) as the distance metric to cluster the data into k clusters pre-determined by the Calinski-Harabasz criterion in order to provide a more robust output for the clustering analysis. The idea with this approach is that by including both the measurement metrics, the convergence of the data into their clusters becomes solidified and more robust. We run the algorithm with some synthetically produced data and also some benchmark data sets obtained from the UCI repository. The results show that the convergence of the data into their respective clusters is more accurate by using both WCD and ICD measurement metrics. The algorithm is also better at clustering the outliers into their true clusters as opposed to the traditional k means method. We also address some interesting possible research topics that reveal themselves as we answer the questions we initially set out to address.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CE" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="stat.ME" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="stat.ML" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-11-21T22:36:14Z</published>
+    <arxiv:comment>Keywords: machine learning, clustering algorithms, k-means</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Naitik Gada</name>
+      <arxiv:affiliation>Rochester Institute of Technology</arxiv:affiliation>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/1404.6059v1</id>
+    <title>A Comparative study Between Fuzzy Clustering Algorithm and Hard Clustering Algorithm</title>
+    <updated>2014-04-24T09:02:38Z</updated>
+    <link href="https://arxiv.org/abs/1404.6059v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/1404.6059v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Data clustering is an important area of data mining. This is an unsupervised study where data of similar types are put into one cluster while data of another types are put into different cluster. Fuzzy C means is a very important clustering technique based on fuzzy logic. Also we have some hard clustering techniques available like K-means among the popular ones. In this paper a comparative study is done between Fuzzy clustering algorithm and hard clustering algorithm</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2014-04-24T09:02:38Z</published>
+    <arxiv:comment>Data Clustering,6 pages,6 figures,Published with International Journal of Computer Trends and Technology (IJCTT)</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <arxiv:journal_ref>International Journal of Computer Trends and Technology (IJCTT) V10(2):108-113, Apr 2014. ISSN:2231-2803</arxiv:journal_ref>
+    <author>
+      <name>Dibya Jyoti Bora</name>
+    </author>
+    <author>
+      <name>Dr. Anil Kumar Gupta</name>
+    </author>
+    <arxiv:doi>10.14445/22312803/IJCTT-V10P119</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.14445/22312803/IJCTT-V10P119" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.07130v1</id>
+    <title>Simple KNN-Based Outlier Detection Achieves Robust Clustering</title>
+    <updated>2026-05-08T02:08:50Z</updated>
+    <link href="https://arxiv.org/abs/2605.07130v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.07130v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Being robust to the presence of outliers is crucial for applying clustering algorithms in practice. In the $\textit{robust $k$-Means}$ problem (i.e., $k$-Means with outliers), the goal is to remove $z$ outliers and minimize the $k$-Means cost on the remaining points. Despite the close connection between robust $k$-Means and outlier detection, both theoretical and empirical understanding of the effectiveness of $\textit{classic outlier detection heuristics}$ for robust $k$-Means remains limited. In this paper, we prove that under a practical assumption on the optimal cluster sizes, simply removing points with large $K$-Nearest-Neighbor distances achieves performance comparable to prior work in terms of approximation guarantees: it yields a constant-factor reduction from robust $k$-Means to standard $k$-Means, without introducing additional centers or discarding extra outliers, as is commonly required by existing approaches. Empirically, experiments on real-world datasets show that our method outperforms or matches several more sophisticated algorithms in terms of clustering cost and runtime. These results demonstrate that simple KNN-based heuristics can be surprisingly effective for robust clustering, highlighting new opportunities to bridge techniques from outlier detection and clustering.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.DS" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-08T02:08:50Z</published>
+    <arxiv:comment>Code: https://github.com/MasterZhou1/Robust-Clustering</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Tianle Jiang</name>
+    </author>
+    <author>
+      <name>Yufa Zhou</name>
+    </author>
+  </entry>
+</feed>
